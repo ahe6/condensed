@@ -1,0 +1,24 @@
+aws_profile = "dev"
+aws_region  = "us-east-2"
+project     = "tele"
+environment = "dev"
+
+vpc_cidr_block        = "10.20.0.0/16"
+db_subnet_cidr_blocks = ["10.20.10.0/24", "10.20.11.0/24"]
+app_subnet_cidr_blocks = ["10.20.20.0/24", "10.20.21.0/24"]
+
+postgres_db_name                  = "tele"
+postgres_username                 = "tele_admin"
+postgres_instance_class           = "db.t4g.micro"
+postgres_allocated_storage_gb     = 20
+postgres_max_allocated_storage_gb = 100
+postgres_backup_retention_days    = 7
+
+allowed_postgres_cidr_blocks = []
+
+backend_service_enabled = false
+backend_image_tag       = "latest"
+backend_container_port  = 3000
+backend_desired_count   = 1
+backend_cpu             = 256
+backend_memory          = 512

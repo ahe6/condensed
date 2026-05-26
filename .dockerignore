@@ -1,0 +1,13 @@
+.git
+.terraform
+**/.terraform
+node_modules
+**/node_modules
+dist
+**/dist
+.env
+**/.env
+*.tfstate
+*.tfstate.*
+npm-debug.log*
+.DS_Store

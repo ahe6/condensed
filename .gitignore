@@ -1,0 +1,27 @@
+.DS_Store
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+backend.hcl
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Local env files
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Node
+node_modules/
+dist/
+coverage/
+npm-debug.log*
