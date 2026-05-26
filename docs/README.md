@@ -5,8 +5,9 @@ This directory holds the working documentation for `tele`.
 ## Start Here
 
 - [Local Development](local-dev.md): run Postgres, backend, and frontend locally.
+- [Backend Architecture](backend-architecture.md): request flow, module conventions, and current backend modules.
 - [Backend API](backend-api.md): route reference and request shapes.
-- [Backend Flows](backend-flows.md): module conventions and ecommerce flow design.
+- [Ecommerce Flows](ecommerce-flows.md): catalog, cart, checkout, order, payment, and shipment business flows.
 - [Database Schema](database-schema.md): Prisma models, relationships, and migration notes.
 
 ## Operations

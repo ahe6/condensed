@@ -70,8 +70,9 @@ Local URLs:
 
 - [Docs Index](docs/README.md)
 - [Local Development](docs/local-dev.md)
+- [Backend Architecture](docs/backend-architecture.md)
 - [Backend API](docs/backend-api.md)
-- [Backend Flows](docs/backend-flows.md)
+- [Ecommerce Flows](docs/ecommerce-flows.md)
 - [Database Schema](docs/database-schema.md)
 - [Infrastructure](docs/infrastructure.md)
 - [Deployment](docs/deployment.md)

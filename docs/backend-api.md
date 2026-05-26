@@ -2,7 +2,7 @@
 
 The backend is a Fastify app in `apps/backend`.
 
-Backend module conventions and business flows live in `docs/backend-flows.md`.
+Backend module conventions live in [Backend Architecture](backend-architecture.md). Business flows live in [Ecommerce Flows](ecommerce-flows.md).
 
 ## Structure
 
