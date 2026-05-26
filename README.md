@@ -107,6 +107,7 @@ Important files:
 - `src/prisma.ts`: Prisma client.
 - `prisma/schema.prisma`: Prisma schema.
 - `prisma/migrations/20260526000000_init/migration.sql`: initial SQL migration.
+- `prisma/migrations/20260526122912_ecommerce_schema/migration.sql`: ecommerce core schema.
 - `Dockerfile`: production backend image.
 
 Local environment example:
@@ -116,6 +117,19 @@ apps/backend/.env.example
 ```
 
 The local `.env` file is intentionally ignored by git.
+
+## Ecommerce Schema
+
+The Prisma schema includes the core ecommerce tables:
+
+- `users`, `addresses`
+- `products`, `product_variants`, `product_images`
+- `categories`, `product_categories`
+- `carts`, `cart_items`
+- `orders`, `order_addresses`, `order_items`
+- `payments`, `shipments`
+
+Orders snapshot purchased item and address details so historical orders do not depend on mutable product or address records.
 
 ## Frontend App
 

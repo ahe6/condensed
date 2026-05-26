@@ -2,6 +2,7 @@ export type User = {
   id: string;
   email: string;
   name: string | null;
+  phone: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -36,10 +37,9 @@ export async function listUsers() {
   return request<User[]>("/users");
 }
 
-export async function createUser(input: { email: string; name?: string }) {
+export async function createUser(input: { email: string; name?: string; phone?: string }) {
   return request<User>("/users", {
     method: "POST",
     body: JSON.stringify(input)
   });
 }
-
