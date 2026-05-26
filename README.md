@@ -131,6 +131,8 @@ The Prisma schema includes the core ecommerce tables:
 
 Orders snapshot purchased item and address details so historical orders do not depend on mutable product or address records.
 
+See `docs/database-schema.md` for table purposes, relationships, design decisions, migration commands, and deferred schema areas.
+
 ## Frontend App
 
 The frontend is a Next.js app in `apps/frontend`.
