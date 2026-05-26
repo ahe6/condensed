@@ -79,6 +79,7 @@ Current frontend scope:
 - Looks up orders through `GET /orders/:orderNumber`.
 - Lists recent admin orders through `GET /admin/orders`.
 - Creates manual payments and marks them authorized, paid, failed, or refunded.
+- Creates shipments, updates tracking, and marks shipments shipped, delivered, or returned.
 - Runs on port `3001`.
 
 ## Useful Endpoints

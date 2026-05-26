@@ -451,12 +451,14 @@ output {
   gap: 14px;
 }
 
-.payment-list {
+.payment-list,
+.shipment-list {
   display: grid;
   gap: 10px;
 }
 
-.payment-row {
+.payment-row,
+.shipment-row {
   display: grid;
   gap: 12px;
   padding: 12px;
@@ -465,25 +467,29 @@ output {
   background: var(--surface);
 }
 
-.payment-row-heading {
+.payment-row-heading,
+.shipment-row-heading {
   display: flex;
   justify-content: space-between;
   gap: 14px;
 }
 
-.payment-row-heading div {
+.payment-row-heading div,
+.shipment-row-heading div {
   display: grid;
   gap: 4px;
 }
 
-.payment-row-heading span {
+.payment-row-heading span,
+.shipment-row-heading span {
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
 }
 
-.payment-controls {
+.payment-controls,
+.shipment-controls {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
@@ -580,7 +586,8 @@ output {
   .topbar,
   .product-action,
   .order-summary-heading,
-  .payment-row-heading {
+  .payment-row-heading,
+  .shipment-row-heading {
     align-items: stretch;
     flex-direction: column;
   }
@@ -595,7 +602,8 @@ output {
     grid-template-columns: 40px 42px 40px;
   }
 
-  .payment-controls {
+  .payment-controls,
+  .shipment-controls {
     grid-template-columns: 1fr 1fr;
   }
 

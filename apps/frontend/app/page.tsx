@@ -14,6 +14,7 @@ import {
   clearCart,
   createCart,
   createManualPayment,
+  createShipment,
   getCart,
   getOrder,
   getReadiness,
@@ -21,8 +22,12 @@ import {
   listProducts,
   markPaymentFailed,
   markPaymentPaid,
+  markShipmentDelivered,
+  markShipmentReturned,
+  markShipmentShipped,
   removeCartItem,
   refundPayment,
+  updateShipmentTracking,
   updateCartItem
 } from "../src/lib/api";
 
@@ -76,6 +81,8 @@ export default function Home() {
   const [lookedUpOrder, setLookedUpOrder] = useState<Order | null>(null);
   const [adminOrders, setAdminOrders] = useState<Order[]>([]);
   const [selectedAdminOrderId, setSelectedAdminOrderId] = useState("");
+  const [shipmentCarrier, setShipmentCarrier] = useState("UPS");
+  const [shipmentTrackingNumber, setShipmentTrackingNumber] = useState("");
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -245,6 +252,58 @@ export default function Home() {
       syncAdminOrder(payment.order);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not update payment");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  function shipmentInput() {
+    return {
+      carrier: shipmentCarrier.trim() || undefined,
+      trackingNumber: shipmentTrackingNumber.trim() || undefined
+    };
+  }
+
+  async function handleCreateShipment(order: Order) {
+    setPendingAction(`create-shipment-${order.id}`);
+    setError(null);
+
+    try {
+      const shipment = await createShipment(order.id, shipmentInput());
+      syncAdminOrder(shipment.order);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not create shipment");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function handleUpdateTracking(shipmentId: string) {
+    setPendingAction(`shipment-${shipmentId}`);
+    setError(null);
+
+    try {
+      const shipment = await updateShipmentTracking(shipmentId, shipmentInput());
+      syncAdminOrder(shipment.order);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not update tracking");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function handleShipmentAction(
+    shipmentId: string,
+    action: (shipmentId: string) => Promise<{ order: Order }>
+  ) {
+    setPendingAction(`shipment-${shipmentId}`);
+    setError(null);
+
+    try {
+      const shipment = await action(shipmentId);
+      syncAdminOrder(shipment.order);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not update shipment");
     } finally {
       setPendingAction(null);
     }
@@ -858,6 +917,101 @@ export default function Home() {
                     </div>
                   </>
                 ) : null}
+              </>
+            )}
+          </section>
+
+          <section className="panel admin-panel" aria-label="Admin fulfillment">
+            <div className="panel-heading">
+              <h2>Fulfillment</h2>
+            </div>
+
+            {!selectedAdminOrder ? (
+              <div className="empty-state compact">No order selected</div>
+            ) : (
+              <>
+                <div className="form-grid">
+                  <label>
+                    <span>Carrier</span>
+                    <input
+                      value={shipmentCarrier}
+                      onChange={(event) => setShipmentCarrier(event.target.value)}
+                      placeholder="UPS"
+                    />
+                  </label>
+                  <label>
+                    <span>Tracking</span>
+                    <input
+                      value={shipmentTrackingNumber}
+                      onChange={(event) => setShipmentTrackingNumber(event.target.value)}
+                      placeholder="1Z..."
+                    />
+                  </label>
+                </div>
+
+                <div className="shipment-list">
+                  {selectedAdminOrder.shipments.length === 0 ? (
+                    <button
+                      type="button"
+                      disabled={pendingAction === `create-shipment-${selectedAdminOrder.id}`}
+                      onClick={() => void handleCreateShipment(selectedAdminOrder)}
+                    >
+                      {pendingAction === `create-shipment-${selectedAdminOrder.id}`
+                        ? "Creating"
+                        : "Create Shipment"}
+                    </button>
+                  ) : (
+                    selectedAdminOrder.shipments.map((shipment) => {
+                      const isBusy = pendingAction === `shipment-${shipment.id}`;
+
+                      return (
+                        <article className="shipment-row" key={shipment.id}>
+                          <div className="shipment-row-heading">
+                            <div>
+                              <span>{shipment.carrier ?? "Carrier pending"}</span>
+                              <strong>{shipment.status}</strong>
+                            </div>
+                            <strong>{shipment.trackingNumber ?? "No tracking"}</strong>
+                          </div>
+
+                          <div className="shipment-controls">
+                            <button
+                              className="secondary"
+                              type="button"
+                              disabled={isBusy}
+                              onClick={() => void handleUpdateTracking(shipment.id)}
+                            >
+                              Save Tracking
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isBusy}
+                              onClick={() => void handleShipmentAction(shipment.id, markShipmentShipped)}
+                            >
+                              Shipped
+                            </button>
+                            <button
+                              className="secondary"
+                              type="button"
+                              disabled={isBusy}
+                              onClick={() => void handleShipmentAction(shipment.id, markShipmentDelivered)}
+                            >
+                              Delivered
+                            </button>
+                            <button
+                              className="secondary"
+                              type="button"
+                              disabled={isBusy}
+                              onClick={() => void handleShipmentAction(shipment.id, markShipmentReturned)}
+                            >
+                              Returned
+                            </button>
+                          </div>
+                        </article>
+                      );
+                    })
+                  )}
+                </div>
               </>
             )}
           </section>

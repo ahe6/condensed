@@ -107,6 +107,20 @@ export type Payment = {
   updatedAt: string;
 };
 
+export type ShipmentStatus = "PENDING" | "SHIPPED" | "DELIVERED" | "RETURNED";
+
+export type Shipment = {
+  id: string;
+  orderId: string;
+  carrier: string | null;
+  trackingNumber: string | null;
+  status: ShipmentStatus;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Order = {
   id: string;
   userId: string | null;
@@ -139,20 +153,14 @@ export type Order = {
     createdAt: string;
   }>;
   payments: Payment[];
-  shipments: Array<{
-    id: string;
-    orderId: string;
-    carrier: string | null;
-    trackingNumber: string | null;
-    status: "PENDING" | "SHIPPED" | "DELIVERED" | "RETURNED";
-    shippedAt: string | null;
-    deliveredAt: string | null;
-    createdAt: string;
-    updatedAt: string;
-  }>;
+  shipments: Shipment[];
 };
 
 export type PaymentWithOrder = Payment & {
+  order: Order;
+};
+
+export type ShipmentWithOrder = Shipment & {
   order: Order;
 };
 
@@ -273,6 +281,41 @@ export async function markPaymentFailed(paymentId: string) {
 
 export async function refundPayment(paymentId: string) {
   return request<PaymentWithOrder>(`/admin/payments/${paymentId}/refund`, {
+    method: "POST"
+  });
+}
+
+export async function createShipment(orderId: string, input: { carrier?: string; trackingNumber?: string }) {
+  return request<ShipmentWithOrder>(`/admin/orders/${orderId}/shipments`, {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
+}
+
+export async function updateShipmentTracking(
+  shipmentId: string,
+  input: { carrier?: string; trackingNumber?: string }
+) {
+  return request<ShipmentWithOrder>(`/admin/shipments/${shipmentId}/tracking`, {
+    method: "PATCH",
+    body: JSON.stringify(input)
+  });
+}
+
+export async function markShipmentShipped(shipmentId: string) {
+  return request<ShipmentWithOrder>(`/admin/shipments/${shipmentId}/ship`, {
+    method: "POST"
+  });
+}
+
+export async function markShipmentDelivered(shipmentId: string) {
+  return request<ShipmentWithOrder>(`/admin/shipments/${shipmentId}/deliver`, {
+    method: "POST"
+  });
+}
+
+export async function markShipmentReturned(shipmentId: string) {
+  return request<ShipmentWithOrder>(`/admin/shipments/${shipmentId}/return`, {
     method: "POST"
   });
 }
