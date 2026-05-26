@@ -22,7 +22,7 @@ Implemented backend modules:
 - `payments`
 - `shipments`
 
-The frontend is currently a local shop console for catalog browsing, cart management, checkout, order lookup, and dev-admin payment/fulfillment controls.
+The frontend is split into a local shop route and a dev-admin route. `/` covers catalog browsing, cart management, checkout, and order lookup. `/admin` covers order payment and fulfillment controls.
 
 ## Quickstart
 
@@ -54,7 +54,8 @@ npm run frontend:dev
 Local URLs:
 
 - Backend API: `http://127.0.0.1:3000`
-- Frontend: `http://127.0.0.1:3001`
+- Shop: `http://127.0.0.1:3001`
+- Admin: `http://127.0.0.1:3001/admin`
 
 ## Layout
 

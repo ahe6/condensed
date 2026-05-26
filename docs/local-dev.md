@@ -14,7 +14,8 @@ Local development uses Docker Postgres, the Fastify backend, and the Next.js fro
 Local URLs:
 
 - Backend API: `http://127.0.0.1:3000`
-- Frontend: `http://127.0.0.1:3001`
+- Shop frontend: `http://127.0.0.1:3001`
+- Admin frontend: `http://127.0.0.1:3001/admin`
 - Postgres: `127.0.0.1:5432`
 
 Docker Compose Postgres settings:
@@ -71,12 +72,17 @@ Override `NEXT_PUBLIC_API_URL` when pointing the frontend at a deployed backend.
 
 Current frontend scope:
 
+Shop route at `/`:
+
 - Checks backend readiness through `GET /ready`.
 - Lists active products through `GET /products`.
 - Creates and resumes browser-local carts.
 - Adds, updates, removes, and clears cart items.
 - Submits checkout through `POST /checkout`.
 - Looks up orders through `GET /orders/:orderNumber`.
+
+Admin route at `/admin`:
+
 - Lists recent admin orders through `GET /admin/orders`.
 - Creates manual payments and marks them authorized, paid, failed, or refunded.
 - Creates shipments, updates tracking, and marks shipments shipped, delivered, or returned.

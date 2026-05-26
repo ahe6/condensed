@@ -103,6 +103,31 @@ button.status-action.active:hover:not(:disabled) {
   margin-bottom: 20px;
 }
 
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-link {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  border-color: var(--accent);
+  background: #eaf8f6;
+}
+
 .eyebrow,
 .metric span,
 label span,
@@ -615,6 +640,7 @@ output {
   }
 
   .topbar,
+  .nav-actions,
   .product-action,
   .order-summary-heading,
   .payment-row-heading,
