@@ -420,7 +420,8 @@ output {
 .order-confirmation,
 .order-summary,
 .empty-state,
-.error {
+.error,
+.notice {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
@@ -553,6 +554,15 @@ output {
   border-color: #f4b6ad;
   background: #fff1f0;
   color: var(--bad);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.notice {
+  padding: 11px 12px;
+  border-color: #b6decf;
+  background: #edf9f4;
+  color: var(--ok);
   font-size: 13px;
   font-weight: 700;
 }

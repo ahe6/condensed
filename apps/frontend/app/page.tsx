@@ -6,6 +6,7 @@ import {
   ApiStatus,
   Cart,
   Order,
+  PaymentWithOrder,
   Product,
   addCartItem,
   apiBaseUrl,
@@ -85,6 +86,7 @@ export default function Home() {
   const [shipmentTrackingNumber, setShipmentTrackingNumber] = useState("");
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const cartCurrency = cart?.items[0]?.variant.currency ?? "USD";
   const productCount = products.length;
@@ -208,16 +210,41 @@ export default function Home() {
     }
   }
 
+  function applyAdminOrders(orders: Order[], preferredOrderId?: string) {
+    setAdminOrders(orders);
+    setSelectedAdminOrderId((current) => {
+      if (preferredOrderId && orders.some((order) => order.id === preferredOrderId)) {
+        return preferredOrderId;
+      }
+
+      return current && orders.some((order) => order.id === current) ? current : orders[0]?.id ?? "";
+    });
+
+    const selectedOrder = orders.find((order) => order.id === preferredOrderId);
+
+    if (selectedOrder && lookedUpOrder?.id === selectedOrder.id) {
+      setLookedUpOrder(selectedOrder);
+    }
+
+    if (selectedOrder && lastOrder?.id === selectedOrder.id) {
+      setLastOrder(selectedOrder);
+    }
+  }
+
+  async function reloadAdminOrders(preferredOrderId?: string) {
+    const orders = await listAdminOrders();
+    applyAdminOrders(orders, preferredOrderId);
+
+    return orders;
+  }
+
   async function refreshAdminOrders() {
     setPendingAction("admin-orders");
     setError(null);
+    setNotice(null);
 
     try {
-      const orders = await listAdminOrders();
-      setAdminOrders(orders);
-      setSelectedAdminOrderId((current) =>
-        current && orders.some((order) => order.id === current) ? current : orders[0]?.id ?? ""
-      );
+      await reloadAdminOrders(selectedAdminOrder?.id);
       setStatus("online");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not refresh orders");
@@ -229,10 +256,13 @@ export default function Home() {
   async function handleCreatePayment(order: Order) {
     setPendingAction(`create-payment-${order.id}`);
     setError(null);
+    setNotice(null);
 
     try {
       const payment = await createManualPayment(order);
       syncAdminOrder(payment.order);
+      await reloadAdminOrders(payment.order.id);
+      setNotice(`Created manual payment for ${payment.order.orderNumber}`);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not create payment");
     } finally {
@@ -242,14 +272,17 @@ export default function Home() {
 
   async function handlePaymentAction(
     paymentId: string,
-    action: (paymentId: string) => Promise<{ order: Order }>
+    action: (paymentId: string) => Promise<PaymentWithOrder>
   ) {
     setPendingAction(`payment-${paymentId}`);
     setError(null);
+    setNotice(null);
 
     try {
       const payment = await action(paymentId);
       syncAdminOrder(payment.order);
+      await reloadAdminOrders(payment.order.id);
+      setNotice(`Payment is now ${payment.status}`);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not update payment");
     } finally {
@@ -476,6 +509,7 @@ export default function Home() {
       </section>
 
       {error ? <p className="error global-error">{error}</p> : null}
+      {notice ? <p className="notice global-error">{notice}</p> : null}
 
       <section className="workspace">
         <section className="catalog" aria-label="Products">
