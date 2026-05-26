@@ -18,10 +18,9 @@ AWS dev account:
 - Account: `173748329850`
 - Region: `us-east-2`
 - Terraform state bucket: `tele-terraform-state-173748329850-us-east-2`
-- RDS Postgres is live and private
-- ECR repo exists and has the backend image pushed
-- ECS cluster, task IAM roles, CloudWatch log group, and public app subnets exist
-- ECS service and public ALB are intentionally disabled for now
+- Bootstrap state storage is retained
+- The Terraform dev environment is currently destroyed to avoid AWS dev costs
+- Recreate dev AWS resources with `terraform -chdir=infra/envs/dev apply`
 
 ## Layout
 
@@ -124,13 +123,14 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:3000
 
 Override that environment variable when pointing the frontend at a deployed backend.
 
-## AWS Database
+## AWS Dev Environment
 
-The live dev DB is private RDS Postgres:
+The AWS dev environment is currently torn down. The local Docker Postgres database is the active development database.
+
+When recreated, Terraform provisions a private RDS Postgres database:
 
 ```text
 identifier: tele-dev-postgres
-endpoint: tele-dev-postgres.cfuc6au48pkm.us-east-2.rds.amazonaws.com
 port: 5432
 database: tele
 username: tele_admin
@@ -143,28 +143,30 @@ backups: 7 days
 
 Security model:
 
-- Postgres security group: `sg-0c38c90827bf719d3`
-- Backend security group: `sg-043fb513bb1161691`
 - RDS allows inbound TCP `5432` only from the backend security group.
 - Your laptop cannot connect directly to RDS.
 - The RDS master password is managed by AWS Secrets Manager.
 
 Approximate RDS cost before credits: about `$14/month`.
 
+Create the dev environment:
+
+```sh
+terraform -chdir=infra/envs/dev apply
+```
+
+Destroy the dev environment:
+
+```sh
+terraform -chdir=infra/envs/dev destroy
+```
+
 ## AWS Backend Image
 
-ECR repository:
+When the AWS dev environment exists, Terraform creates this ECR repository:
 
 ```text
 173748329850.dkr.ecr.us-east-2.amazonaws.com/tele-dev-backend
-```
-
-Current pushed image:
-
-```text
-tag: latest
-digest: sha256:ee4cbacc947d97e6a42d455892d4e37acabc6b9f876ae5414ba562867d5129ec
-size: ~148 MB
 ```
 
 Build and push a new image:
@@ -236,6 +238,12 @@ Apply dev changes:
 terraform -chdir=infra/envs/dev apply
 ```
 
+Destroy dev resources:
+
+```sh
+terraform -chdir=infra/envs/dev destroy
+```
+
 Terraform state:
 
 ```text
@@ -251,13 +259,13 @@ Local migrations:
 npm run db:migrate
 ```
 
-AWS RDS migrations should run from inside AWS because the database is private. The repo has the deploy command:
+AWS RDS migrations should run from inside AWS when the dev environment exists because the database is private. The repo has the deploy command:
 
 ```sh
 npm run db:deploy
 ```
 
-The dev environment includes a one-off ECS task definition that runs `npm run db:deploy` against RDS. Run it with:
+The dev environment includes a one-off ECS task definition that runs `npm run db:deploy` against RDS. After recreating AWS dev and pushing an image, run it with:
 
 ```sh
 make backend-migrate-aws
