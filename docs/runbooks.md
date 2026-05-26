@@ -1,0 +1,137 @@
+# Runbooks
+
+These are common operational flows for the current project state.
+
+## Start Local Dev
+
+```sh
+docker compose up -d postgres
+npm install
+npm run db:migrate
+npm run backend:dev
+```
+
+In another terminal:
+
+```sh
+npm run frontend:dev
+```
+
+Open:
+
+- Backend: `http://127.0.0.1:3000/health`
+- Frontend: `http://127.0.0.1:3001`
+
+## Check Local Health
+
+```sh
+docker compose ps
+curl -s http://127.0.0.1:3000/health
+curl -s http://127.0.0.1:3000/ready
+```
+
+## Reset Local Database
+
+This removes local Postgres data.
+
+```sh
+docker compose down -v
+docker compose up -d postgres
+npm run db:migrate
+```
+
+## Regenerate Prisma Client
+
+```sh
+npm run db:generate
+```
+
+## Check Migration Status
+
+From the backend workspace:
+
+```sh
+cd apps/backend
+npx prisma migrate status --schema prisma/schema.prisma
+```
+
+## Build Everything Locally
+
+```sh
+npm run backend:check
+npm run backend:build
+npm run frontend:check
+npm run frontend:build
+```
+
+## Build Local Docker Images
+
+```sh
+make backend-docker-build
+make frontend-docker-build
+```
+
+## Recreate AWS Dev
+
+```sh
+make aws-login
+make aws-whoami
+make dev-init
+make dev-plan
+terraform -chdir=infra/envs/dev apply
+```
+
+## Push Backend Image To AWS
+
+```sh
+make backend-docker-build
+make backend-ecr-login
+make backend-ecr-push
+```
+
+## Run AWS RDS Migrations
+
+AWS RDS is private. Use the one-off ECS migration task:
+
+```sh
+make backend-migrate-aws
+```
+
+## Inspect AWS Outputs
+
+```sh
+terraform -chdir=infra/envs/dev output
+```
+
+Useful output names:
+
+- `backend_ecr_repository_url`
+- `ecs_cluster_name`
+- `backend_migration_task_definition_arn`
+- `backend_load_balancer_dns_name`
+- `postgres_endpoint`
+- `postgres_port`
+
+## Check Backend ECR Image
+
+```sh
+aws ecr describe-images --repository-name tele-dev-backend --image-ids imageTag=latest --region us-east-2 --profile dev
+```
+
+## Destroy AWS Dev
+
+```sh
+terraform -chdir=infra/envs/dev destroy
+```
+
+The Terraform bootstrap state bucket is retained.
+
+## If AWS Commands Fail With SSO Errors
+
+Refresh SSO:
+
+```sh
+make aws-login
+```
+
+Then retry the AWS or Terraform command.

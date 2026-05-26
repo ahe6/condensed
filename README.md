@@ -1,40 +1,30 @@
 # tele
 
-`tele` is set up as a Fastify + TypeScript + Prisma backend with local Docker Postgres and AWS infrastructure managed by Terraform.
+`tele` is a TypeScript ecommerce app scaffold with:
+
+- Fastify backend in `apps/backend`
+- Prisma and Postgres for data
+- Next.js frontend in `apps/frontend`
+- Local Docker Postgres for development
+- Terraform-managed AWS dev infrastructure
 
 ## Current State
 
-Local development:
+Local development is the active environment. The AWS dev environment is currently destroyed to avoid AWS costs, while the Terraform bootstrap state bucket is retained.
 
-- Backend app: `apps/backend`
-- Frontend app: `apps/frontend`
-- Local Postgres: Docker Compose service `postgres`
-- Prisma schema and migrations cover the ecommerce core
-- Backend modules cover users, catalog, carts, checkout, orders, payments, and shipments
-- Frontend is a local development console for backend readiness and starter user records
-- Backend Docker image builds and has been smoke-tested locally
-- Frontend Docker image builds and has been smoke-tested locally
+Implemented backend modules:
 
-AWS dev account:
+- `users`
+- `catalog`
+- `carts`
+- `checkout`
+- `orders`
+- `payments`
+- `shipments`
 
-- AWS profile: `dev`
-- Account: `173748329850`
-- Region: `us-east-2`
-- Terraform state bucket: `tele-terraform-state-173748329850-us-east-2`
-- Bootstrap state storage is retained
-- The Terraform dev environment is currently destroyed to avoid AWS dev costs
-- Recreate dev AWS resources with `terraform -chdir=infra/envs/dev apply`
+The frontend is currently a local development console for backend readiness and starter user records.
 
-## Layout
-
-- `apps/backend`: Fastify API, Prisma schema, migrations, and Dockerfile.
-- `apps/frontend`: Next.js app for local product development.
-- `infra/bootstrap`: one-time Terraform state bucket setup.
-- `infra/envs/dev`: AWS dev environment, including VPC, RDS, ECR, ECS prerequisites, and optional ALB/Fargate service.
-- `docker-compose.yml`: local Postgres for development.
-- `Makefile`: common local, Terraform, Docker, and ECR commands.
-
-## Local Development
+## Quickstart
 
 Start local Postgres:
 
@@ -61,306 +51,41 @@ Run the frontend:
 npm run frontend:dev
 ```
 
-Build the frontend production container:
-
-```sh
-make frontend-docker-build
-```
-
-Run the frontend production container with Compose:
-
-```sh
-docker compose --profile app up --build frontend
-```
-
 Local URLs:
 
 - Backend API: `http://127.0.0.1:3000`
 - Frontend: `http://127.0.0.1:3001`
 
-Useful endpoints:
+## Layout
 
-- `GET /health`: process health
-- `GET /ready`: database connectivity check
-- `GET /users`, `POST /users`: starter user records
-- `GET /products`, `GET /products/:slug`, `GET /categories`: public catalog
-- `POST /carts`, `GET /carts/:id`, `POST /carts/:id/items`: cart flow
-- `POST /checkout`: convert a cart into an order
-- `GET /orders/:orderNumber`: customer order lookup
-- `/admin/*`: dev-only catalog, order, payment, and shipment routes
+- `apps/backend`: Fastify API, Prisma schema, migrations, scripts, and Dockerfile.
+- `apps/frontend`: Next.js local development UI and Dockerfile.
+- `infra/bootstrap`: one-time Terraform state bucket setup.
+- `infra/envs/dev`: AWS dev environment for VPC, RDS, ECR, ECS, and optional public backend service.
+- `docker-compose.yml`: local Postgres and optional frontend container.
+- `Makefile`: common AWS, Terraform, Docker, ECR, and migration commands.
+- `docs`: project docs.
 
-Stop local Postgres:
+## Docs
 
-```sh
-docker compose stop postgres
-```
+- [Docs Index](docs/README.md)
+- [Local Development](docs/local-dev.md)
+- [Backend API](docs/backend-api.md)
+- [Backend Flows](docs/backend-flows.md)
+- [Database Schema](docs/database-schema.md)
+- [Infrastructure](docs/infrastructure.md)
+- [Deployment](docs/deployment.md)
+- [Runbooks](docs/runbooks.md)
 
-Reset local Postgres data:
-
-```sh
-docker compose down -v
-```
-
-## Backend App
-
-The backend is in `apps/backend`.
-
-Important files:
-
-- `src/index.ts`: process entrypoint and shutdown handling.
-- `src/server.ts`: Fastify routes and error handling.
-- `src/modules`: route, schema, and service modules.
-- `src/config.ts`: environment parsing. Supports local `DATABASE_URL` or AWS `DB_SECRET_JSON` + `DB_HOST`.
-- `src/prisma.ts`: Prisma client.
-- `prisma/schema.prisma`: Prisma schema.
-- `prisma/migrations/20260526000000_init/migration.sql`: initial SQL migration.
-- `prisma/migrations/20260526122912_ecommerce_schema/migration.sql`: ecommerce core schema.
-- `Dockerfile`: production backend image.
-
-Local environment example:
+## Common Commands
 
 ```sh
-apps/backend/.env.example
-```
-
-The local `.env` file is intentionally ignored by git.
-
-Backend docs:
-
-- `docs/backend-api.md`: current route modules, API endpoints, request shapes, and error handling.
-- `docs/backend-flows.md`: backend module conventions, service responsibilities, and ecommerce flow design.
-- `docs/database-schema.md`: Prisma table purposes, relationships, and migration notes.
-
-Current backend modules:
-
-- `users`: list and create starter users.
-- `catalog`: public catalog reads plus dev-admin product, category, variant, image, status, and inventory management.
-- `carts`: create carts, add/update/remove items, clear carts, and return calculated totals.
-- `checkout`: validate a cart, snapshot order data, decrement inventory, and clear the cart in one transaction.
-- `orders`: customer order lookup plus dev-admin list/place/cancel actions.
-- `payments`: provider-agnostic dev-admin payment creation and status changes.
-- `shipments`: dev-admin shipment creation, tracking, and fulfillment status changes.
-
-## Ecommerce Schema
-
-The Prisma schema includes the core ecommerce tables:
-
-- `users`, `addresses`
-- `products`, `product_variants`, `product_images`
-- `categories`, `product_categories`
-- `carts`, `cart_items`
-- `orders`, `order_addresses`, `order_items`
-- `payments`, `shipments`
-
-Orders snapshot purchased item and address details so historical orders do not depend on mutable product or address records.
-
-See `docs/database-schema.md` for table purposes, relationships, design decisions, migration commands, and deferred schema areas.
-
-## Frontend App
-
-The frontend is a Next.js app in `apps/frontend`.
-
-Important files:
-
-- `app/page.tsx`: local development console UI.
-- `app/layout.tsx`: app shell metadata and global CSS import.
-- `app/globals.css`: frontend styling.
-- `src/lib/api.ts`: typed browser API client for the Fastify backend.
-- `Dockerfile`: production frontend image.
-
-The frontend defaults to:
-
-```text
-NEXT_PUBLIC_API_URL=http://127.0.0.1:3000
-```
-
-Override that environment variable when pointing the frontend at a deployed backend.
-
-Current frontend scope:
-
-- Checks backend readiness through `GET /ready`.
-- Lists starter users through `GET /users`.
-- Creates starter users through `POST /users`.
-- Runs on port `3001` in local dev and production container mode.
-
-## AWS Dev Environment
-
-The AWS dev environment is currently torn down. The local Docker Postgres database is the active development database.
-
-When recreated, Terraform provisions a private RDS Postgres database:
-
-```text
-identifier: tele-dev-postgres
-port: 5432
-database: tele
-username: tele_admin
-instance: db.t4g.micro
-storage: 20 GB gp3, autoscale up to 100 GB
-encrypted: yes
-publicly accessible: no
-backups: 7 days
-```
-
-Security model:
-
-- RDS allows inbound TCP `5432` only from the backend security group.
-- Your laptop cannot connect directly to RDS.
-- The RDS master password is managed by AWS Secrets Manager.
-
-Approximate RDS cost before credits: about `$14/month`.
-
-Create the dev environment:
-
-```sh
-terraform -chdir=infra/envs/dev apply
-```
-
-Destroy the dev environment:
-
-```sh
-terraform -chdir=infra/envs/dev destroy
-```
-
-## AWS Backend Image
-
-When the AWS dev environment exists, Terraform creates this ECR repository:
-
-```text
-173748329850.dkr.ecr.us-east-2.amazonaws.com/tele-dev-backend
-```
-
-Build and push a new image:
-
-```sh
-make backend-docker-build
-make backend-ecr-login
-make backend-ecr-push
-```
-
-The frontend image is local-only for now. Build it with:
-
-```sh
-make frontend-docker-build
-```
-
-## AWS Backend Service
-
-The Terraform config includes an optional public backend service:
-
-- Application Load Balancer
-- HTTP listener on port `80`
-- ECS Fargate task/service
-- Task definition using the ECR backend image
-- Secrets Manager injection for the RDS password
-- CloudWatch logs at `/ecs/tele-dev-backend`
-
-It is currently disabled in `infra/envs/dev/terraform.tfvars`:
-
-```hcl
-backend_service_enabled = false
-```
-
-To preview the service layer:
-
-```sh
-terraform -chdir=infra/envs/dev plan -var backend_service_enabled=true
-```
-
-The last dry run showed:
-
-```text
-9 to add, 0 to change, 0 to destroy
-```
-
-That would create the ALB, target group, listener, ECS task definition, ECS service, and HTTP security group rules.
-
-Expected added cost when enabled: roughly `$20-30/month` before credits, mainly ALB + one small Fargate task.
-
-## Terraform
-
-Authenticate:
-
-```sh
-make aws-login
-make aws-whoami
-```
-
-Format and validate:
-
-```sh
-make fmt
-make validate
-```
-
-Plan dev changes:
-
-```sh
-make dev-plan
-```
-
-Apply dev changes:
-
-```sh
-terraform -chdir=infra/envs/dev apply
-```
-
-Destroy dev resources:
-
-```sh
-terraform -chdir=infra/envs/dev destroy
-```
-
-Terraform state:
-
-```text
-bucket: tele-terraform-state-173748329850-us-east-2
-key: envs/dev/terraform.tfstate
-```
-
-## Migration Strategy
-
-Local migrations:
-
-```sh
-npm run db:migrate
-```
-
-AWS RDS migrations should run from inside AWS when the dev environment exists because the database is private. The repo has the deploy command:
-
-```sh
-npm run db:deploy
-```
-
-The dev environment includes a one-off ECS task definition that runs `npm run db:deploy` against RDS. After recreating AWS dev and pushing an image, run it with:
-
-```sh
-make backend-migrate-aws
-```
-
-This starts a short-lived Fargate task in the dev VPC, waits for it to stop, and exits non-zero if the migration container fails.
-
-The ECS task definitions use ARM64 Fargate because the local image is built on Apple Silicon by default.
-
-The migration command uses `apps/backend/scripts/prisma-deploy.mjs` so Prisma CLI receives a concrete `DATABASE_URL` built from the AWS-injected RDS secret.
-
-## Useful Commands
-
-```sh
-docker compose ps
-docker compose logs postgres
 npm run backend:check
 npm run backend:build
 npm run frontend:check
 npm run frontend:build
-make backend-docker-build
-make frontend-docker-build
 npm run db:generate
+docker compose ps
 ```
 
-AWS-only commands after recreating `infra/envs/dev`:
-
-```sh
-make backend-migrate-aws
-terraform -chdir=infra/envs/dev output
-aws ecr describe-images --repository-name tele-dev-backend --image-ids imageTag=latest --region us-east-2 --profile dev
-```
+See [Local Development](docs/local-dev.md) and [Runbooks](docs/runbooks.md) for setup, reset, and troubleshooting commands.
