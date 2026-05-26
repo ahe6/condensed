@@ -72,15 +72,17 @@ Override `NEXT_PUBLIC_API_URL` when pointing the frontend at a deployed backend.
 Current frontend scope:
 
 - Checks backend readiness through `GET /ready`.
-- Lists starter users through `GET /users`.
-- Creates starter users through `POST /users`.
+- Lists active products through `GET /products`.
+- Creates and resumes browser-local carts.
+- Adds, updates, removes, and clears cart items.
+- Submits checkout through `POST /checkout`.
+- Looks up orders through `GET /orders/:orderNumber`.
 - Runs on port `3001`.
 
 ## Useful Endpoints
 
 - `GET /health`: process health
 - `GET /ready`: database connectivity check
-- `GET /users`, `POST /users`: starter user records
 - `GET /products`, `GET /products/:slug`, `GET /categories`: public catalog
 - `POST /carts`, `GET /carts/:id`, `POST /carts/:id/items`: cart flow
 - `POST /checkout`: convert a cart into an order
