@@ -91,13 +91,29 @@ export type CheckoutInput = {
   billingAddress: AddressInput;
 };
 
+export type PaymentStatus = "UNPAID" | "AUTHORIZED" | "PAID" | "FAILED" | "REFUNDED";
+
+export type Payment = {
+  id: string;
+  orderId: string;
+  provider: string;
+  providerPaymentId: string | null;
+  status: PaymentStatus;
+  amount: string;
+  currency: string;
+  processedAt: string | null;
+  metadata: unknown | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Order = {
   id: string;
   userId: string | null;
   orderNumber: string;
   email: string;
   status: "PENDING" | "PLACED" | "CANCELLED" | "REFUNDED";
-  paymentStatus: "UNPAID" | "AUTHORIZED" | "PAID" | "FAILED" | "REFUNDED";
+  paymentStatus: PaymentStatus;
   fulfillmentStatus: "UNFULFILLED" | "PARTIAL" | "FULFILLED" | "RETURNED";
   currency: string;
   subtotal: string;
@@ -122,18 +138,7 @@ export type Order = {
     total: string;
     createdAt: string;
   }>;
-  payments: Array<{
-    id: string;
-    orderId: string;
-    provider: string;
-    providerPaymentId: string | null;
-    status: Order["paymentStatus"];
-    amount: string;
-    currency: string;
-    processedAt: string | null;
-    createdAt: string;
-    updatedAt: string;
-  }>;
+  payments: Payment[];
   shipments: Array<{
     id: string;
     orderId: string;
@@ -145,6 +150,10 @@ export type Order = {
     createdAt: string;
     updatedAt: string;
   }>;
+};
+
+export type PaymentWithOrder = Payment & {
+  order: Order;
 };
 
 export const apiBaseUrl =
@@ -226,4 +235,44 @@ export async function checkoutCart(input: CheckoutInput) {
 
 export async function getOrder(orderNumber: string) {
   return request<Order>(`/orders/${encodeURIComponent(orderNumber)}`);
+}
+
+export async function listAdminOrders() {
+  return request<Order[]>("/admin/orders");
+}
+
+export async function createManualPayment(order: Order) {
+  return request<PaymentWithOrder>(`/admin/orders/${order.id}/payments`, {
+    method: "POST",
+    body: JSON.stringify({
+      provider: "manual",
+      providerPaymentId: `manual-${order.orderNumber}-${Date.now()}`,
+      amount: order.total,
+      currency: order.currency
+    })
+  });
+}
+
+export async function authorizePayment(paymentId: string) {
+  return request<PaymentWithOrder>(`/admin/payments/${paymentId}/authorize`, {
+    method: "POST"
+  });
+}
+
+export async function markPaymentPaid(paymentId: string) {
+  return request<PaymentWithOrder>(`/admin/payments/${paymentId}/pay`, {
+    method: "POST"
+  });
+}
+
+export async function markPaymentFailed(paymentId: string) {
+  return request<PaymentWithOrder>(`/admin/payments/${paymentId}/fail`, {
+    method: "POST"
+  });
+}
+
+export async function refundPayment(paymentId: string) {
+  return request<PaymentWithOrder>(`/admin/payments/${paymentId}/refund`, {
+    method: "POST"
+  });
 }

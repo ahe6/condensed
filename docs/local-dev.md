@@ -77,6 +77,8 @@ Current frontend scope:
 - Adds, updates, removes, and clears cart items.
 - Submits checkout through `POST /checkout`.
 - Looks up orders through `GET /orders/:orderNumber`.
+- Lists recent admin orders through `GET /admin/orders`.
+- Creates manual payments and marks them authorized, paid, failed, or refunded.
 - Runs on port `3001`.
 
 ## Useful Endpoints

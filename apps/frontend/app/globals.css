@@ -440,10 +440,53 @@ output {
   padding: 12px;
 }
 
+.admin-panel {
+  display: grid;
+  gap: 12px;
+}
+
 .order-summary-heading {
   display: flex;
   justify-content: space-between;
   gap: 14px;
+}
+
+.payment-list {
+  display: grid;
+  gap: 10px;
+}
+
+.payment-row {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.payment-row-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.payment-row-heading div {
+  display: grid;
+  gap: 4px;
+}
+
+.payment-row-heading span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.payment-controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .status-row {
@@ -536,7 +579,8 @@ output {
 
   .topbar,
   .product-action,
-  .order-summary-heading {
+  .order-summary-heading,
+  .payment-row-heading {
     align-items: stretch;
     flex-direction: column;
   }
@@ -549,6 +593,10 @@ output {
 
   .quantity-control {
     grid-template-columns: 40px 42px 40px;
+  }
+
+  .payment-controls {
+    grid-template-columns: 1fr 1fr;
   }
 
   .remove-button {

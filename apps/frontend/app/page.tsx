@@ -9,14 +9,20 @@ import {
   Product,
   addCartItem,
   apiBaseUrl,
+  authorizePayment,
   checkoutCart,
   clearCart,
   createCart,
+  createManualPayment,
   getCart,
   getOrder,
   getReadiness,
+  listAdminOrders,
   listProducts,
+  markPaymentFailed,
+  markPaymentPaid,
   removeCartItem,
+  refundPayment,
   updateCartItem
 } from "../src/lib/api";
 
@@ -68,12 +74,16 @@ export default function Home() {
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
   const [orderLookup, setOrderLookup] = useState("");
   const [lookedUpOrder, setLookedUpOrder] = useState<Order | null>(null);
+  const [adminOrders, setAdminOrders] = useState<Order[]>([]);
+  const [selectedAdminOrderId, setSelectedAdminOrderId] = useState("");
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const cartCurrency = cart?.items[0]?.variant.currency ?? "USD";
   const productCount = products.length;
   const cartItemCount = cart?.totals.itemCount ?? 0;
+  const selectedAdminOrder =
+    adminOrders.find((order) => order.id === selectedAdminOrderId) ?? adminOrders[0] ?? null;
 
   const activeProducts = useMemo(
     () => products.filter((product) => product.variants.length > 0),
@@ -86,9 +96,10 @@ export default function Home() {
     async function load() {
       try {
         await getReadiness();
-        const [nextProducts, savedCart] = await Promise.all([
+        const [nextProducts, savedCart, nextAdminOrders] = await Promise.all([
           listProducts(),
-          loadSavedCart()
+          loadSavedCart(),
+          listAdminOrders()
         ]);
 
         if (!isMounted) {
@@ -97,6 +108,8 @@ export default function Home() {
 
         setProducts(nextProducts);
         setCart(savedCart);
+        setAdminOrders(nextAdminOrders);
+        setSelectedAdminOrderId(nextAdminOrders[0]?.id ?? "");
         setStatus("online");
         setError(null);
       } catch (caught) {
@@ -165,6 +178,73 @@ export default function Home() {
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not refresh products");
       setStatus("offline");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  function syncAdminOrder(order: Order) {
+    setAdminOrders((current) => {
+      const next = [order, ...current.filter((item) => item.id !== order.id)];
+
+      return next.sort((first, second) => Date.parse(second.createdAt) - Date.parse(first.createdAt));
+    });
+
+    setSelectedAdminOrderId(order.id);
+
+    if (lookedUpOrder?.id === order.id) {
+      setLookedUpOrder(order);
+    }
+
+    if (lastOrder?.id === order.id) {
+      setLastOrder(order);
+    }
+  }
+
+  async function refreshAdminOrders() {
+    setPendingAction("admin-orders");
+    setError(null);
+
+    try {
+      const orders = await listAdminOrders();
+      setAdminOrders(orders);
+      setSelectedAdminOrderId((current) =>
+        current && orders.some((order) => order.id === current) ? current : orders[0]?.id ?? ""
+      );
+      setStatus("online");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not refresh orders");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function handleCreatePayment(order: Order) {
+    setPendingAction(`create-payment-${order.id}`);
+    setError(null);
+
+    try {
+      const payment = await createManualPayment(order);
+      syncAdminOrder(payment.order);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not create payment");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function handlePaymentAction(
+    paymentId: string,
+    action: (paymentId: string) => Promise<{ order: Order }>
+  ) {
+    setPendingAction(`payment-${paymentId}`);
+    setError(null);
+
+    try {
+      const payment = await action(paymentId);
+      syncAdminOrder(payment.order);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not update payment");
     } finally {
       setPendingAction(null);
     }
@@ -264,6 +344,7 @@ export default function Home() {
       setLastOrder(order);
       setLookedUpOrder(order);
       setOrderLookup(order.orderNumber);
+      syncAdminOrder(order);
       setCart(null);
       window.localStorage.removeItem(cartStorageKey);
       setEmail("");
@@ -674,6 +755,111 @@ export default function Home() {
             </form>
 
             {lookedUpOrder ? <OrderSummary order={lookedUpOrder} /> : null}
+          </section>
+
+          <section className="panel admin-panel" aria-label="Admin payments">
+            <div className="panel-heading">
+              <h2>Admin Payments</h2>
+              <button
+                className="secondary"
+                type="button"
+                disabled={pendingAction === "admin-orders"}
+                onClick={() => void refreshAdminOrders()}
+              >
+                {pendingAction === "admin-orders" ? "Refreshing" : "Refresh"}
+              </button>
+            </div>
+
+            {adminOrders.length === 0 ? (
+              <div className="empty-state compact">No orders</div>
+            ) : (
+              <>
+                <label>
+                  <span>Order</span>
+                  <select
+                    value={selectedAdminOrder?.id ?? ""}
+                    onChange={(event) => setSelectedAdminOrderId(event.target.value)}
+                  >
+                    {adminOrders.map((order) => (
+                      <option key={order.id} value={order.id}>
+                        {order.orderNumber} - {order.paymentStatus} -{" "}
+                        {formatMoney(order.total, order.currency)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                {selectedAdminOrder ? (
+                  <>
+                    <OrderSummary order={selectedAdminOrder} />
+
+                    <div className="payment-list">
+                      {selectedAdminOrder.payments.length === 0 ? (
+                        <button
+                          type="button"
+                          disabled={pendingAction === `create-payment-${selectedAdminOrder.id}`}
+                          onClick={() => void handleCreatePayment(selectedAdminOrder)}
+                        >
+                          {pendingAction === `create-payment-${selectedAdminOrder.id}`
+                            ? "Creating"
+                            : "Create Manual Payment"}
+                        </button>
+                      ) : (
+                        selectedAdminOrder.payments.map((payment) => {
+                          const isBusy = pendingAction === `payment-${payment.id}`;
+
+                          return (
+                            <article className="payment-row" key={payment.id}>
+                              <div className="payment-row-heading">
+                                <div>
+                                  <span>{payment.provider}</span>
+                                  <strong>{payment.status}</strong>
+                                </div>
+                                <strong>{formatMoney(payment.amount, payment.currency)}</strong>
+                              </div>
+
+                              <div className="payment-controls">
+                                <button
+                                  className="secondary"
+                                  type="button"
+                                  disabled={isBusy}
+                                  onClick={() => void handlePaymentAction(payment.id, authorizePayment)}
+                                >
+                                  Authorize
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={isBusy}
+                                  onClick={() => void handlePaymentAction(payment.id, markPaymentPaid)}
+                                >
+                                  Paid
+                                </button>
+                                <button
+                                  className="secondary"
+                                  type="button"
+                                  disabled={isBusy}
+                                  onClick={() => void handlePaymentAction(payment.id, markPaymentFailed)}
+                                >
+                                  Failed
+                                </button>
+                                <button
+                                  className="secondary"
+                                  type="button"
+                                  disabled={isBusy}
+                                  onClick={() => void handlePaymentAction(payment.id, refundPayment)}
+                                >
+                                  Refund
+                                </button>
+                              </div>
+                            </article>
+                          );
+                        })
+                      )}
+                    </div>
+                  </>
+                ) : null}
+              </>
+            )}
           </section>
         </aside>
       </section>

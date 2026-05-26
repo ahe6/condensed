@@ -22,7 +22,7 @@ Implemented backend modules:
 - `payments`
 - `shipments`
 
-The frontend is currently a local shop console for catalog browsing, cart management, checkout, and order lookup.
+The frontend is currently a local shop console for catalog browsing, cart management, checkout, order lookup, and dev-admin payment controls.
 
 ## Quickstart
 
