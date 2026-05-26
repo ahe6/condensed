@@ -2,6 +2,7 @@ import cors from "@fastify/cors";
 import { Prisma } from "@prisma/client";
 import Fastify from "fastify";
 import { ZodError } from "zod";
+import { cartsRoutes } from "./modules/carts/carts.routes.js";
 import { catalogRoutes } from "./modules/catalog/catalog.routes.js";
 import { usersRoutes } from "./modules/users/users.routes.js";
 import { config } from "./config.js";
@@ -76,6 +77,7 @@ export function buildServer() {
 
   server.register(usersRoutes);
   server.register(catalogRoutes);
+  server.register(cartsRoutes);
 
   return server;
 }

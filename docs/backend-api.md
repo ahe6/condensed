@@ -18,6 +18,10 @@ apps/backend/src/modules/
     catalog.routes.ts
     catalog.schemas.ts
     catalog.service.ts
+  carts/
+    carts.routes.ts
+    carts.schemas.ts
+    carts.service.ts
 ```
 
 Route files should stay thin: parse input, call a service, and shape the HTTP response. Service files own Prisma calls and business logic. Schema files own Zod request validation.
@@ -199,6 +203,69 @@ Currency codes are normalized to uppercase three-character values.
 
 Prices are accepted as strings instead of JSON numbers so callers do not accidentally send imprecise floating point values.
 
+## Carts
+
+```text
+POST   /carts
+GET    /carts/:id
+POST   /carts/:id/items
+PATCH  /carts/:id/items/:itemId
+DELETE /carts/:id/items/:itemId
+DELETE /carts/:id/items
+```
+
+`POST /carts` accepts an optional user ID:
+
+```json
+{
+  "userId": "00000000-0000-0000-0000-000000000000"
+}
+```
+
+Send `{}` for an anonymous cart.
+
+Cart responses include:
+
+- `items`
+- each item `variant`
+- each variant `product`
+- response-only `totals`
+
+Example totals:
+
+```json
+{
+  "totals": {
+    "itemCount": 2,
+    "subtotal": "43.00",
+    "total": "43.00"
+  }
+}
+```
+
+`POST /carts/:id/items` accepts:
+
+```json
+{
+  "variantId": "00000000-0000-0000-0000-000000000000",
+  "quantity": 2
+}
+```
+
+Adding the same variant again increments the existing cart item quantity.
+
+`PATCH /carts/:id/items/:itemId` accepts:
+
+```json
+{
+  "quantity": 4
+}
+```
+
+Quantity must be positive. Use `DELETE /carts/:id/items/:itemId` to remove an item.
+
+`DELETE /carts/:id/items` clears all items from the cart.
+
 ## Error Handling
 
 Zod validation errors return `400`.
@@ -215,7 +282,6 @@ Unhandled errors return `500` and are logged by Fastify.
 
 The next backend modules should be:
 
-- `carts`: create carts, add/update/remove cart items, calculate cart totals
 - `checkout`: validate cart, create order snapshots, clear cart
 - `orders`: read order details and manage order state
 - `payments`: record payment attempts and status changes

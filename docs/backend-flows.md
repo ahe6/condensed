@@ -80,32 +80,30 @@ Current responsibilities:
 
 Catalog services are the foundation for cart and checkout. Cart items should reference `product_variants`, not `products`.
 
-## Planned Modules
-
 ### Carts
 
-Purpose: mutable pre-checkout shopping state.
+Current responsibilities:
 
-Main service functions:
+- Create anonymous or user-owned carts
+- Get a cart with items and calculated totals
+- Add variants to a cart
+- Increment existing cart item quantities
+- Update cart item quantities
+- Remove cart items
+- Clear a cart
 
-- `createCart`
-- `getCart`
-- `getOrCreateCartForUser`
-- `addCartItem`
-- `updateCartItemQuantity`
-- `removeCartItem`
-- `clearCart`
-- `calculateCartTotals`
+Current routes:
 
-Expected flow:
+- `POST /carts`
+- `GET /carts/:id`
+- `POST /carts/:id/items`
+- `PATCH /carts/:id/items/:itemId`
+- `DELETE /carts/:id/items/:itemId`
+- `DELETE /carts/:id/items`
 
-```text
-client selects variant
-  -> POST /carts/:id/items
-  -> validate variant exists and quantity is valid
-  -> upsert cart item
-  -> return cart with recalculated totals
-```
+Cart totals are calculated from current variant prices and returned in the response. They are not stored in the database.
+
+## Planned Modules
 
 ### Checkout
 
@@ -278,9 +276,7 @@ Local database records are disposable during early development unless we add see
 
 Recommended sequence:
 
-1. Add `carts` module.
-2. Add cart totals.
-3. Add `checkout` module with order creation transaction.
-4. Add order read routes.
-5. Add simple payment and shipment status routes.
-6. Add auth before exposing admin routes outside local development.
+1. Add `checkout` module with order creation transaction.
+2. Add order read routes.
+3. Add simple payment and shipment status routes.
+4. Add auth before exposing admin routes outside local development.
