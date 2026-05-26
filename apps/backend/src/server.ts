@@ -1,14 +1,11 @@
 import cors from "@fastify/cors";
+import { Prisma } from "@prisma/client";
 import Fastify from "fastify";
-import { z, ZodError } from "zod";
+import { ZodError } from "zod";
+import { catalogRoutes } from "./modules/catalog/catalog.routes.js";
+import { usersRoutes } from "./modules/users/users.routes.js";
 import { config } from "./config.js";
 import { prisma } from "./prisma.js";
-
-const createUserSchema = z.object({
-  email: z.string().email(),
-  name: z.string().trim().min(1).optional(),
-  phone: z.string().trim().min(1).optional()
-});
 
 export function buildServer() {
   const server = Fastify({
@@ -27,6 +24,21 @@ export function buildServer() {
         error: "Bad Request",
         issues: error.issues
       });
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        return reply.code(409).send({
+          error: "Conflict",
+          target: error.meta?.target
+        });
+      }
+
+      if (error.code === "P2025") {
+        return reply.code(404).send({
+          error: "Not Found"
+        });
+      }
     }
 
     server.log.error(error);
@@ -55,22 +67,8 @@ export function buildServer() {
     };
   });
 
-  server.get("/users", async () => {
-    return prisma.user.findMany({
-      orderBy: {
-        createdAt: "desc"
-      }
-    });
-  });
-
-  server.post("/users", async (request, reply) => {
-    const body = createUserSchema.parse(request.body);
-    const user = await prisma.user.create({
-      data: body
-    });
-
-    return reply.code(201).send(user);
-  });
+  server.register(usersRoutes);
+  server.register(catalogRoutes);
 
   return server;
 }

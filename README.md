@@ -103,6 +103,7 @@ Important files:
 
 - `src/index.ts`: process entrypoint and shutdown handling.
 - `src/server.ts`: Fastify routes and error handling.
+- `src/modules`: route, schema, and service modules.
 - `src/config.ts`: environment parsing. Supports local `DATABASE_URL` or AWS `DB_SECRET_JSON` + `DB_HOST`.
 - `src/prisma.ts`: Prisma client.
 - `prisma/schema.prisma`: Prisma schema.
@@ -117,6 +118,8 @@ apps/backend/.env.example
 ```
 
 The local `.env` file is intentionally ignored by git.
+
+See `docs/backend-api.md` for the current route modules, API endpoints, request shapes, and error handling.
 
 ## Ecommerce Schema
 
