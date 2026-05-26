@@ -68,6 +68,27 @@ button.secondary:hover:not(:disabled) {
   background: #eaf8f6;
 }
 
+button.status-action {
+  border-color: var(--border);
+  background: #fff;
+  color: var(--text);
+}
+
+button.status-action:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: #eaf8f6;
+}
+
+button.status-action.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+button.status-action.active:hover:not(:disabled) {
+  background: var(--accent-strong);
+}
+
 .shell {
   width: min(1440px, calc(100% - 32px));
   margin: 0 auto;

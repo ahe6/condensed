@@ -68,6 +68,10 @@ function statusClass(value: string) {
   return value.toLowerCase().replace(/_/g, "-");
 }
 
+function actionButtonClass(isActive: boolean) {
+  return isActive ? "status-action active" : "status-action";
+}
+
 export default function Home() {
   const [status, setStatus] = useState<ApiStatus>("checking");
   const [products, setProducts] = useState<Product[]>([]);
@@ -913,7 +917,7 @@ export default function Home() {
 
                               <div className="payment-controls">
                                 <button
-                                  className="secondary"
+                                  className={actionButtonClass(payment.status === "AUTHORIZED")}
                                   type="button"
                                   disabled={isBusy}
                                   onClick={() => void handlePaymentAction(payment.id, authorizePayment)}
@@ -921,6 +925,7 @@ export default function Home() {
                                   Authorize
                                 </button>
                                 <button
+                                  className={actionButtonClass(payment.status === "PAID")}
                                   type="button"
                                   disabled={isBusy}
                                   onClick={() => void handlePaymentAction(payment.id, markPaymentPaid)}
@@ -928,7 +933,7 @@ export default function Home() {
                                   Paid
                                 </button>
                                 <button
-                                  className="secondary"
+                                  className={actionButtonClass(payment.status === "FAILED")}
                                   type="button"
                                   disabled={isBusy}
                                   onClick={() => void handlePaymentAction(payment.id, markPaymentFailed)}
@@ -936,7 +941,7 @@ export default function Home() {
                                   Failed
                                 </button>
                                 <button
-                                  className="secondary"
+                                  className={actionButtonClass(payment.status === "REFUNDED")}
                                   type="button"
                                   disabled={isBusy}
                                   onClick={() => void handlePaymentAction(payment.id, refundPayment)}
@@ -1010,7 +1015,7 @@ export default function Home() {
 
                           <div className="shipment-controls">
                             <button
-                              className="secondary"
+                              className="status-action"
                               type="button"
                               disabled={isBusy}
                               onClick={() => void handleUpdateTracking(shipment.id)}
@@ -1018,6 +1023,7 @@ export default function Home() {
                               Save Tracking
                             </button>
                             <button
+                              className={actionButtonClass(shipment.status === "SHIPPED")}
                               type="button"
                               disabled={isBusy}
                               onClick={() => void handleShipmentAction(shipment.id, markShipmentShipped)}
@@ -1025,7 +1031,7 @@ export default function Home() {
                               Shipped
                             </button>
                             <button
-                              className="secondary"
+                              className={actionButtonClass(shipment.status === "DELIVERED")}
                               type="button"
                               disabled={isBusy}
                               onClick={() => void handleShipmentAction(shipment.id, markShipmentDelivered)}
@@ -1033,7 +1039,7 @@ export default function Home() {
                               Delivered
                             </button>
                             <button
-                              className="secondary"
+                              className={actionButtonClass(shipment.status === "RETURNED")}
                               type="button"
                               disabled={isBusy}
                               onClick={() => void handleShipmentAction(shipment.id, markShipmentReturned)}
