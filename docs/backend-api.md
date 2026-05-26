@@ -38,6 +38,8 @@ GET  /users
 POST /users
 ```
 
+`GET /users` returns users newest first.
+
 `POST /users` accepts:
 
 ```json
@@ -60,7 +62,17 @@ GET /products/:slug
 GET /categories
 ```
 
-`GET /products` returns active products only. `GET /products/:slug` can return any product by slug so a direct product detail URL works during development.
+`GET /products` returns active products only, newest first.
+
+Product responses include:
+
+- `variants`
+- `images`
+- `categories` with nested `category`
+
+`GET /products/:slug` can return any product by slug so a direct product detail URL works during development.
+
+`GET /categories` returns categories ordered by name.
 
 Dev-admin catalog routes:
 
@@ -111,6 +123,8 @@ These routes are intentionally unauthenticated for local development. Add auth b
 
 `slug` must be lowercase URL-safe text. Prices are accepted as decimal strings with up to two cents.
 
+`GET /admin/products` returns all products, including drafts and archived products.
+
 `PATCH /admin/products/:id` accepts any subset of:
 
 ```json
@@ -132,6 +146,8 @@ Use `POST /admin/products/:id/publish` and `POST /admin/products/:id/archive` fo
 }
 ```
 
+`DELETE /admin/products/:id/categories/:categoryId` removes the category assignment and returns the updated product.
+
 `POST /admin/products/:id/images` accepts:
 
 ```json
@@ -142,13 +158,44 @@ Use `POST /admin/products/:id/publish` and `POST /admin/products/:id/archive` fo
 }
 ```
 
-`PATCH /admin/variants/:id` accepts any subset of SKU, title, price, currency, and inventory quantity. Use `PATCH /admin/variants/:id/inventory` when only adjusting stock:
+`POST /admin/products/:id/variants` accepts:
+
+```json
+{
+  "sku": "DEV-MUG-002",
+  "title": "Large",
+  "price": "24.99",
+  "currency": "USD",
+  "inventoryQuantity": 10
+}
+```
+
+`PATCH /admin/variants/:id` accepts any subset of SKU, title, price, currency, and inventory quantity:
+
+```json
+{
+  "title": "Large Mug",
+  "price": "21.50"
+}
+```
+
+Use `PATCH /admin/variants/:id/inventory` when only adjusting stock:
 
 ```json
 {
   "inventoryQuantity": 12
 }
 ```
+
+## Validation Notes
+
+IDs in route params must be UUIDs.
+
+Product and category slugs must be lowercase URL-safe text, for example `dev-mug`.
+
+Currency codes are normalized to uppercase three-character values.
+
+Prices are accepted as strings instead of JSON numbers so callers do not accidentally send imprecise floating point values.
 
 ## Error Handling
 
@@ -157,6 +204,8 @@ Zod validation errors return `400`.
 Known Prisma uniqueness conflicts return `409`, including duplicate product slugs, category slugs, SKUs, and user emails.
 
 Known invalid foreign key references return `400`.
+
+Missing records return `404` when Prisma reports a known not-found condition or when product detail lookup misses.
 
 Unhandled errors return `500` and are logged by Fastify.
 
