@@ -119,7 +119,10 @@ apps/backend/.env.example
 
 The local `.env` file is intentionally ignored by git.
 
-See `docs/backend-api.md` for the current route modules, API endpoints, request shapes, and error handling.
+Backend docs:
+
+- `docs/backend-api.md`: current route modules, API endpoints, request shapes, and error handling.
+- `docs/backend-flows.md`: backend module conventions, service responsibilities, and ecommerce flow design.
 
 ## Ecommerce Schema
 
