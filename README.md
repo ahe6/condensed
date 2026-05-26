@@ -7,6 +7,7 @@
 Local development:
 
 - Backend app: `apps/backend`
+- Frontend app: `apps/frontend`
 - Local Postgres: Docker Compose service `postgres`
 - Prisma schema and initial migration are present
 - Backend Docker image builds and has been smoke-tested locally
@@ -25,6 +26,7 @@ AWS dev account:
 ## Layout
 
 - `apps/backend`: Fastify API, Prisma schema, migrations, and Dockerfile.
+- `apps/frontend`: Next.js app for local product development.
 - `infra/bootstrap`: one-time Terraform state bucket setup.
 - `infra/envs/dev`: AWS dev environment, including VPC, RDS, ECR, ECS prerequisites, and optional ALB/Fargate service.
 - `docker-compose.yml`: local Postgres for development.
@@ -50,6 +52,17 @@ Run the backend:
 ```sh
 npm run backend:dev
 ```
+
+Run the frontend:
+
+```sh
+npm run frontend:dev
+```
+
+Local URLs:
+
+- Backend API: `http://127.0.0.1:3000`
+- Frontend: `http://127.0.0.1:3001`
 
 Useful endpoints:
 
@@ -92,6 +105,25 @@ apps/backend/.env.example
 
 The local `.env` file is intentionally ignored by git.
 
+## Frontend App
+
+The frontend is a Next.js app in `apps/frontend`.
+
+Important files:
+
+- `app/page.tsx`: local development console UI.
+- `app/layout.tsx`: app shell metadata and global CSS import.
+- `app/globals.css`: frontend styling.
+- `src/lib/api.ts`: typed browser API client for the Fastify backend.
+
+The frontend defaults to:
+
+```text
+NEXT_PUBLIC_API_URL=http://127.0.0.1:3000
+```
+
+Override that environment variable when pointing the frontend at a deployed backend.
+
 ## AWS Database
 
 The live dev DB is private RDS Postgres:
@@ -131,7 +163,7 @@ Current pushed image:
 
 ```text
 tag: latest
-digest: sha256:79ca985bf5919b45a6dbff4ae0fe33350be1c0efb8b37605ef0f532e96822898
+digest: sha256:ee4cbacc947d97e6a42d455892d4e37acabc6b9f876ae5414ba562867d5129ec
 size: ~148 MB
 ```
 
@@ -244,6 +276,8 @@ docker compose ps
 docker compose logs postgres
 npm run backend:check
 npm run backend:build
+npm run frontend:check
+npm run frontend:build
 npm run db:generate
 make backend-migrate-aws
 terraform -chdir=infra/envs/dev output

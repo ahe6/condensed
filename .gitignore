@@ -23,5 +23,8 @@ override.tf.json
 # Node
 node_modules/
 dist/
+.next/
+out/
 coverage/
+*.tsbuildinfo
 npm-debug.log*
