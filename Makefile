@@ -2,10 +2,12 @@ AWS_PROFILE ?= dev
 AWS_REGION ?= us-east-2
 BACKEND_IMAGE ?= tele/backend
 BACKEND_TAG ?= latest
+FRONTEND_IMAGE ?= tele/frontend
+FRONTEND_TAG ?= latest
 BOOTSTRAP_DIR := infra/bootstrap
 DEV_DIR := infra/envs/dev
 
-.PHONY: aws-login aws-whoami fmt validate bootstrap-init bootstrap-plan bootstrap-apply dev-init dev-plan backend-docker-build backend-ecr-login backend-ecr-push backend-migrate-aws
+.PHONY: aws-login aws-whoami fmt validate bootstrap-init bootstrap-plan bootstrap-apply dev-init dev-plan backend-docker-build frontend-docker-build backend-ecr-login backend-ecr-push backend-migrate-aws
 
 aws-login:
 	aws sso login --profile $(AWS_PROFILE)
@@ -37,6 +39,9 @@ dev-plan:
 
 backend-docker-build:
 	docker build -f apps/backend/Dockerfile -t $(BACKEND_IMAGE):$(BACKEND_TAG) .
+
+frontend-docker-build:
+	docker build -f apps/frontend/Dockerfile -t $(FRONTEND_IMAGE):$(FRONTEND_TAG) .
 
 backend-ecr-login:
 	aws ecr get-login-password --region $(AWS_REGION) --profile $(AWS_PROFILE) | docker login --username AWS --password-stdin $$(terraform -chdir=$(DEV_DIR) output -raw backend_ecr_repository_url | cut -d/ -f1)

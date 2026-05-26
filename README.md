@@ -58,6 +58,18 @@ Run the frontend:
 npm run frontend:dev
 ```
 
+Build the frontend production container:
+
+```sh
+make frontend-docker-build
+```
+
+Run the frontend production container with Compose:
+
+```sh
+docker compose --profile app up --build frontend
+```
+
 Local URLs:
 
 - Backend API: `http://127.0.0.1:3000`
@@ -114,6 +126,7 @@ Important files:
 - `app/layout.tsx`: app shell metadata and global CSS import.
 - `app/globals.css`: frontend styling.
 - `src/lib/api.ts`: typed browser API client for the Fastify backend.
+- `Dockerfile`: production frontend image.
 
 The frontend defaults to:
 
@@ -173,6 +186,7 @@ Build and push a new image:
 
 ```sh
 make backend-docker-build
+make frontend-docker-build
 make backend-ecr-login
 make backend-ecr-push
 ```
@@ -286,6 +300,7 @@ npm run backend:check
 npm run backend:build
 npm run frontend:check
 npm run frontend:build
+make frontend-docker-build
 npm run db:generate
 make backend-migrate-aws
 terraform -chdir=infra/envs/dev output
