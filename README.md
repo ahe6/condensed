@@ -11,6 +11,7 @@ Local development:
 - Local Postgres: Docker Compose service `postgres`
 - Prisma schema and initial migration are present
 - Backend Docker image builds and has been smoke-tested locally
+- Frontend Docker image builds and has been smoke-tested locally
 
 AWS dev account:
 
@@ -186,9 +187,14 @@ Build and push a new image:
 
 ```sh
 make backend-docker-build
-make frontend-docker-build
 make backend-ecr-login
 make backend-ecr-push
+```
+
+The frontend image is local-only for now. Build it with:
+
+```sh
+make frontend-docker-build
 ```
 
 ## AWS Backend Service
@@ -300,8 +306,14 @@ npm run backend:check
 npm run backend:build
 npm run frontend:check
 npm run frontend:build
+make backend-docker-build
 make frontend-docker-build
 npm run db:generate
+```
+
+AWS-only commands after recreating `infra/envs/dev`:
+
+```sh
 make backend-migrate-aws
 terraform -chdir=infra/envs/dev output
 aws ecr describe-images --repository-name tele-dev-backend --image-ids imageTag=latest --region us-east-2 --profile dev
