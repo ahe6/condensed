@@ -163,6 +163,8 @@ Important fields:
 
 The pair `provider + providerPaymentId` is unique when a provider payment ID exists.
 
+Current backend payment routes are provider-agnostic. Marking a payment `AUTHORIZED`, `PAID`, `FAILED`, or `REFUNDED` also updates the parent order `paymentStatus` in the same transaction.
+
 ## Fulfillment
 
 ### `shipments`
@@ -176,6 +178,8 @@ Important fields:
 - `status`: `PENDING`, `SHIPPED`, `DELIVERED`, or `RETURNED`
 - `shippedAt`
 - `deliveredAt`
+
+Current shipment records are order-level, not line-item-level. Marking a shipment shipped or delivered marks the parent order `FULFILLED`; marking a shipment returned marks the parent order `RETURNED`. Add shipment line items before using `PARTIAL` fulfillment for split shipments.
 
 ## Design Decisions
 

@@ -44,6 +44,8 @@ Route files should stay thin: parse input, call a service, and shape the HTTP re
 
 `apps/backend/src/server.ts` owns shared Fastify setup, CORS, health/readiness routes, error handling, and module registration.
 
+All `/admin/*` routes are intentionally unauthenticated for local development. Add authentication and authorization before exposing them publicly.
+
 ## Health
 
 ```text
@@ -112,8 +114,6 @@ PATCH  /admin/variants/:id
 PATCH  /admin/variants/:id/inventory
 POST   /admin/categories
 ```
-
-These routes are intentionally unauthenticated for local development. Add auth before exposing them publicly.
 
 `POST /admin/products` accepts:
 

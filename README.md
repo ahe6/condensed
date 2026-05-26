@@ -9,7 +9,9 @@ Local development:
 - Backend app: `apps/backend`
 - Frontend app: `apps/frontend`
 - Local Postgres: Docker Compose service `postgres`
-- Prisma schema and initial migration are present
+- Prisma schema and migrations cover the ecommerce core
+- Backend modules cover users, catalog, carts, checkout, orders, payments, and shipments
+- Frontend is a local development console for backend readiness and starter user records
 - Backend Docker image builds and has been smoke-tested locally
 - Frontend Docker image builds and has been smoke-tested locally
 
@@ -80,8 +82,12 @@ Useful endpoints:
 
 - `GET /health`: process health
 - `GET /ready`: database connectivity check
-- `GET /users`: list starter users
-- `POST /users`: create a starter user with `email` and optional `name`
+- `GET /users`, `POST /users`: starter user records
+- `GET /products`, `GET /products/:slug`, `GET /categories`: public catalog
+- `POST /carts`, `GET /carts/:id`, `POST /carts/:id/items`: cart flow
+- `POST /checkout`: convert a cart into an order
+- `GET /orders/:orderNumber`: customer order lookup
+- `/admin/*`: dev-only catalog, order, payment, and shipment routes
 
 Stop local Postgres:
 
@@ -123,6 +129,17 @@ Backend docs:
 
 - `docs/backend-api.md`: current route modules, API endpoints, request shapes, and error handling.
 - `docs/backend-flows.md`: backend module conventions, service responsibilities, and ecommerce flow design.
+- `docs/database-schema.md`: Prisma table purposes, relationships, and migration notes.
+
+Current backend modules:
+
+- `users`: list and create starter users.
+- `catalog`: public catalog reads plus dev-admin product, category, variant, image, status, and inventory management.
+- `carts`: create carts, add/update/remove items, clear carts, and return calculated totals.
+- `checkout`: validate a cart, snapshot order data, decrement inventory, and clear the cart in one transaction.
+- `orders`: customer order lookup plus dev-admin list/place/cancel actions.
+- `payments`: provider-agnostic dev-admin payment creation and status changes.
+- `shipments`: dev-admin shipment creation, tracking, and fulfillment status changes.
 
 ## Ecommerce Schema
 
@@ -158,6 +175,13 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:3000
 ```
 
 Override that environment variable when pointing the frontend at a deployed backend.
+
+Current frontend scope:
+
+- Checks backend readiness through `GET /ready`.
+- Lists starter users through `GET /users`.
+- Creates starter users through `POST /users`.
+- Runs on port `3001` in local dev and production container mode.
 
 ## AWS Dev Environment
 
