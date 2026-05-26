@@ -103,23 +103,22 @@ Current routes:
 
 Cart totals are calculated from current variant prices and returned in the response. They are not stored in the database.
 
-## Planned Modules
-
 ### Checkout
 
-Purpose: convert a valid cart into an order.
+Current responsibilities:
 
-Main service functions:
+- Convert a valid cart into an order
+- Validate cart items, product status, currency, and inventory
+- Snapshot order items
+- Snapshot shipping and billing addresses
+- Deduct variant inventory
+- Clear the cart after order creation
 
-- `checkoutCart`
-- `validateCartForCheckout`
-- `createOrderFromCart`
-- `snapshotOrderItems`
-- `snapshotOrderAddresses`
-- `deductInventory`
-- `clearCartAfterOrder`
+Current routes:
 
-Expected flow:
+- `POST /checkout`
+
+Current flow:
 
 ```text
 client submits cart, email, and addresses
@@ -135,29 +134,40 @@ client submits cart, email, and addresses
   -> return order number
 ```
 
-Inventory changes and order creation should happen in a Prisma transaction.
+Inventory changes and order creation happen in a Prisma transaction.
 
 ### Orders
 
-Purpose: durable post-checkout records.
+Current responsibilities:
 
-Main service functions:
+- Get one order by order number
+- List all orders through a dev-admin route
 
-- `listOrders`
-- `getOrder`
-- `getOrderByNumber`
-- `cancelOrder`
-- `markOrderPlaced`
-- `updatePaymentStatus`
-- `updateFulfillmentStatus`
+Current routes:
 
-Expected flow:
+- `GET /orders/:orderNumber`
+- `GET /admin/orders`
+
+Current flow:
 
 ```text
 client requests order by order number
   -> fetch order with addresses, items, payments, and shipments
   -> return order detail
 ```
+
+## Planned Modules
+
+### Order Management
+
+Purpose: controlled order state changes.
+
+Main service functions:
+
+- `cancelOrder`
+- `markOrderPlaced`
+- `updatePaymentStatus`
+- `updateFulfillmentStatus`
 
 Admin order status changes should be explicit service functions, not arbitrary patch objects, so state transitions stay controlled.
 
@@ -276,7 +286,6 @@ Local database records are disposable during early development unless we add see
 
 Recommended sequence:
 
-1. Add `checkout` module with order creation transaction.
-2. Add order read routes.
-3. Add simple payment and shipment status routes.
-4. Add auth before exposing admin routes outside local development.
+1. Add simple payment and shipment status routes.
+2. Add controlled order status update routes.
+3. Add auth before exposing admin routes outside local development.

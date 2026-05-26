@@ -22,6 +22,14 @@ apps/backend/src/modules/
     carts.routes.ts
     carts.schemas.ts
     carts.service.ts
+  checkout/
+    checkout.routes.ts
+    checkout.schemas.ts
+    checkout.service.ts
+  orders/
+    orders.routes.ts
+    orders.schemas.ts
+    orders.service.ts
 ```
 
 Route files should stay thin: parse input, call a service, and shape the HTTP response. Service files own Prisma calls and business logic. Schema files own Zod request validation.
@@ -266,9 +274,75 @@ Quantity must be positive. Use `DELETE /carts/:id/items/:itemId` to remove an it
 
 `DELETE /carts/:id/items` clears all items from the cart.
 
+## Checkout
+
+```text
+POST /checkout
+```
+
+`POST /checkout` converts a cart into an order in a database transaction.
+
+It validates:
+
+- cart exists
+- cart has items
+- products are active
+- all items use one currency
+- inventory is available
+
+It then:
+
+- creates the order
+- snapshots shipping and billing addresses
+- snapshots order items
+- decrements variant inventory
+- clears the cart
+
+Request body:
+
+```json
+{
+  "cartId": "00000000-0000-0000-0000-000000000000",
+  "email": "buyer@example.com",
+  "shippingAddress": {
+    "recipientName": "Buyer Example",
+    "line1": "123 Market St",
+    "city": "San Francisco",
+    "state": "CA",
+    "postalCode": "94105",
+    "country": "US",
+    "phone": "555-0100"
+  },
+  "billingAddress": {
+    "recipientName": "Buyer Example",
+    "line1": "123 Market St",
+    "city": "San Francisco",
+    "state": "CA",
+    "postalCode": "94105",
+    "country": "US",
+    "phone": "555-0100"
+  }
+}
+```
+
+Checkout returns the created order with addresses, items, payments, and shipments.
+
+## Orders
+
+```text
+GET /orders/:orderNumber
+GET /admin/orders
+```
+
+`GET /orders/:orderNumber` returns one order by its human-facing order number.
+
+`GET /admin/orders` returns all orders newest first.
+
 ## Error Handling
 
 Zod validation errors return `400`.
+
+Checkout business rule failures return `400`.
 
 Known Prisma uniqueness conflicts return `409`, including duplicate product slugs, category slugs, SKUs, and user emails.
 
@@ -282,7 +356,5 @@ Unhandled errors return `500` and are logged by Fastify.
 
 The next backend modules should be:
 
-- `checkout`: validate cart, create order snapshots, clear cart
-- `orders`: read order details and manage order state
 - `payments`: record payment attempts and status changes
 - `shipments`: add tracking and fulfillment status

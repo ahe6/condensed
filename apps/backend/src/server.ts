@@ -4,6 +4,9 @@ import Fastify from "fastify";
 import { ZodError } from "zod";
 import { cartsRoutes } from "./modules/carts/carts.routes.js";
 import { catalogRoutes } from "./modules/catalog/catalog.routes.js";
+import { CheckoutError } from "./modules/checkout/checkout.service.js";
+import { checkoutRoutes } from "./modules/checkout/checkout.routes.js";
+import { ordersRoutes } from "./modules/orders/orders.routes.js";
 import { usersRoutes } from "./modules/users/users.routes.js";
 import { config } from "./config.js";
 import { prisma } from "./prisma.js";
@@ -24,6 +27,12 @@ export function buildServer() {
       return reply.code(400).send({
         error: "Bad Request",
         issues: error.issues
+      });
+    }
+
+    if (error instanceof CheckoutError) {
+      return reply.code(error.statusCode).send({
+        error: error.message
       });
     }
 
@@ -78,6 +87,8 @@ export function buildServer() {
   server.register(usersRoutes);
   server.register(catalogRoutes);
   server.register(cartsRoutes);
+  server.register(checkoutRoutes);
+  server.register(ordersRoutes);
 
   return server;
 }
