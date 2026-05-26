@@ -7,6 +7,8 @@ import { catalogRoutes } from "./modules/catalog/catalog.routes.js";
 import { CheckoutError } from "./modules/checkout/checkout.service.js";
 import { checkoutRoutes } from "./modules/checkout/checkout.routes.js";
 import { ordersRoutes } from "./modules/orders/orders.routes.js";
+import { paymentsRoutes } from "./modules/payments/payments.routes.js";
+import { shipmentsRoutes } from "./modules/shipments/shipments.routes.js";
 import { usersRoutes } from "./modules/users/users.routes.js";
 import { config } from "./config.js";
 import { prisma } from "./prisma.js";
@@ -89,6 +91,8 @@ export function buildServer() {
   server.register(cartsRoutes);
   server.register(checkoutRoutes);
   server.register(ordersRoutes);
+  server.register(paymentsRoutes);
+  server.register(shipmentsRoutes);
 
   return server;
 }

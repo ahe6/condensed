@@ -142,11 +142,15 @@ Current responsibilities:
 
 - Get one order by order number
 - List all orders through a dev-admin route
+- Mark an order placed through a controlled dev-admin route
+- Cancel an order through a controlled dev-admin route
 
 Current routes:
 
 - `GET /orders/:orderNumber`
 - `GET /admin/orders`
+- `POST /admin/orders/:id/place`
+- `POST /admin/orders/:id/cancel`
 
 Current flow:
 
@@ -156,24 +160,26 @@ client requests order by order number
   -> return order detail
 ```
 
-## Planned Modules
-
-### Order Management
-
-Purpose: controlled order state changes.
-
-Main service functions:
-
-- `cancelOrder`
-- `markOrderPlaced`
-- `updatePaymentStatus`
-- `updateFulfillmentStatus`
-
 Admin order status changes should be explicit service functions, not arbitrary patch objects, so state transitions stay controlled.
 
 ### Payments
 
-Purpose: record payment attempts and status changes.
+Current responsibilities:
+
+- Record provider-agnostic payment attempts
+- Mark payments authorized
+- Mark payments paid
+- Mark payments failed
+- Mark payments refunded
+- Update the parent order `paymentStatus` when payment state changes
+
+Current routes:
+
+- `POST /admin/orders/:id/payments`
+- `POST /admin/payments/:id/authorize`
+- `POST /admin/payments/:id/pay`
+- `POST /admin/payments/:id/fail`
+- `POST /admin/payments/:id/refund`
 
 Main service functions:
 
@@ -183,13 +189,26 @@ Main service functions:
 - `markPaymentFailed`
 - `refundPayment`
 
-Early implementation can be internal and provider-agnostic. Later, Stripe or another provider can call these functions from webhook handlers.
-
-Payment updates should also update the parent order `paymentStatus` when appropriate.
+Payment status changes happen in a Prisma transaction with the parent order update. Early implementation is internal and provider-agnostic. Later, Stripe or another provider can call these functions from webhook handlers.
 
 ### Shipments
 
-Purpose: track fulfillment and delivery.
+Current responsibilities:
+
+- Create shipment placeholders
+- Add or update tracking details
+- Mark shipments shipped
+- Mark shipments delivered
+- Mark shipments returned
+- Update the parent order `fulfillmentStatus` when shipment state changes
+
+Current routes:
+
+- `POST /admin/orders/:id/shipments`
+- `PATCH /admin/shipments/:id/tracking`
+- `POST /admin/shipments/:id/ship`
+- `POST /admin/shipments/:id/deliver`
+- `POST /admin/shipments/:id/return`
 
 Main service functions:
 
@@ -199,7 +218,7 @@ Main service functions:
 - `markShipmentDelivered`
 - `markShipmentReturned`
 
-Shipment updates should also update the parent order `fulfillmentStatus` when appropriate.
+Shipment status changes happen in a Prisma transaction with the parent order update.
 
 ## Main Business Flows
 
@@ -286,6 +305,6 @@ Local database records are disposable during early development unless we add see
 
 Recommended sequence:
 
-1. Add simple payment and shipment status routes.
-2. Add controlled order status update routes.
-3. Add auth before exposing admin routes outside local development.
+1. Add authentication and authorization before exposing admin routes outside local development.
+2. Add provider webhook handlers when a real payment provider is chosen.
+3. Add fulfillment quantity support if orders need split or partial shipments.

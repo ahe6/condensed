@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
-import { orderNumberParamsSchema } from "./orders.schemas.js";
-import { getOrderByNumber, listOrders } from "./orders.service.js";
+import { orderIdParamsSchema, orderNumberParamsSchema } from "./orders.schemas.js";
+import { cancelOrder, getOrderByNumber, listOrders, markOrderPlaced } from "./orders.service.js";
 
 export const ordersRoutes: FastifyPluginAsync = async (server) => {
   server.get("/orders/:orderNumber", async (request, reply) => {
@@ -18,5 +18,17 @@ export const ordersRoutes: FastifyPluginAsync = async (server) => {
 
   server.get("/admin/orders", async () => {
     return listOrders();
+  });
+
+  server.post("/admin/orders/:id/place", async (request) => {
+    const { id } = orderIdParamsSchema.parse(request.params);
+
+    return markOrderPlaced(id);
+  });
+
+  server.post("/admin/orders/:id/cancel", async (request) => {
+    const { id } = orderIdParamsSchema.parse(request.params);
+
+    return cancelOrder(id);
   });
 };

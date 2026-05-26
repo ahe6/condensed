@@ -30,6 +30,14 @@ apps/backend/src/modules/
     orders.routes.ts
     orders.schemas.ts
     orders.service.ts
+  payments/
+    payments.routes.ts
+    payments.schemas.ts
+    payments.service.ts
+  shipments/
+    shipments.routes.ts
+    shipments.schemas.ts
+    shipments.service.ts
 ```
 
 Route files should stay thin: parse input, call a service, and shape the HTTP response. Service files own Prisma calls and business logic. Schema files own Zod request validation.
@@ -330,13 +338,87 @@ Checkout returns the created order with addresses, items, payments, and shipment
 ## Orders
 
 ```text
-GET /orders/:orderNumber
-GET /admin/orders
+GET  /orders/:orderNumber
+GET  /admin/orders
+POST /admin/orders/:id/place
+POST /admin/orders/:id/cancel
 ```
 
 `GET /orders/:orderNumber` returns one order by its human-facing order number.
 
 `GET /admin/orders` returns all orders newest first.
+
+`POST /admin/orders/:id/place` marks an order as `PLACED` and sets `placedAt`.
+
+`POST /admin/orders/:id/cancel` marks an order as `CANCELLED`.
+
+Order status changes use explicit routes so callers cannot arbitrarily patch order state.
+
+## Payments
+
+```text
+POST /admin/orders/:id/payments
+POST /admin/payments/:id/authorize
+POST /admin/payments/:id/pay
+POST /admin/payments/:id/fail
+POST /admin/payments/:id/refund
+```
+
+`POST /admin/orders/:id/payments` records a provider-agnostic payment attempt:
+
+```json
+{
+  "provider": "manual",
+  "providerPaymentId": "dev-payment-001",
+  "amount": "19.99",
+  "currency": "USD"
+}
+```
+
+`provider` and `amount` are required. `currency` defaults to `USD`; `providerPaymentId` is optional. Amounts are accepted as decimal strings with up to two cents.
+
+Payment status routes update the payment and the parent order `paymentStatus` in one transaction:
+
+- `authorize` sets both to `AUTHORIZED`
+- `pay` sets both to `PAID`
+- `fail` sets both to `FAILED`
+- `refund` sets both to `REFUNDED`
+
+## Shipments
+
+```text
+POST  /admin/orders/:id/shipments
+PATCH /admin/shipments/:id/tracking
+POST  /admin/shipments/:id/ship
+POST  /admin/shipments/:id/deliver
+POST  /admin/shipments/:id/return
+```
+
+`POST /admin/orders/:id/shipments` creates a shipment placeholder:
+
+```json
+{
+  "carrier": "UPS",
+  "trackingNumber": "1Z9999999999999999"
+}
+```
+
+Both fields are optional when creating a shipment, because fulfillment may be staged before a label exists.
+
+`PATCH /admin/shipments/:id/tracking` accepts at least one tracking field:
+
+```json
+{
+  "carrier": "UPS",
+  "trackingNumber": "1Z9999999999999999"
+}
+```
+
+Shipment status routes update the shipment and the parent order `fulfillmentStatus` in one transaction:
+
+- `ship` sets shipment status to `SHIPPED`, sets `shippedAt`, and marks the order `FULFILLED`
+- `deliver` sets shipment status to `DELIVERED`, sets `deliveredAt`, and keeps the order `FULFILLED`
+- `return` sets shipment status to `RETURNED` and marks the order `RETURNED`
 
 ## Error Handling
 
@@ -351,10 +433,3 @@ Known invalid foreign key references return `400`.
 Missing records return `404` when Prisma reports a known not-found condition or when product detail lookup misses.
 
 Unhandled errors return `500` and are logged by Fastify.
-
-## Next Modules
-
-The next backend modules should be:
-
-- `payments`: record payment attempts and status changes
-- `shipments`: add tracking and fulfillment status

@@ -1,6 +1,7 @@
+import { FulfillmentStatus, OrderStatus, PaymentStatus } from "@prisma/client";
 import { prisma } from "../../prisma.js";
 
-const orderInclude = {
+export const orderInclude = {
   addresses: true,
   items: true,
   payments: true,
@@ -22,5 +23,54 @@ export function listOrders() {
     orderBy: {
       createdAt: "desc"
     }
+  });
+}
+
+export function cancelOrder(orderId: string) {
+  return prisma.order.update({
+    where: {
+      id: orderId
+    },
+    data: {
+      status: OrderStatus.CANCELLED
+    },
+    include: orderInclude
+  });
+}
+
+export function markOrderPlaced(orderId: string) {
+  return prisma.order.update({
+    where: {
+      id: orderId
+    },
+    data: {
+      status: OrderStatus.PLACED,
+      placedAt: new Date()
+    },
+    include: orderInclude
+  });
+}
+
+export function updatePaymentStatus(orderId: string, paymentStatus: PaymentStatus) {
+  return prisma.order.update({
+    where: {
+      id: orderId
+    },
+    data: {
+      paymentStatus
+    },
+    include: orderInclude
+  });
+}
+
+export function updateFulfillmentStatus(orderId: string, fulfillmentStatus: FulfillmentStatus) {
+  return prisma.order.update({
+    where: {
+      id: orderId
+    },
+    data: {
+      fulfillmentStatus
+    },
+    include: orderInclude
   });
 }
