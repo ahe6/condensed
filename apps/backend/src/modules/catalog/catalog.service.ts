@@ -1,9 +1,14 @@
 import { ProductStatus } from "@prisma/client";
 import { prisma } from "../../prisma.js";
 import type {
+  AddProductImageInput,
+  AssignProductCategoryInput,
   CreateCategoryInput,
   CreateProductInput,
-  CreateProductVariantInput
+  CreateProductVariantInput,
+  SetVariantInventoryInput,
+  UpdateProductInput,
+  UpdateProductVariantInput
 } from "./catalog.schemas.js";
 
 const productInclude = {
@@ -96,6 +101,98 @@ export function createProductVariant(productId: string, input: CreateProductVari
     data: {
       ...input,
       productId
+    }
+  });
+}
+
+export function updateProduct(productId: string, input: UpdateProductInput) {
+  return prisma.product.update({
+    where: {
+      id: productId
+    },
+    data: input,
+    include: productInclude
+  });
+}
+
+export function setProductStatus(productId: string, status: ProductStatus) {
+  return prisma.product.update({
+    where: {
+      id: productId
+    },
+    data: {
+      status
+    },
+    include: productInclude
+  });
+}
+
+export async function assignProductCategory(productId: string, input: AssignProductCategoryInput) {
+  await prisma.productCategory.upsert({
+    where: {
+      productId_categoryId: {
+        productId,
+        categoryId: input.categoryId
+      }
+    },
+    create: {
+      productId,
+      categoryId: input.categoryId
+    },
+    update: {}
+  });
+
+  return prisma.product.findUniqueOrThrow({
+    where: {
+      id: productId
+    },
+    include: productInclude
+  });
+}
+
+export async function removeProductCategory(productId: string, categoryId: string) {
+  await prisma.productCategory.delete({
+    where: {
+      productId_categoryId: {
+        productId,
+        categoryId
+      }
+    }
+  });
+
+  return prisma.product.findUniqueOrThrow({
+    where: {
+      id: productId
+    },
+    include: productInclude
+  });
+}
+
+export function addProductImage(productId: string, input: AddProductImageInput) {
+  return prisma.productImage.create({
+    data: {
+      ...input,
+      productId
+    }
+  });
+}
+
+export function updateProductVariant(variantId: string, input: UpdateProductVariantInput) {
+  return prisma.productVariant.update({
+    where: {
+      id: variantId
+    },
+    data: input
+  });
+}
+
+export function setVariantInventory(variantId: string, input: SetVariantInventoryInput) {
+  return prisma.productVariant.update({
+    where: {
+      id: variantId
+    },
+    data: {
+      inventoryQuantity: input.inventoryQuantity
     }
   });
 }

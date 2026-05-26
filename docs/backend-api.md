@@ -65,10 +65,18 @@ GET /categories
 Dev-admin catalog routes:
 
 ```text
-GET  /admin/products
-POST /admin/products
-POST /admin/products/:id/variants
-POST /admin/categories
+GET    /admin/products
+POST   /admin/products
+PATCH  /admin/products/:id
+POST   /admin/products/:id/publish
+POST   /admin/products/:id/archive
+POST   /admin/products/:id/categories
+DELETE /admin/products/:id/categories/:categoryId
+POST   /admin/products/:id/images
+POST   /admin/products/:id/variants
+PATCH  /admin/variants/:id
+PATCH  /admin/variants/:id/inventory
+POST   /admin/categories
 ```
 
 These routes are intentionally unauthenticated for local development. Add auth before exposing them publicly.
@@ -103,11 +111,52 @@ These routes are intentionally unauthenticated for local development. Add auth b
 
 `slug` must be lowercase URL-safe text. Prices are accepted as decimal strings with up to two cents.
 
+`PATCH /admin/products/:id` accepts any subset of:
+
+```json
+{
+  "slug": "updated-dev-mug",
+  "name": "Updated Dev Mug",
+  "description": "Updated description",
+  "status": "ACTIVE"
+}
+```
+
+Use `POST /admin/products/:id/publish` and `POST /admin/products/:id/archive` for common status changes.
+
+`POST /admin/products/:id/categories` accepts:
+
+```json
+{
+  "categoryId": "00000000-0000-0000-0000-000000000000"
+}
+```
+
+`POST /admin/products/:id/images` accepts:
+
+```json
+{
+  "url": "https://example.com/mug.jpg",
+  "altText": "Dev Mug",
+  "sortOrder": 0
+}
+```
+
+`PATCH /admin/variants/:id` accepts any subset of SKU, title, price, currency, and inventory quantity. Use `PATCH /admin/variants/:id/inventory` when only adjusting stock:
+
+```json
+{
+  "inventoryQuantity": 12
+}
+```
+
 ## Error Handling
 
 Zod validation errors return `400`.
 
 Known Prisma uniqueness conflicts return `409`, including duplicate product slugs, category slugs, SKUs, and user emails.
+
+Known invalid foreign key references return `400`.
 
 Unhandled errors return `500` and are logged by Fastify.
 

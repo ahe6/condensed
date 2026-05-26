@@ -1,19 +1,34 @@
+import { ProductStatus } from "@prisma/client";
 import type { FastifyPluginAsync } from "fastify";
 import {
+  addProductImageSchema,
+  assignProductCategorySchema,
   createCategorySchema,
   createProductSchema,
   createProductVariantSchema,
+  productCategoryParamsSchema,
   productIdParamsSchema,
-  productSlugParamsSchema
+  productSlugParamsSchema,
+  setVariantInventorySchema,
+  updateProductSchema,
+  updateProductVariantSchema,
+  variantIdParamsSchema
 } from "./catalog.schemas.js";
 import {
+  addProductImage,
+  assignProductCategory,
   createCategory,
   createProduct,
   createProductVariant,
   getProductBySlug,
   listAdminProducts,
   listCategories,
-  listProducts
+  listProducts,
+  removeProductCategory,
+  setProductStatus,
+  setVariantInventory,
+  updateProduct,
+  updateProductVariant
 } from "./catalog.service.js";
 
 export const catalogRoutes: FastifyPluginAsync = async (server) => {
@@ -49,12 +64,66 @@ export const catalogRoutes: FastifyPluginAsync = async (server) => {
     return reply.code(201).send(product);
   });
 
+  server.patch("/admin/products/:id", async (request) => {
+    const { id } = productIdParamsSchema.parse(request.params);
+    const body = updateProductSchema.parse(request.body);
+
+    return updateProduct(id, body);
+  });
+
+  server.post("/admin/products/:id/publish", async (request) => {
+    const { id } = productIdParamsSchema.parse(request.params);
+
+    return setProductStatus(id, ProductStatus.ACTIVE);
+  });
+
+  server.post("/admin/products/:id/archive", async (request) => {
+    const { id } = productIdParamsSchema.parse(request.params);
+
+    return setProductStatus(id, ProductStatus.ARCHIVED);
+  });
+
+  server.post("/admin/products/:id/categories", async (request) => {
+    const { id } = productIdParamsSchema.parse(request.params);
+    const body = assignProductCategorySchema.parse(request.body);
+
+    return assignProductCategory(id, body);
+  });
+
+  server.delete("/admin/products/:id/categories/:categoryId", async (request) => {
+    const { id, categoryId } = productCategoryParamsSchema.parse(request.params);
+
+    return removeProductCategory(id, categoryId);
+  });
+
+  server.post("/admin/products/:id/images", async (request, reply) => {
+    const { id } = productIdParamsSchema.parse(request.params);
+    const body = addProductImageSchema.parse(request.body);
+    const image = await addProductImage(id, body);
+
+    return reply.code(201).send(image);
+  });
+
   server.post("/admin/products/:id/variants", async (request, reply) => {
     const { id } = productIdParamsSchema.parse(request.params);
     const body = createProductVariantSchema.parse(request.body);
     const variant = await createProductVariant(id, body);
 
     return reply.code(201).send(variant);
+  });
+
+  server.patch("/admin/variants/:id", async (request) => {
+    const { id } = variantIdParamsSchema.parse(request.params);
+    const body = updateProductVariantSchema.parse(request.body);
+
+    return updateProductVariant(id, body);
+  });
+
+  server.patch("/admin/variants/:id/inventory", async (request) => {
+    const { id } = variantIdParamsSchema.parse(request.params);
+    const body = setVariantInventorySchema.parse(request.body);
+
+    return setVariantInventory(id, body);
   });
 
   server.post("/admin/categories", async (request, reply) => {

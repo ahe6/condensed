@@ -39,6 +39,13 @@ export function buildServer() {
           error: "Not Found"
         });
       }
+
+      if (error.code === "P2003") {
+        return reply.code(400).send({
+          error: "Invalid Reference",
+          field: error.meta?.field_name
+        });
+      }
     }
 
     server.log.error(error);
