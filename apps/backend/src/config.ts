@@ -1,10 +1,15 @@
 import { config as loadEnv } from "dotenv";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 
+const moduleDir = dirname(fileURLToPath(import.meta.url));
+
 loadEnv({
-  path: "../../.env"
+  path: join(moduleDir, "../../..", ".env")
 });
 loadEnv({
+  path: join(moduleDir, "..", ".env"),
   override: true
 });
 

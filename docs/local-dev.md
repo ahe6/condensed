@@ -78,10 +78,13 @@ Stripe payment testing needs:
 
 ```text
 STRIPE_API_KEY
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 STRIPE_WEBHOOK_SECRET
 ```
 
-`STRIPE_WEBHOOK_SECRET` is only required when testing Stripe webhooks.
+Use Stripe test keys for local development. `STRIPE_WEBHOOK_SECRET` is only required when testing Stripe webhooks.
+
+The webhook secret should start with `whsec_`. The publishable browser key should start with `pk_` and use `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
 
 Current frontend scope:
 

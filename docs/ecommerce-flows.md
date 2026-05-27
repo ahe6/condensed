@@ -105,5 +105,5 @@ Local database records are disposable during early development unless we add see
 
 Recommended sequence:
 
-1. Add frontend Stripe Elements checkout UI.
+1. Improve checkout so payment is collected before the cart is cleared.
 2. Add fulfillment quantity support if orders need split or partial shipments.

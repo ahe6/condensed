@@ -137,6 +137,14 @@ STRIPE_API_KEY
 STRIPE_WEBHOOK_SECRET
 ```
 
+Frontend Stripe Elements needs:
+
+```text
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+```
+
+The webhook secret should start with `whsec_`. The frontend publishable key should start with `pk_`.
+
 For local webhook testing, use the Stripe CLI to forward events to:
 
 ```text

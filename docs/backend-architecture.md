@@ -163,6 +163,7 @@ Current responsibilities:
 
 - Create Stripe PaymentIntents for orders
 - Handle Stripe PaymentIntent webhook status updates
+- Support Stripe Elements from the frontend checkout
 - Record provider-agnostic payment attempts
 - Mark payments authorized
 - Mark payments paid

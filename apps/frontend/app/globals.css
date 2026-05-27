@@ -427,6 +427,7 @@ output {
 
 .checkout-form,
 .auth-form,
+.payment-form,
 .billing-fields {
   display: grid;
   gap: 12px;

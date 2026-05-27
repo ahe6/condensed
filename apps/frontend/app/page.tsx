@@ -1,5 +1,7 @@
 "use client";
 
+import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { OrderSummary } from "../src/components/OrderSummary";
@@ -15,6 +17,7 @@ import {
   checkoutCart,
   clearCart,
   createCart,
+  createStripePaymentIntent,
   getCart,
   getMe,
   getOrder,
@@ -28,6 +31,8 @@ import { isAuthConfigured, signOut, startLogin } from "../src/lib/auth";
 import { formatMoney } from "../src/lib/format";
 
 const cartStorageKey = "tele.cartId";
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 const emptyAddress: AddressInput = {
   recipientName: "",
@@ -62,6 +67,7 @@ export default function Home() {
   const [billingAddress, setBillingAddress] = useState<AddressInput>(emptyAddress);
   const [billingSame, setBillingSame] = useState(true);
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
+  const [paymentClientSecret, setPaymentClientSecret] = useState<string | null>(null);
   const [orderLookup, setOrderLookup] = useState("");
   const [lookedUpOrder, setLookedUpOrder] = useState<Order | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -283,6 +289,13 @@ export default function Home() {
         shippingAddress: compactAddress(shippingAddress),
         billingAddress: billingSame ? compactAddress(shippingAddress) : compactAddress(billingAddress)
       });
+
+      if (stripePromise) {
+        const paymentIntent = await createStripePaymentIntent(order.id);
+        setPaymentClientSecret(paymentIntent.clientSecret);
+      } else {
+        setPaymentClientSecret(null);
+      }
 
       setLastOrder(order);
       setLookedUpOrder(order);
@@ -706,6 +719,19 @@ export default function Home() {
                 <strong>{lastOrder.orderNumber}</strong>
               </div>
             ) : null}
+
+            {lastOrder && paymentClientSecret && stripePromise ? (
+              <Elements
+                stripe={stripePromise}
+                options={{
+                  clientSecret: paymentClientSecret
+                }}
+              >
+                <StripePaymentForm order={lastOrder} onError={setError} />
+              </Elements>
+            ) : lastOrder ? (
+              <div className="empty-state compact">Stripe payment is not configured</div>
+            ) : null}
           </section>
 
           <section className="panel" aria-label="Order lookup">
@@ -771,5 +797,56 @@ export default function Home() {
         </aside>
       </section>
     </main>
+  );
+}
+
+function StripePaymentForm({
+  onError,
+  order
+}: {
+  onError: (message: string | null) => void;
+  order: Order;
+}) {
+  const elements = useElements();
+  const stripe = useStripe();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function handlePayment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!stripe || !elements) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setMessage(null);
+    onError(null);
+
+    const result = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/?order=${order.orderNumber}`
+      },
+      redirect: "if_required"
+    });
+
+    if (result.error) {
+      onError(result.error.message ?? "Payment failed");
+    } else {
+      setMessage("Payment submitted");
+    }
+
+    setIsSubmitting(false);
+  }
+
+  return (
+    <form className="payment-form" onSubmit={handlePayment}>
+      <PaymentElement />
+      <button type="submit" disabled={!stripe || !elements || isSubmitting}>
+        {isSubmitting ? "Paying" : `Pay ${formatMoney(order.total, order.currency)}`}
+      </button>
+      {message ? <p className="notice">{message}</p> : null}
+    </form>
   );
 }
