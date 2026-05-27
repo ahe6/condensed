@@ -51,6 +51,8 @@ All `/admin/*` routes require a valid Cognito ID token with membership in the `a
 
 Authenticated customer routes expect a Cognito ID token in the `Authorization: Bearer <token>` header.
 
+See [Auth](auth.md) for the Cognito flow and admin group setup.
+
 ## Health
 
 ```text
@@ -94,7 +96,7 @@ GET /me/orders
 
 `POST /checkout` also accepts the same bearer token. When present, the created order is linked to the authenticated user.
 
-The frontend confirmation page at `/auth/confirm` uses Cognito public signup APIs directly for confirm-code and resend-code recovery.
+The frontend confirmation page at `/auth/confirm` uses Cognito public signup APIs directly for confirm-code and resend-email recovery.
 
 ## Catalog
 

@@ -1,0 +1,113 @@
+# Auth
+
+Authentication uses Amazon Cognito. The app stack can stay local while Cognito runs in AWS.
+
+## Current State
+
+- Cognito is deployed in auth-only mode.
+- Local Postgres remains the active development database.
+- Costly AWS app resources such as VPC, RDS, ECR, ECS, and ALB are not deployed.
+- New signups use link-based email confirmation.
+- Backend admin routes require Cognito `admin` group membership.
+
+## Cognito Resources
+
+Terraform manages Cognito in `infra/envs/dev/auth.tf`:
+
+- User pool: `tele-dev`
+- Hosted UI domain
+- Public frontend app client using authorization code flow with PKCE
+- `admin` user group
+- Link-based email confirmation
+
+Apply only Cognito:
+
+```sh
+make dev-init
+make dev-auth-plan
+make dev-auth-apply
+```
+
+Write Cognito outputs into ignored local env files:
+
+```sh
+make dev-auth-env
+```
+
+This updates:
+
+- `apps/backend/.env`
+- `apps/frontend/.env.local`
+
+Restart backend and frontend dev servers after changing auth env values.
+
+## Local Login Flow
+
+Use `http://localhost:3001` consistently during local auth testing.
+
+1. Frontend starts the Hosted UI login flow with PKCE.
+2. Cognito handles signup, signin, password policy, and email confirmation.
+3. Cognito redirects back to the current browser origin at `/auth/callback`.
+4. The frontend exchanges the authorization code for tokens.
+5. API requests include the Cognito ID token in `Authorization: Bearer <token>`.
+6. Backend verifies the ID token against the Cognito issuer and app client ID.
+7. Backend links the Cognito `sub` to local `users.externalAuthId`.
+
+Do not mix `localhost` and `127.0.0.1` in the same login attempt. Browser storage is origin-specific, and PKCE state must be read from the same origin that started login.
+
+## Signup Confirmation
+
+Cognito sends confirmation links for new signups.
+
+If a signup is interrupted, or a user is stuck as unconfirmed, open:
+
+```text
+http://localhost:3001/auth/confirm
+```
+
+That page can confirm the existing account with a code or resend the confirmation email.
+
+## Customer Routes
+
+Authenticated customer routes expect a Cognito ID token:
+
+```text
+Authorization: Bearer <id-token>
+```
+
+Current routes:
+
+- `GET /me`
+- `GET /me/orders`
+- `POST /checkout`, when a token is present
+
+Checkout links the created order to the authenticated local user when the bearer token is valid.
+
+## Admin Access
+
+All backend `/admin/*` routes require:
+
+- Valid Cognito ID token
+- Membership in the Cognito `admin` group
+
+Grant a dev user admin access:
+
+```sh
+make dev-auth-add-admin EMAIL=user@example.com
+```
+
+The user must sign out and sign back in after group membership changes so Cognito issues a fresh ID token with the `admin` group claim.
+
+Delete a throwaway dev user:
+
+```sh
+make dev-auth-delete-user EMAIL=user@example.com
+```
+
+## Production Notes
+
+Cognito is HIPAA eligible, but HIPAA use still requires the right AWS BAA, configuration, logging, operational controls, and application behavior.
+
+Cognito's default email sender is acceptable for dev, but production should use SES with a verified domain and SPF, DKIM, and DMARC for better deliverability.
+
+Admin authorization currently uses a single Cognito group. Add finer-grained roles or permissions before adding multiple admin personas.

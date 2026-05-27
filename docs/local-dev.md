@@ -62,7 +62,7 @@ Run the frontend:
 npm run frontend:dev
 ```
 
-## Frontend Configuration
+## Configuration
 
 The frontend defaults to:
 
@@ -72,60 +72,7 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:3000
 
 Override `NEXT_PUBLIC_API_URL` when pointing the frontend at a deployed backend.
 
-Cognito login is disabled until these frontend env vars are set:
-
-```text
-NEXT_PUBLIC_COGNITO_DOMAIN
-NEXT_PUBLIC_COGNITO_CLIENT_ID
-NEXT_PUBLIC_COGNITO_REGION
-```
-
-The backend also needs:
-
-```text
-COGNITO_ISSUER
-COGNITO_CLIENT_ID
-```
-
-Use the auth-only Terraform apply to create Cognito without recreating RDS/ECS:
-
-```sh
-make dev-init
-make dev-auth-plan
-make dev-auth-apply
-```
-
-Then write Cognito outputs into local env files:
-
-```sh
-make dev-auth-env
-```
-
-This updates `apps/backend/.env` and `apps/frontend/.env.local`. Restart the backend and frontend dev servers after changing these env files.
-
-New signups receive a Cognito confirmation link. If a signup is interrupted or the link email is hard to find, use:
-
-```text
-http://localhost:3001/auth/confirm
-```
-
-That page can confirm the existing unconfirmed account with a code or resend the confirmation email.
-
-During local dev, use `http://localhost:3001` consistently. `http://127.0.0.1:3001` is also allowed, but avoid mixing the two in the same login attempt. The frontend sends Cognito back to the current browser origin so the PKCE verifier remains available.
-
-Delete throwaway Cognito dev users with:
-
-```sh
-make dev-auth-delete-user EMAIL=user@example.com
-```
-
-Grant backend admin access to a signed-up Cognito user with:
-
-```sh
-make dev-auth-add-admin EMAIL=user@example.com
-```
-
-Sign out and sign back in after changing group membership so Cognito issues a fresh ID token with the `admin` group claim.
+Auth setup, signup recovery, and admin access commands are covered in [Auth](auth.md).
 
 Current frontend scope:
 

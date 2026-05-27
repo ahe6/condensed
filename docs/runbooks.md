@@ -84,7 +84,7 @@ terraform -chdir=infra/envs/dev apply
 
 ## Deploy Cognito Only
 
-Use this for local auth development without recreating RDS/ECS:
+Use this for local auth development without recreating RDS/ECS. See [Auth](auth.md) for the full auth model.
 
 ```sh
 make aws-login
@@ -97,29 +97,9 @@ make dev-auth-env
 
 Restart backend and frontend dev servers after `make dev-auth-env`.
 
-## Recover Unconfirmed Cognito Signup
+## Auth Tasks
 
-New signups receive a confirmation link. If Cognito says the user already exists but is not confirmed, open:
-
-```text
-http://localhost:3001/auth/confirm
-```
-
-Enter the email and confirmation code, or resend a new confirmation email from that page.
-
-To delete a throwaway Cognito dev user and start over:
-
-```sh
-make dev-auth-delete-user EMAIL=user@example.com
-```
-
-To grant admin access to a Cognito dev user:
-
-```sh
-make dev-auth-add-admin EMAIL=user@example.com
-```
-
-The user must sign out and sign back in after group membership changes.
+Signup recovery, deleting throwaway users, and granting admin access are covered in [Auth](auth.md).
 
 ## Push Backend Image To AWS
 

@@ -75,6 +75,7 @@ Local URLs:
 - [Local Development](docs/local-dev.md)
 - [Backend Architecture](docs/backend-architecture.md)
 - [Backend API](docs/backend-api.md)
+- [Auth](docs/auth.md)
 - [Ecommerce Flows](docs/ecommerce-flows.md)
 - [Database Schema](docs/database-schema.md)
 - [Infrastructure](docs/infrastructure.md)

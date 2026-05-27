@@ -19,6 +19,7 @@ Auth:
 
 - Terraform has deployed a Cognito user pool, Hosted UI domain, and public frontend app client in auth-only mode.
 - Cognito is HIPAA eligible under the AWS HIPAA eligible services program, but the app still needs the right AWS BAA, configuration, logging, and operational controls for HIPAA use.
+- See [Auth](auth.md) for login flow, local env setup, and admin access.
 
 ## AWS Account
 
@@ -158,15 +159,7 @@ Useful Terraform outputs:
 - `cognito_issuer`
 - `cognito_hosted_ui_domain`
 
-Auth-only commands:
-
-```sh
-make dev-auth-plan
-make dev-auth-apply
-make dev-auth-env
-```
-
-`make dev-auth-env` writes Terraform Cognito outputs into ignored local env files for backend and frontend development.
+See [Auth](auth.md) for auth-only commands and local setup.
 
 ## Optional Public Backend Service
 
