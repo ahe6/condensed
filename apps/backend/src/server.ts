@@ -12,6 +12,7 @@ import { ordersRoutes } from "./modules/orders/orders.routes.js";
 import { paymentsRoutes } from "./modules/payments/payments.routes.js";
 import { PaymentError } from "./modules/payments/payments.service.js";
 import { shipmentsRoutes } from "./modules/shipments/shipments.routes.js";
+import { ShipmentError } from "./modules/shipments/shipments.service.js";
 import { usersRoutes } from "./modules/users/users.routes.js";
 import { config } from "./config.js";
 import { prisma } from "./prisma.js";
@@ -24,6 +25,7 @@ export function buildServer() {
   });
 
   server.register(cors, {
+    methods: ["GET", "HEAD", "POST", "PATCH", "DELETE", "OPTIONS"],
     origin: true
   });
 
@@ -62,6 +64,12 @@ export function buildServer() {
     }
 
     if (error instanceof PaymentError) {
+      return reply.code(error.statusCode).send({
+        error: error.message
+      });
+    }
+
+    if (error instanceof ShipmentError) {
       return reply.code(error.statusCode).send({
         error: error.message
       });

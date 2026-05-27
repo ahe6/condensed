@@ -15,9 +15,13 @@
     "frontend:build": "npm --workspace apps/frontend run build",
     "frontend:start": "npm --workspace apps/frontend run start",
     "frontend:check": "npm --workspace apps/frontend run check",
+    "test:stripe-checkout": "scripts/restock-dev-mug.sh && playwright test tests/stripe-checkout.spec.ts --project=local-chrome",
     "db:migrate": "npm --workspace apps/backend run prisma:migrate",
     "db:deploy": "npm --workspace apps/backend run prisma:deploy",
     "db:generate": "npm --workspace apps/backend run prisma:generate",
     "db:studio": "npm --workspace apps/backend run prisma:studio"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
   }
 }

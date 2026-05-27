@@ -1,5 +1,5 @@
 import type { Order } from "../lib/api";
-import { formatMoney, statusClass } from "../lib/format";
+import { formatDateTime, formatMoney, statusClass, trackingUrl } from "../lib/format";
 
 export function OrderSummary({ order }: { order: Order }) {
   return (
@@ -20,6 +20,13 @@ export function OrderSummary({ order }: { order: Order }) {
         </span>
       </div>
 
+      <dl className="order-meta">
+        <div>
+          <dt>Ordered</dt>
+          <dd>{formatDateTime(order.placedAt ?? order.createdAt)}</dd>
+        </div>
+      </dl>
+
       <div className="order-lines">
         {order.items.map((item) => (
           <div key={item.id}>
@@ -30,6 +37,32 @@ export function OrderSummary({ order }: { order: Order }) {
           </div>
         ))}
       </div>
+
+      {order.shipments.length > 0 ? (
+        <div className="shipment-summary-list">
+          {order.shipments.map((shipment) => {
+            const url = trackingUrl(shipment.carrier, shipment.trackingNumber);
+
+            return (
+              <div key={shipment.id}>
+                <span>{shipment.carrier ?? "Shipment"}</span>
+                <strong>{shipment.status}</strong>
+                {shipment.trackingNumber ? (
+                  url ? (
+                    <a href={url} rel="noreferrer" target="_blank">
+                      {shipment.trackingNumber}
+                    </a>
+                  ) : (
+                    <small>{shipment.trackingNumber}</small>
+                  )
+                ) : (
+                  <small>No tracking</small>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
     </article>
   );
 }

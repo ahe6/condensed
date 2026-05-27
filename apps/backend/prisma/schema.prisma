@@ -26,6 +26,24 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
+  DISPUTED
+}
+
+enum PaymentStatusEventSource {
+  SYSTEM
+  ADMIN_MANUAL
+  ADMIN_SYNC
+  STRIPE_WEBHOOK
+}
+
+enum ShipmentStatusEventSource {
+  SYSTEM
+  ADMIN_MANUAL
+}
+
+enum ShipmentTrackingEventSource {
+  SYSTEM
+  ADMIN_MANUAL
 }
 
 enum FulfillmentStatus {
@@ -187,27 +205,31 @@ model CartItem {
 }
 
 model Order {
-  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId            String?           @db.Uuid
-  orderNumber       String            @unique
-  email             String
-  status            OrderStatus       @default(PENDING)
-  paymentStatus     PaymentStatus     @default(UNPAID)
-  fulfillmentStatus FulfillmentStatus @default(UNFULFILLED)
-  currency          String            @default("USD") @db.Char(3)
-  subtotal          Decimal           @default(0) @db.Decimal(12, 2)
-  discountTotal     Decimal           @default(0) @db.Decimal(12, 2)
-  shippingTotal     Decimal           @default(0) @db.Decimal(12, 2)
-  taxTotal          Decimal           @default(0) @db.Decimal(12, 2)
-  total             Decimal           @default(0) @db.Decimal(12, 2)
-  placedAt          DateTime?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  user              User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
-  addresses         OrderAddress[]
-  items             OrderItem[]
-  payments          Payment[]
-  shipments         Shipment[]
+  id                     String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                 String?                 @db.Uuid
+  orderNumber            String                  @unique
+  email                  String
+  status                 OrderStatus             @default(PENDING)
+  paymentStatus          PaymentStatus           @default(UNPAID)
+  fulfillmentStatus      FulfillmentStatus       @default(UNFULFILLED)
+  currency               String                  @default("USD") @db.Char(3)
+  subtotal               Decimal                 @default(0) @db.Decimal(12, 2)
+  discountTotal          Decimal                 @default(0) @db.Decimal(12, 2)
+  shippingTotal          Decimal                 @default(0) @db.Decimal(12, 2)
+  taxTotal               Decimal                 @default(0) @db.Decimal(12, 2)
+  total                  Decimal                 @default(0) @db.Decimal(12, 2)
+  placedAt               DateTime?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  user                   User?                   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  addresses              OrderAddress[]
+  items                  OrderItem[]
+  payments               Payment[]
+  paymentStatusEvents    PaymentStatusEvent[]
+  shipmentStatusEvents   ShipmentStatusEvent[]
+  shipmentTrackingEvents ShipmentTrackingEvent[]
+  notes                  OrderNote[]
+  shipments              Shipment[]
 
   @@index([userId])
   @@index([status])
@@ -256,38 +278,113 @@ model OrderItem {
   @@map("order_items")
 }
 
+model OrderNote {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId     String   @db.Uuid
+  body        String
+  authorEmail String?
+  createdAt   DateTime @default(now())
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, createdAt])
+  @@map("order_notes")
+}
+
 model Payment {
-  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orderId           String        @db.Uuid
+  id                String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId           String               @db.Uuid
   provider          String
   providerPaymentId String?
-  status            PaymentStatus @default(UNPAID)
-  amount            Decimal       @db.Decimal(12, 2)
-  currency          String        @default("USD") @db.Char(3)
+  status            PaymentStatus        @default(UNPAID)
+  amount            Decimal              @db.Decimal(12, 2)
+  currency          String               @default("USD") @db.Char(3)
   processedAt       DateTime?
   metadata          Json?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-  order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  order             Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  statusEvents      PaymentStatusEvent[]
 
   @@unique([provider, providerPaymentId])
   @@index([orderId])
   @@map("payments")
 }
 
+model PaymentStatusEvent {
+  id               String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paymentId        String                   @db.Uuid
+  orderId          String                   @db.Uuid
+  fromStatus       PaymentStatus?
+  toStatus         PaymentStatus
+  source           PaymentStatusEventSource
+  providerEventId  String?
+  providerObjectId String?
+  reason           String?
+  metadata         Json?
+  createdAt        DateTime                 @default(now())
+  payment          Payment                  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  order            Order                    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([providerEventId])
+  @@index([paymentId, createdAt])
+  @@index([orderId, createdAt])
+  @@index([providerObjectId])
+  @@map("payment_status_events")
+}
+
 model Shipment {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orderId        String         @db.Uuid
+  id             String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId        String                  @db.Uuid
   carrier        String?
   trackingNumber String?
-  status         ShipmentStatus @default(PENDING)
+  status         ShipmentStatus          @default(PENDING)
   shippedAt      DateTime?
   deliveredAt    DateTime?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  order          Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  order          Order                   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  statusEvents   ShipmentStatusEvent[]
+  trackingEvents ShipmentTrackingEvent[]
 
   @@index([orderId])
   @@index([trackingNumber])
   @@map("shipments")
+}
+
+model ShipmentStatusEvent {
+  id         String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shipmentId String                    @db.Uuid
+  orderId    String                    @db.Uuid
+  fromStatus ShipmentStatus?
+  toStatus   ShipmentStatus
+  source     ShipmentStatusEventSource
+  reason     String?
+  metadata   Json?
+  createdAt  DateTime                  @default(now())
+  shipment   Shipment                  @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  order      Order                     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([shipmentId, createdAt])
+  @@index([orderId, createdAt])
+  @@map("shipment_status_events")
+}
+
+model ShipmentTrackingEvent {
+  id                 String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shipmentId         String                      @db.Uuid
+  orderId            String                      @db.Uuid
+  fromCarrier        String?
+  toCarrier          String?
+  fromTrackingNumber String?
+  toTrackingNumber   String?
+  source             ShipmentTrackingEventSource
+  reason             String?
+  metadata           Json?
+  createdAt          DateTime                    @default(now())
+  shipment           Shipment                    @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  order              Order                       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([shipmentId, createdAt])
+  @@index([orderId, createdAt])
+  @@map("shipment_tracking_events")
 }

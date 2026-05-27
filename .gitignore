@@ -26,5 +26,7 @@ dist/
 .next/
 out/
 coverage/
+playwright-report/
+test-results/
 *.tsbuildinfo
 npm-debug.log*

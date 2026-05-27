@@ -101,6 +101,8 @@ cognito_issuer="$(terraform_output cognito_issuer)"
 cognito_client_id="$(terraform_output cognito_frontend_client_id)"
 cognito_domain="$(terraform_output cognito_hosted_ui_domain)"
 cognito_region="$(terraform_output region)"
+stripe_api_key="$(read_env_var "$root_env" "STRIPE_API_KEY")"
+stripe_webhook_secret="$(read_env_var "$root_env" "STRIPE_WEBHOOK_SECRET")"
 stripe_publishable_key="$(read_env_var "$root_env" "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY")"
 
 if [[ -z "$cognito_issuer" || -z "$cognito_client_id" || -z "$cognito_domain" || -z "$cognito_region" ]]; then
@@ -113,6 +115,12 @@ ensure_env_file "$frontend_env" "apps/frontend/.env.example"
 
 set_env_var "$backend_env" "COGNITO_ISSUER" "$cognito_issuer"
 set_env_var "$backend_env" "COGNITO_CLIENT_ID" "$cognito_client_id"
+if [[ -n "$stripe_api_key" ]]; then
+  set_env_var "$backend_env" "STRIPE_API_KEY" "$stripe_api_key"
+fi
+if [[ -n "$stripe_webhook_secret" ]]; then
+  set_env_var "$backend_env" "STRIPE_WEBHOOK_SECRET" "$stripe_webhook_secret"
+fi
 
 set_env_var "$frontend_env" "NEXT_PUBLIC_COGNITO_DOMAIN" "$cognito_domain"
 set_env_var "$frontend_env" "NEXT_PUBLIC_COGNITO_CLIENT_ID" "$cognito_client_id"

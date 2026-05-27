@@ -29,4 +29,9 @@ export const createPaymentSchema = z.object({
   currency: currencySchema.default("USD")
 });
 
+export const createStripeCheckoutSessionSchema = z.object({
+  returnUrl: z.string().trim().url()
+});
+
 export type CreatePaymentInput = z.infer<typeof createPaymentSchema>;
+export type CreateStripeCheckoutSessionInput = z.infer<typeof createStripeCheckoutSessionSchema>;

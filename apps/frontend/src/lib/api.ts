@@ -103,7 +103,22 @@ export type CheckoutInput = {
   billingAddress: AddressInput;
 };
 
-export type PaymentStatus = "UNPAID" | "AUTHORIZED" | "PAID" | "FAILED" | "REFUNDED";
+export type PaymentStatus = "UNPAID" | "AUTHORIZED" | "PAID" | "FAILED" | "REFUNDED" | "DISPUTED";
+export type PaymentStatusEventSource = "SYSTEM" | "ADMIN_MANUAL" | "ADMIN_SYNC" | "STRIPE_WEBHOOK";
+
+export type PaymentStatusEvent = {
+  id: string;
+  paymentId: string;
+  orderId: string;
+  fromStatus: PaymentStatus | null;
+  toStatus: PaymentStatus;
+  source: PaymentStatusEventSource;
+  providerEventId: string | null;
+  providerObjectId: string | null;
+  reason: string | null;
+  metadata: unknown | null;
+  createdAt: string;
+};
 
 export type Payment = {
   id: string;
@@ -117,9 +132,38 @@ export type Payment = {
   metadata: unknown | null;
   createdAt: string;
   updatedAt: string;
+  statusEvents: PaymentStatusEvent[];
 };
 
 export type ShipmentStatus = "PENDING" | "SHIPPED" | "DELIVERED" | "RETURNED";
+export type ShipmentStatusEventSource = "SYSTEM" | "ADMIN_MANUAL";
+export type ShipmentTrackingEventSource = "SYSTEM" | "ADMIN_MANUAL";
+
+export type ShipmentStatusEvent = {
+  id: string;
+  shipmentId: string;
+  orderId: string;
+  fromStatus: ShipmentStatus | null;
+  toStatus: ShipmentStatus;
+  source: ShipmentStatusEventSource;
+  reason: string | null;
+  metadata: unknown | null;
+  createdAt: string;
+};
+
+export type ShipmentTrackingEvent = {
+  id: string;
+  shipmentId: string;
+  orderId: string;
+  fromCarrier: string | null;
+  toCarrier: string | null;
+  fromTrackingNumber: string | null;
+  toTrackingNumber: string | null;
+  source: ShipmentTrackingEventSource;
+  reason: string | null;
+  metadata: unknown | null;
+  createdAt: string;
+};
 
 export type Shipment = {
   id: string;
@@ -131,6 +175,8 @@ export type Shipment = {
   deliveredAt: string | null;
   createdAt: string;
   updatedAt: string;
+  statusEvents: ShipmentStatusEvent[];
+  trackingEvents: ShipmentTrackingEvent[];
 };
 
 export type Order = {
@@ -165,7 +211,51 @@ export type Order = {
     createdAt: string;
   }>;
   payments: Payment[];
+  notes?: OrderNote[];
   shipments: Shipment[];
+};
+
+export type OrderNote = {
+  id: string;
+  orderId: string;
+  body: string;
+  authorEmail: string | null;
+  createdAt: string;
+};
+
+export type AdminOrderQuery = {
+  search?: string;
+  payment?: "ALL" | PaymentStatus;
+  fulfillment?: "ALL" | Order["fulfillmentStatus"];
+  dateField?:
+    | "ANY"
+    | "ORDER_CREATED"
+    | "ORDER_PLACED"
+    | "ORDER_UPDATED"
+    | "SHIPMENT_CREATED"
+    | "SHIPMENT_SHIPPED"
+    | "SHIPMENT_DELIVERED";
+  dateFrom?: string;
+  dateTo?: string;
+  sort?:
+    | "CREATED_DESC"
+    | "CREATED_ASC"
+    | "UPDATED_DESC"
+    | "PLACED_DESC"
+    | "SHIPPED_DESC"
+    | "DELIVERED_DESC"
+    | "TOTAL_DESC"
+    | "TOTAL_ASC";
+  page?: number;
+  pageSize?: number;
+};
+
+export type AdminOrdersResponse = {
+  orders: Order[];
+  total: number;
+  page: number;
+  pageSize: number;
+  pageCount: number;
 };
 
 export type PaymentWithOrder = Payment & {
@@ -176,9 +266,9 @@ export type ShipmentWithOrder = Shipment & {
   order: Order;
 };
 
-export type StripePaymentIntent = {
+export type StripeCheckoutSession = {
   clientSecret: string;
-  paymentIntentId: string;
+  checkoutSessionId: string;
   payment: PaymentWithOrder;
 };
 
@@ -279,8 +369,27 @@ export async function getOrder(orderNumber: string) {
   return request<Order>(`/orders/${encodeURIComponent(orderNumber)}`);
 }
 
-export async function listAdminOrders() {
-  return request<Order[]>("/admin/orders");
+export async function listAdminOrders(query: AdminOrderQuery = {}) {
+  const params = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined && value !== "") {
+      params.set(key, String(value));
+    }
+  }
+
+  const queryString = params.toString();
+
+  return request<AdminOrdersResponse>(`/admin/orders${queryString ? `?${queryString}` : ""}`);
+}
+
+export async function createOrderNote(orderId: string, body: string) {
+  return request<Order>(`/admin/orders/${orderId}/notes`, {
+    method: "POST",
+    body: JSON.stringify({
+      body
+    })
+  });
 }
 
 export async function createManualPayment(order: Order) {
@@ -295,9 +404,12 @@ export async function createManualPayment(order: Order) {
   });
 }
 
-export async function createStripePaymentIntent(orderId: string) {
-  return request<StripePaymentIntent>(`/orders/${orderId}/stripe-payment-intent`, {
-    method: "POST"
+export async function createStripeCheckoutSession(orderId: string, returnUrl: string) {
+  return request<StripeCheckoutSession>(`/orders/${orderId}/stripe-checkout-session`, {
+    method: "POST",
+    body: JSON.stringify({
+      returnUrl
+    })
   });
 }
 
@@ -321,6 +433,12 @@ export async function markPaymentFailed(paymentId: string) {
 
 export async function refundPayment(paymentId: string) {
   return request<PaymentWithOrder>(`/admin/payments/${paymentId}/refund`, {
+    method: "POST"
+  });
+}
+
+export async function syncStripePayment(paymentId: string) {
+  return request<PaymentWithOrder>(`/admin/payments/${paymentId}/sync-stripe`, {
     method: "POST"
   });
 }

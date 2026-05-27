@@ -1,6 +1,18 @@
 import type { FastifyPluginAsync } from "fastify";
-import { orderIdParamsSchema, orderNumberParamsSchema } from "./orders.schemas.js";
-import { cancelOrder, getOrderByNumber, listOrders, markOrderPlaced } from "./orders.service.js";
+import { getAdminIdentity } from "../auth/auth.service.js";
+import {
+  adminOrderQuerySchema,
+  createOrderNoteSchema,
+  orderIdParamsSchema,
+  orderNumberParamsSchema
+} from "./orders.schemas.js";
+import {
+  cancelOrder,
+  createOrderNote,
+  getOrderByNumber,
+  listOrders,
+  markOrderPlaced
+} from "./orders.service.js";
 
 export const ordersRoutes: FastifyPluginAsync = async (server) => {
   server.get("/orders/:orderNumber", async (request, reply) => {
@@ -16,8 +28,10 @@ export const ordersRoutes: FastifyPluginAsync = async (server) => {
     return order;
   });
 
-  server.get("/admin/orders", async () => {
-    return listOrders();
+  server.get("/admin/orders", async (request) => {
+    const query = adminOrderQuerySchema.parse(request.query);
+
+    return listOrders(query);
   });
 
   server.post("/admin/orders/:id/place", async (request) => {
@@ -30,5 +44,14 @@ export const ordersRoutes: FastifyPluginAsync = async (server) => {
     const { id } = orderIdParamsSchema.parse(request.params);
 
     return cancelOrder(id);
+  });
+
+  server.post("/admin/orders/:id/notes", async (request, reply) => {
+    const { id } = orderIdParamsSchema.parse(request.params);
+    const input = createOrderNoteSchema.parse(request.body);
+    const admin = await getAdminIdentity(request.headers.authorization);
+    const order = await createOrderNote(id, input, admin.email);
+
+    return reply.code(201).send(order);
   });
 };

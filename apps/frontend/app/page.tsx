@@ -1,6 +1,10 @@
 "use client";
 
-import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
+import {
+  CheckoutElementsProvider,
+  PaymentElement,
+  useCheckoutElements
+} from "@stripe/react-stripe-js/checkout";
 import { loadStripe } from "@stripe/stripe-js";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
@@ -17,7 +21,7 @@ import {
   checkoutCart,
   clearCart,
   createCart,
-  createStripePaymentIntent,
+  createStripeCheckoutSession,
   getCart,
   getMe,
   getOrder,
@@ -57,6 +61,30 @@ function compactAddress(input: AddressInput): AddressInput {
   };
 }
 
+function stripeReturnUrl(orderNumber: string) {
+  return `${window.location.origin}/?order=${orderNumber}&session_id={CHECKOUT_SESSION_ID}`;
+}
+
+function stripePhoneNumber(order: Order) {
+  const phone = order.addresses.find((address) => address.type === "SHIPPING")?.phone?.trim();
+
+  if (!phone) {
+    return undefined;
+  }
+
+  const digits = phone.replace(/\D/g, "");
+
+  if (digits.length === 10) {
+    return `+1${digits}`;
+  }
+
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return `+${digits}`;
+  }
+
+  return phone;
+}
+
 export default function Home() {
   const [status, setStatus] = useState<ApiStatus>("checking");
   const [products, setProducts] = useState<Product[]>([]);
@@ -67,7 +95,7 @@ export default function Home() {
   const [billingAddress, setBillingAddress] = useState<AddressInput>(emptyAddress);
   const [billingSame, setBillingSame] = useState(true);
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
-  const [paymentClientSecret, setPaymentClientSecret] = useState<string | null>(null);
+  const [checkoutClientSecret, setCheckoutClientSecret] = useState<string | null>(null);
   const [orderLookup, setOrderLookup] = useState("");
   const [lookedUpOrder, setLookedUpOrder] = useState<Order | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -291,10 +319,13 @@ export default function Home() {
       });
 
       if (stripePromise) {
-        const paymentIntent = await createStripePaymentIntent(order.id);
-        setPaymentClientSecret(paymentIntent.clientSecret);
+        const checkoutSession = await createStripeCheckoutSession(
+          order.id,
+          stripeReturnUrl(order.orderNumber)
+        );
+        setCheckoutClientSecret(checkoutSession.clientSecret);
       } else {
-        setPaymentClientSecret(null);
+        setCheckoutClientSecret(null);
       }
 
       setLastOrder(order);
@@ -720,15 +751,26 @@ export default function Home() {
               </div>
             ) : null}
 
-            {lastOrder && paymentClientSecret && stripePromise ? (
-              <Elements
+            {lastOrder && checkoutClientSecret && stripePromise ? (
+              <CheckoutElementsProvider
                 stripe={stripePromise}
                 options={{
-                  clientSecret: paymentClientSecret
+                  clientSecret: checkoutClientSecret
                 }}
               >
-                <StripePaymentForm order={lastOrder} onError={setError} />
-              </Elements>
+                <StripePaymentForm
+                  order={lastOrder}
+                  onError={setError}
+                  onSubmitted={async () => {
+                    const refreshedOrder = await getOrder(lastOrder.orderNumber);
+                    setLastOrder(refreshedOrder);
+                    setLookedUpOrder(refreshedOrder);
+                    if (currentUser) {
+                      setMyOrders(await getMyOrders());
+                    }
+                  }}
+                />
+              </CheckoutElementsProvider>
             ) : lastOrder ? (
               <div className="empty-state compact">Stripe payment is not configured</div>
             ) : null}
@@ -802,20 +844,21 @@ export default function Home() {
 
 function StripePaymentForm({
   onError,
+  onSubmitted,
   order
 }: {
   onError: (message: string | null) => void;
+  onSubmitted: () => Promise<void>;
   order: Order;
 }) {
-  const elements = useElements();
-  const stripe = useStripe();
+  const checkoutState = useCheckoutElements();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   async function handlePayment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!stripe || !elements) {
+    if (checkoutState.type !== "success") {
       return;
     }
 
@@ -823,29 +866,33 @@ function StripePaymentForm({
     setMessage(null);
     onError(null);
 
-    const result = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/?order=${order.orderNumber}`
-      },
-      redirect: "if_required"
-    });
+    try {
+      const result = await checkoutState.checkout.confirm({
+        phoneNumber: stripePhoneNumber(order),
+        redirect: "if_required"
+      });
 
-    if (result.error) {
-      onError(result.error.message ?? "Payment failed");
-    } else {
-      setMessage("Payment submitted");
+      if (result.type === "error") {
+        onError(result.error.message ?? "Payment failed");
+      } else {
+        setMessage("Payment submitted");
+        await new Promise((resolve) => window.setTimeout(resolve, 1200));
+        await onSubmitted();
+      }
+    } catch (caught) {
+      onError(caught instanceof Error ? caught.message : "Payment failed");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
   }
 
   return (
     <form className="payment-form" onSubmit={handlePayment}>
       <PaymentElement />
-      <button type="submit" disabled={!stripe || !elements || isSubmitting}>
+      <button type="submit" disabled={checkoutState.type !== "success" || isSubmitting}>
         {isSubmitting ? "Paying" : `Pay ${formatMoney(order.total, order.currency)}`}
       </button>
+      {checkoutState.type === "error" ? <p className="error">{checkoutState.error.message}</p> : null}
       {message ? <p className="notice">{message}</p> : null}
     </form>
   );

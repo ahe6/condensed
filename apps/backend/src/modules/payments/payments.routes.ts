@@ -1,26 +1,29 @@
 import type { FastifyPluginAsync } from "fastify";
 import {
   createPaymentSchema,
+  createStripeCheckoutSessionSchema,
   orderIdParamsSchema,
   orderPaymentParamsSchema,
   paymentIdParamsSchema
 } from "./payments.schemas.js";
 import {
   createPayment,
-  createStripePaymentIntent,
+  createStripeCheckoutSession,
   handleStripeWebhook,
   markPaymentAuthorized,
   markPaymentFailed,
   markPaymentPaid,
-  refundPayment
+  refundPayment,
+  syncStripePayment
 } from "./payments.service.js";
 
 export const paymentsRoutes: FastifyPluginAsync = async (server) => {
-  server.post("/orders/:id/stripe-payment-intent", async (request, reply) => {
+  server.post("/orders/:id/stripe-checkout-session", async (request, reply) => {
     const { id } = orderIdParamsSchema.parse(request.params);
-    const paymentIntent = await createStripePaymentIntent(id);
+    const input = createStripeCheckoutSessionSchema.parse(request.body);
+    const checkoutSession = await createStripeCheckoutSession(id, input);
 
-    return reply.code(201).send(paymentIntent);
+    return reply.code(201).send(checkoutSession);
   });
 
   server.post("/webhooks/stripe", async (request) => {
@@ -59,5 +62,11 @@ export const paymentsRoutes: FastifyPluginAsync = async (server) => {
     const { id } = paymentIdParamsSchema.parse(request.params);
 
     return refundPayment(id);
+  });
+
+  server.post("/admin/payments/:id/sync-stripe", async (request) => {
+    const { id } = paymentIdParamsSchema.parse(request.params);
+
+    return syncStripePayment(id);
   });
 };

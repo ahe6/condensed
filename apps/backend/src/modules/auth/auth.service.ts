@@ -102,12 +102,21 @@ export async function listCurrentUserOrders(authorization: string | undefined) {
 }
 
 export async function requireAdmin(authorization: string | undefined) {
+  await getAdminIdentity(authorization);
+}
+
+export async function getAdminIdentity(authorization: string | undefined) {
   const claims = await verifyCognitoToken(authorization);
   const groups = claims["cognito:groups"] ?? [];
 
   if (!groups.includes("admin")) {
     throw new AuthError("Admin access required", 403);
   }
+
+  return {
+    email: claims.email?.toLowerCase() ?? null,
+    externalAuthId: claims.sub ?? null
+  };
 }
 
 async function verifyCognitoToken(authorization: string | undefined): Promise<CognitoClaims> {

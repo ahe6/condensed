@@ -33,7 +33,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -89,6 +90,13 @@ button.status-action.active:hover:not(:disabled) {
   background: var(--accent-strong);
 }
 
+button.status-action.active:disabled {
+  border-color: var(--border);
+  background: #eef1f5;
+  color: var(--muted);
+  opacity: 1;
+}
+
 .shell {
   width: min(1440px, calc(100% - 32px));
   margin: 0 auto;
@@ -132,6 +140,11 @@ button.status-action.active:hover:not(:disabled) {
   background: #eaf8f6;
 }
 
+.text-link {
+  color: var(--accent);
+  font-weight: 700;
+}
+
 .eyebrow,
 .metric span,
 label span,
@@ -139,7 +152,9 @@ label span,
 .cart-row span,
 .totals span,
 .order-confirmation span,
-.order-summary-heading span {
+.order-summary-heading span,
+.admin-detail-grid span,
+.order-meta dt {
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
@@ -228,7 +243,7 @@ h3 {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   align-items: start;
 }
@@ -321,7 +336,8 @@ label {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   min-height: 40px;
   padding: 9px 11px;
@@ -331,8 +347,14 @@ select {
   color: var(--text);
 }
 
+textarea {
+  min-height: 86px;
+  resize: vertical;
+}
+
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   border-color: var(--accent);
   outline: 3px solid rgba(15, 118, 110, 0.14);
 }
@@ -479,6 +501,7 @@ output {
 .order-summary,
 .empty-state,
 .error,
+.warning,
 .notice {
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -510,8 +533,220 @@ output {
   gap: 14px;
 }
 
+.admin-order-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-order-tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.admin-order-search {
+  grid-column: span 2;
+}
+
+.admin-order-list-summary,
+.pagination-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.admin-order-list-summary {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-order-row {
+  display: grid;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.admin-order-row-trigger {
+  display: grid;
+  gap: 9px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.admin-order-row:hover,
+.admin-order-row.selected {
+  border-color: var(--accent);
+}
+
+.admin-order-row-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-order-row-main div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.admin-order-row-main strong,
+.admin-order-row-main span,
+.admin-order-row-main small,
+.admin-order-row-meta span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-order-row-main span,
+.admin-order-row-main small,
+.admin-order-row-meta {
+  color: var(--muted);
+}
+
+.admin-order-row-main small,
+.admin-order-row-meta {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-order-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 12px;
+}
+
+.admin-order-expanded {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.admin-order-expanded .order-summary {
+  margin-top: 0;
+  padding: 0;
+}
+
+.admin-order-expanded .admin-detail-grid {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.admin-work-section {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.admin-work-section .panel-heading {
+  margin-bottom: 0;
+}
+
+.note-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.note-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.note-list li {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.timeline-list li {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.note-list div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.timeline-list div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.timeline-list span {
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.timeline-list strong {
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+
+.note-list p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.timeline-list p {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.pagination-controls button {
+  min-width: 108px;
+}
+
 .payment-list,
-.shipment-list {
+.shipment-list,
+.history-stack,
+.status-event-list {
   display: grid;
   gap: 10px;
 }
@@ -533,6 +768,13 @@ output {
   gap: 14px;
 }
 
+.shipment-row-heading a,
+.shipment-summary-list a {
+  color: var(--accent);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
 .payment-row-heading div,
 .shipment-row-heading div {
   display: grid;
@@ -550,7 +792,7 @@ output {
 .payment-controls,
 .shipment-controls {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
   gap: 8px;
 }
 
@@ -558,6 +800,73 @@ output {
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
+}
+
+.order-meta,
+.admin-detail-grid {
+  display: grid;
+  gap: 9px;
+}
+
+.order-meta {
+  margin: 0;
+}
+
+.order-meta.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.order-meta div,
+.admin-detail-grid div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.order-meta dd,
+.admin-detail-grid strong,
+.admin-detail-grid small {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+
+.admin-detail-grid small {
+  color: var(--muted);
+}
+
+.admin-detail-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.status-event-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.status-event-list li {
+  display: grid;
+  gap: 3px;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.status-event-list span,
+.status-event-list small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.status-event-list strong {
+  font-size: 13px;
 }
 
 .pill.placed,
@@ -572,7 +881,8 @@ output {
 .pill.failed,
 .pill.cancelled,
 .pill.refunded,
-.pill.returned {
+.pill.returned,
+.pill.disputed {
   border-color: #f4b6ad;
   background: #fff1f0;
   color: var(--bad);
@@ -586,9 +896,27 @@ output {
   color: var(--warn);
 }
 
-.order-lines {
+.order-lines,
+.shipment-summary-list {
   display: grid;
   gap: 8px;
+}
+
+.shipment-summary-list {
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.shipment-summary-list div {
+  display: grid;
+  gap: 4px;
+}
+
+.shipment-summary-list span,
+.shipment-summary-list small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .account-panel {
@@ -642,6 +970,15 @@ output {
   font-weight: 700;
 }
 
+.warning {
+  padding: 11px 12px;
+  border-color: #f6d6a5;
+  background: #fff8eb;
+  color: var(--warn);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .global-error {
   margin-bottom: 16px;
 }
@@ -672,6 +1009,7 @@ output {
   .nav-actions,
   .product-action,
   .order-summary-heading,
+  .admin-order-row-main,
   .payment-row-heading,
   .shipment-row-heading {
     align-items: stretch;
@@ -680,8 +1018,16 @@ output {
 
   .side-stack,
   .form-grid,
-  .form-grid.thirds {
+  .form-grid.thirds,
+  .admin-order-tools,
+  .note-composer,
+  .admin-detail-grid,
+  .order-meta.compact {
     grid-template-columns: 1fr;
+  }
+
+  .admin-order-search {
+    grid-column: auto;
   }
 
   .quantity-control {
