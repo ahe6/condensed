@@ -113,6 +113,14 @@ To delete a throwaway Cognito dev user and start over:
 make dev-auth-delete-user EMAIL=user@example.com
 ```
 
+To grant admin access to a Cognito dev user:
+
+```sh
+make dev-auth-add-admin EMAIL=user@example.com
+```
+
+The user must sign out and sign back in after group membership changes.
+
 ## Push Backend Image To AWS
 
 ```sh

@@ -81,3 +81,9 @@ resource "aws_cognito_user_pool_client" "frontend" {
     refresh_token = "days"
   }
 }
+
+resource "aws_cognito_user_group" "admin" {
+  name         = "admin"
+  description  = "Administrators allowed to use backend admin routes."
+  user_pool_id = aws_cognito_user_pool.main.id
+}

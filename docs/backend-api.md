@@ -47,7 +47,7 @@ Route files should stay thin: parse input, call a service, and shape the HTTP re
 
 `apps/backend/src/server.ts` owns shared Fastify setup, CORS, health/readiness routes, error handling, and module registration.
 
-All `/admin/*` routes are intentionally unauthenticated for local development. Add authentication and authorization before exposing them publicly.
+All `/admin/*` routes require a valid Cognito ID token with membership in the `admin` group.
 
 Authenticated customer routes expect a Cognito ID token in the `Authorization: Bearer <token>` header.
 

@@ -51,6 +51,7 @@ Current responsibilities:
 
 - Verify Cognito ID tokens
 - Upsert or link local users by Cognito subject and email
+- Require Cognito `admin` group membership for backend admin routes
 - Return the current account profile
 - Return the current user's order history
 
@@ -60,6 +61,8 @@ Current routes:
 - `GET /me/orders`
 
 Checkout accepts the same bearer token and links the created order to the authenticated user when one is present.
+
+Backend `/admin/*` routes are protected by a global Fastify pre-handler in `server.ts`.
 
 ### Users
 
@@ -87,7 +90,7 @@ Current responsibilities:
 - List public active products
 - Get product by slug
 - List categories
-- Create/update products through dev-admin routes
+- Create/update products through admin routes
 - Publish/archive products
 - Create/update variants
 - Set variant inventory
@@ -141,9 +144,9 @@ Inventory changes and order creation happen in a Prisma transaction.
 Current responsibilities:
 
 - Get one order by order number
-- List all orders through a dev-admin route
-- Mark an order placed through a controlled dev-admin route
-- Cancel an order through a controlled dev-admin route
+- List all orders through an admin route
+- Mark an order placed through a controlled admin route
+- Cancel an order through a controlled admin route
 
 Current routes:
 

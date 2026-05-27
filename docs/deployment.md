@@ -72,6 +72,7 @@ Terraform creates Cognito auth resources in both full and auth-only modes:
 - User pool
 - Hosted UI domain
 - Public frontend app client using authorization code flow with PKCE
+- `admin` user group for backend admin access
 
 Useful outputs:
 

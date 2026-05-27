@@ -144,6 +144,7 @@ Terraform always creates Cognito resources, including in auth-only mode:
 - Cognito user pool: `tele-dev`
 - Cognito Hosted UI domain using the AWS account ID for uniqueness
 - Public app client for the Next.js frontend
+- `admin` user group for backend admin access
 - Link-based email confirmation for new signups
 - OAuth authorization code flow with PKCE
 - Local callback URLs:

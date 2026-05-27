@@ -4,6 +4,7 @@ import { prisma } from "../../prisma.js";
 import { orderInclude } from "../orders/orders.service.js";
 
 type CognitoClaims = {
+  "cognito:groups"?: string[];
   sub?: string;
   email?: string;
   name?: string;
@@ -98,6 +99,15 @@ export async function listCurrentUserOrders(authorization: string | undefined) {
       createdAt: "desc"
     }
   });
+}
+
+export async function requireAdmin(authorization: string | undefined) {
+  const claims = await verifyCognitoToken(authorization);
+  const groups = claims["cognito:groups"] ?? [];
+
+  if (!groups.includes("admin")) {
+    throw new AuthError("Admin access required", 403);
+  }
 }
 
 async function verifyCognitoToken(authorization: string | undefined): Promise<CognitoClaims> {

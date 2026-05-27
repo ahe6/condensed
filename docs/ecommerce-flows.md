@@ -89,7 +89,7 @@ Current shipment records are order-level. Marking a shipment shipped or delivere
 
 ## Design Rules
 
-Admin routes are dev-only until authentication and authorization exist.
+Admin routes require a Cognito ID token with membership in the `admin` group.
 
 Order items snapshot product name, variant title, SKU, unit price, quantity, and total.
 
@@ -105,6 +105,5 @@ Local database records are disposable during early development unless we add see
 
 Recommended sequence:
 
-1. Add authentication and authorization before exposing admin routes outside local development.
-2. Add provider webhook handlers when a real payment provider is chosen.
-3. Add fulfillment quantity support if orders need split or partial shipments.
+1. Add provider webhook handlers when a real payment provider is chosen.
+2. Add fulfillment quantity support if orders need split or partial shipments.

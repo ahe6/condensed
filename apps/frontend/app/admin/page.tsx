@@ -21,6 +21,7 @@ import {
   refundPayment,
   updateShipmentTracking
 } from "../../src/lib/api";
+import { getSession, isAuthConfigured, signOut, startLogin } from "../../src/lib/auth";
 import { actionButtonClass, formatMoney } from "../../src/lib/format";
 
 export default function AdminPage() {
@@ -32,6 +33,7 @@ export default function AdminPage() {
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [hasSession, setHasSession] = useState(false);
 
   const selectedAdminOrder =
     adminOrders.find((order) => order.id === selectedAdminOrderId) ?? adminOrders[0] ?? null;
@@ -41,6 +43,15 @@ export default function AdminPage() {
 
     async function load() {
       try {
+        const session = isAuthConfigured() ? getSession() : null;
+        setHasSession(Boolean(session));
+
+        if (isAuthConfigured() && !session) {
+          setStatus("offline");
+          setError("Sign in with an admin account");
+          return;
+        }
+
         await getReadiness();
         const orders = await listAdminOrders();
 
@@ -214,6 +225,17 @@ export default function AdminPage() {
           <Link className="nav-link" href="/">
             Shop
           </Link>
+          {isAuthConfigured() ? (
+            hasSession ? (
+              <button className="secondary" type="button" onClick={signOut}>
+                Sign Out
+              </button>
+            ) : (
+              <button className="secondary" type="button" onClick={() => void startLogin()}>
+                Sign In
+              </button>
+            )
+          ) : null}
           <div className={`status ${status}`}>
             <span aria-hidden="true" />
             {status}
@@ -243,7 +265,12 @@ export default function AdminPage() {
       {error ? <p className="error global-error">{error}</p> : null}
       {notice ? <p className="notice global-error">{notice}</p> : null}
 
-      <section className="workspace">
+      {isAuthConfigured() && !hasSession ? (
+        <section className="panel admin-panel">
+          <div className="empty-state compact">Sign in with an admin account to manage orders</div>
+        </section>
+      ) : (
+        <section className="workspace">
         <section className="catalog" aria-label="Orders">
           <section className="panel admin-panel">
             <div className="panel-heading">
@@ -456,6 +483,7 @@ export default function AdminPage() {
           </section>
         </aside>
       </section>
+      )}
     </main>
   );
 }

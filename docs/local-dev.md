@@ -119,6 +119,14 @@ Delete throwaway Cognito dev users with:
 make dev-auth-delete-user EMAIL=user@example.com
 ```
 
+Grant backend admin access to a signed-up Cognito user with:
+
+```sh
+make dev-auth-add-admin EMAIL=user@example.com
+```
+
+Sign out and sign back in after changing group membership so Cognito issues a fresh ID token with the `admin` group claim.
+
 Current frontend scope:
 
 Shop route at `/`:
@@ -137,6 +145,7 @@ Admin route at `/admin`:
 - Lists recent admin orders through `GET /admin/orders`.
 - Creates manual payments and marks them authorized, paid, failed, or refunded.
 - Creates shipments, updates tracking, and marks shipments shipped, delivered, or returned.
+- Requires a signed-in Cognito user in the `admin` group.
 - Runs on port `3001`.
 
 ## Useful Endpoints
@@ -148,7 +157,7 @@ Admin route at `/admin`:
 - `POST /carts`, `GET /carts/:id`, `POST /carts/:id/items`: cart flow
 - `POST /checkout`: convert a cart into an order
 - `GET /orders/:orderNumber`: customer order lookup
-- `/admin/*`: dev-only catalog, order, payment, and shipment routes
+- `/admin/*`: admin catalog, order, payment, and shipment routes
 
 See [Backend API](backend-api.md) for the full route reference.
 

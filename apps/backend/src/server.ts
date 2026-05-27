@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import Fastify from "fastify";
 import { ZodError } from "zod";
 import { authRoutes } from "./modules/auth/auth.routes.js";
-import { AuthError } from "./modules/auth/auth.service.js";
+import { AuthError, requireAdmin } from "./modules/auth/auth.service.js";
 import { cartsRoutes } from "./modules/carts/carts.routes.js";
 import { catalogRoutes } from "./modules/catalog/catalog.routes.js";
 import { CheckoutError } from "./modules/checkout/checkout.service.js";
@@ -92,6 +92,12 @@ export function buildServer() {
     return {
       ok: true
     };
+  });
+
+  server.addHook("preHandler", async (request) => {
+    if (request.url.startsWith("/admin/")) {
+      await requireAdmin(request.headers.authorization);
+    }
   });
 
   server.register(authRoutes);
