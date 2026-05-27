@@ -1,8 +1,8 @@
-# Backend API
+# API
 
 The backend is a Fastify app in `apps/backend`.
 
-Backend module conventions live in [Backend Architecture](backend-architecture.md). Business flows live in [Ecommerce Flows](ecommerce-flows.md).
+Backend module conventions live in [Backend](backend.md). Business flows live in [Flows](flows.md). Fulfillment workflow details live in [Fulfillment](fulfillment.md).
 
 ## Structure
 
@@ -364,38 +364,80 @@ GET  /orders/:orderNumber
 GET  /admin/orders
 POST /admin/orders/:id/place
 POST /admin/orders/:id/cancel
+POST /admin/orders/:id/notes
 ```
 
 `GET /orders/:orderNumber` returns one order by its human-facing order number.
 
-`GET /admin/orders` returns all orders newest first.
+`GET /admin/orders` returns a paged admin order result:
+
+```json
+{
+  "orders": [],
+  "total": 24,
+  "page": 1,
+  "pageSize": 5,
+  "pageCount": 5
+}
+```
+
+Supported query params:
+
+- `search`: order number, customer email/name, item name, SKU, note text/author, or status text
+- `payment`: `ALL`, `UNPAID`, `AUTHORIZED`, `PAID`, `FAILED`, `REFUNDED`, or `DISPUTED`
+- `fulfillment`: `ALL`, `UNFULFILLED`, `PARTIAL`, `FULFILLED`, or `RETURNED`
+- `dateField`: `ANY`, `ORDER_CREATED`, `ORDER_PLACED`, `ORDER_UPDATED`, `SHIPMENT_CREATED`, `SHIPMENT_SHIPPED`, or `SHIPMENT_DELIVERED`
+- `dateFrom` / `dateTo`: `YYYY-MM-DD`
+- `sort`: `CREATED_DESC`, `CREATED_ASC`, `UPDATED_DESC`, `PLACED_DESC`, `SHIPPED_DESC`, `DELIVERED_DESC`, `TOTAL_DESC`, or `TOTAL_ASC`
+- `page` and `pageSize`
+
+The backend applies admin order matching, counting, sorting, and pagination in SQL, then fetches the selected page of order records with admin-only relations.
 
 `POST /admin/orders/:id/place` marks an order as `PLACED` and sets `placedAt`.
 
 `POST /admin/orders/:id/cancel` marks an order as `CANCELLED`.
+
+`POST /admin/orders/:id/notes` creates an internal admin-only note:
+
+```json
+{
+  "body": "Customer asked us to confirm shipping address before label purchase."
+}
+```
+
+The backend stores the signed-in admin email when available from Cognito. Notes are returned by admin order responses and are not included in public order lookup or customer order history.
 
 Order status changes use explicit routes so callers cannot arbitrarily patch order state.
 
 ## Payments
 
 ```text
-POST /orders/:id/stripe-payment-intent
+POST /orders/:id/stripe-checkout-session
 POST /admin/orders/:id/payments
 POST /admin/payments/:id/authorize
 POST /admin/payments/:id/pay
 POST /admin/payments/:id/fail
 POST /admin/payments/:id/refund
+POST /admin/payments/:id/sync-stripe
 POST /webhooks/stripe
 ```
 
-`POST /orders/:id/stripe-payment-intent` creates or reuses a Stripe PaymentIntent for an order and records a local `payments` row with provider `stripe`.
+`POST /orders/:id/stripe-checkout-session` creates or reuses a card-only Stripe Checkout Session with `ui_mode: "elements"` for an order and records a local `payments` row with provider `stripe`. The session uses the order email as `customer_email` and enables phone collection, so the frontend confirms checkout with the shipping phone number.
+
+Request:
+
+```json
+{
+  "returnUrl": "http://localhost:3001/?order=TELE-123456&session_id={CHECKOUT_SESSION_ID}"
+}
+```
 
 Response:
 
 ```json
 {
-  "clientSecret": "pi_...",
-  "paymentIntentId": "pi_...",
+  "clientSecret": "cs_...",
+  "checkoutSessionId": "cs_...",
   "payment": {}
 }
 ```
@@ -420,12 +462,21 @@ Payment status routes update the payment and the parent order `paymentStatus` in
 - `fail` sets both to `FAILED`
 - `refund` sets both to `REFUNDED`
 
+`POST /admin/payments/:id/sync-stripe` retrieves the current Checkout Session or PaymentIntent from Stripe and updates the local payment plus parent order. It stores Stripe details such as `paymentIntentId`, `chargeId`, Stripe status, and dispute flags in payment metadata. It only supports payments whose provider is `stripe`.
+
+Payment responses include `statusEvents`, an ordered audit trail of payment status changes. Admin manual actions, Stripe webhooks, and admin Stripe sync write status event rows when they change payment status.
+
 `POST /webhooks/stripe` verifies the Stripe signature when `STRIPE_WEBHOOK_SECRET` is configured and updates local payment/order status for:
 
+- `checkout.session.completed` -> `PAID` when Stripe reports paid or no payment required
+- `checkout.session.async_payment_succeeded` -> `PAID`
+- `checkout.session.async_payment_failed` -> `FAILED`
+- `checkout.session.expired` -> `FAILED`
 - `payment_intent.succeeded` -> `PAID`
 - `payment_intent.payment_failed` -> `FAILED`
 - `payment_intent.canceled` -> `FAILED`
 - `payment_intent.amount_capturable_updated` -> `AUTHORIZED`
+- `charge.dispute.created`, `charge.dispute.updated`, `charge.dispute.closed` -> `DISPUTED`, or `PAID` if Stripe reports the dispute was won
 
 ## Shipments
 
@@ -448,6 +499,8 @@ POST  /admin/shipments/:id/return
 
 Both fields are optional when creating a shipment, because fulfillment may be staged before a label exists.
 
+Shipment creation requires the parent order payment status to be `PAID` or `AUTHORIZED`.
+
 `PATCH /admin/shipments/:id/tracking` accepts at least one tracking field:
 
 ```json
@@ -457,11 +510,20 @@ Both fields are optional when creating a shipment, because fulfillment may be st
 }
 ```
 
+Carrier and tracking fields are stored as raw values. The frontend derives public tracking links for UPS, USPS, FedEx, and DHL; no carrier API lookup is performed.
+Tracking updates overwrite the stored carrier/tracking values, which lets admins correct an incorrectly entered tracking number. Changes are also written to `shipment_tracking_events`, so the current shipment row stays simple while admin can still audit old carrier/tracking values.
+
 Shipment status routes update the shipment and the parent order `fulfillmentStatus` in one transaction:
 
 - `ship` sets shipment status to `SHIPPED`, sets `shippedAt`, and marks the order `FULFILLED`
 - `deliver` sets shipment status to `DELIVERED`, sets `deliveredAt`, and keeps the order `FULFILLED`
 - `return` sets shipment status to `RETURNED` and marks the order `RETURNED`
+
+The `ship` and `deliver` actions require payment status `PAID` or `AUTHORIZED`. Returned shipment status can still be set for existing shipments so admin can clean up already-shipped orders.
+
+Shipment responses include `statusEvents`, an ordered audit trail of shipment status changes, and `trackingEvents`, an ordered audit trail of carrier/tracking changes.
+
+See [Fulfillment](fulfillment.md) for operator workflow, tracking links, and current limitations.
 
 ## Error Handling
 

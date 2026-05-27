@@ -35,13 +35,28 @@ curl -s http://127.0.0.1:3000/ready
 
 ## Test Stripe Webhooks Locally
 
-Run the backend, then forward Stripe webhook events:
+Put Stripe test keys in `.env.test`, then sync them and forward Stripe webhook events:
 
 ```sh
+make dev-test-env
 stripe listen --forward-to http://127.0.0.1:3000/webhooks/stripe
 ```
 
-Put the printed `whsec_...` value in `STRIPE_WEBHOOK_SECRET`, then restart the backend.
+Put the printed `whsec_...` value in `.env.test` as `STRIPE_WEBHOOK_SECRET`, run `make dev-test-env` again, then restart the backend. Checkout payments use Checkout Session webhooks such as `checkout.session.completed`; the Stripe CLI forwards those during local testing.
+
+See [Payments](payments.md) for test cards, admin Stripe sync, dispute behavior, and the current refund caveat.
+
+## Run Stripe Checkout Smoke Test
+
+With Postgres, backend, frontend, and `stripe listen` running, run:
+
+```sh
+npm run test:stripe-checkout
+```
+
+This opens the local shop in installed Chrome, creates a dev mug order, fills Stripe's test card, submits payment, and polls the backend order API until `paymentStatus` is `PAID`.
+
+The command restocks `dev-mug` to 25 units before running so repeated smoke tests do not fail from local inventory depletion.
 
 ## Reset Local Database
 

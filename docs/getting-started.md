@@ -1,4 +1,4 @@
-# Local Development
+# Getting Started
 
 Local development uses Docker Postgres, the Fastify backend, and the Next.js frontend.
 
@@ -13,7 +13,7 @@ Local development uses Docker Postgres, the Fastify backend, and the Next.js fro
 
 Local URLs:
 
-- Backend API: `http://127.0.0.1:3000`
+- API: `http://127.0.0.1:3000`
 - Shop frontend: `http://localhost:3001`
 - Admin frontend: `http://localhost:3001/admin`
 - Postgres: `127.0.0.1:5432`
@@ -82,9 +82,17 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 STRIPE_WEBHOOK_SECRET
 ```
 
-Use Stripe test keys for local development. `STRIPE_WEBHOOK_SECRET` is only required when testing Stripe webhooks.
+Use Stripe test keys for local development. Keep them in `.env.test` if `.env` has live-mode values. `STRIPE_API_KEY` is the secret backend key, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` is the browser key, and `STRIPE_WEBHOOK_SECRET` is the local Stripe CLI signing secret. Sync `.env.test` into the app-local env files with:
 
-The webhook secret should start with `whsec_`. The publishable browser key should start with `pk_` and use `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
+```sh
+make dev-test-env
+```
+
+`STRIPE_WEBHOOK_SECRET` is only required when testing Stripe webhooks.
+
+The backend API key should start with `sk_test_`. The webhook secret should start with `whsec_`. The publishable browser key should start with `pk_test_` and use `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
+
+Local Stripe checkout uses Checkout Sessions with Checkout Elements. The frontend creates a local order first, then requests `POST /orders/:id/stripe-checkout-session` and confirms the session in the browser. Webhooks are still the normal source of truth for marking the order paid. See [Payments](payments.md) for the full Stripe checkout, webhook, sync, dispute, and refund behavior.
 
 Current frontend scope:
 
@@ -102,11 +110,20 @@ Shop route at `/`:
 Admin route at `/admin`:
 
 - Is opened directly; the public shop nav does not link to it.
-- Lists recent admin orders through `GET /admin/orders`.
+- Lists, searches, filters, sorts, and pages admin orders through SQL-backed `GET /admin/orders`.
+- Adds internal admin-only notes to orders.
+- Shows a combined order timeline with order, note, payment, fulfillment, and tracking activity.
 - Creates manual payments and marks them authorized, paid, failed, or refunded.
+- Syncs Stripe payment status from Stripe for Stripe payments.
 - Creates shipments, updates tracking, and marks shipments shipped, delivered, or returned.
+- Blocks shipment creation, shipped, and delivered actions unless payment is `PAID` or `AUTHORIZED`.
+- Keeps detailed payment and shipment audit history folded behind per-record history controls.
+- Shows public tracking links for UPS, USPS, FedEx, and DHL when carrier and tracking number are available.
+- Allows admins to overwrite carrier/tracking values from each shipment row if tracking was entered incorrectly, with changes recorded in shipment tracking history.
 - Requires a signed-in Cognito user in the `admin` group.
 - Runs on port `3001`.
+
+See [Fulfillment](fulfillment.md) for shipment guardrails, tracking links, and fulfillment history.
 
 ## Useful Endpoints
 
@@ -119,7 +136,7 @@ Admin route at `/admin`:
 - `GET /orders/:orderNumber`: customer order lookup
 - `/admin/*`: admin catalog, order, payment, and shipment routes
 
-See [Backend API](backend-api.md) for the full route reference.
+See [API](api.md) for the full route reference.
 
 ## Checks And Builds
 
@@ -129,6 +146,15 @@ npm run backend:build
 npm run frontend:check
 npm run frontend:build
 ```
+
+Run a full local Stripe checkout smoke test after starting Postgres, backend, frontend, and `stripe listen`:
+
+```sh
+npm run test:stripe-checkout
+```
+
+The smoke test restocks `dev-mug` locally before creating an order.
+It uses installed Google Chrome through Playwright, so no Playwright browser download is required.
 
 ## Local Containers
 

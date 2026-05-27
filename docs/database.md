@@ -1,6 +1,6 @@
-# Database Schema
+# Database
 
-The Prisma schema lives at `apps/backend/prisma/schema.prisma`. Prisma migrations in `apps/backend/prisma/migrations` are the source of truth for database changes.
+The Prisma schema lives at `apps/backend/prisma/schema.prisma`. Prisma migrations in `apps/backend/prisma/migrations` are the source of truth for database changes. Fulfillment workflow behavior lives in [Fulfillment](fulfillment.md).
 
 ## Current Scope
 
@@ -116,7 +116,7 @@ Important fields:
 - `orderNumber`: unique human-facing order identifier
 - `email`: order contact email
 - `status`: `PENDING`, `PLACED`, `CANCELLED`, or `REFUNDED`
-- `paymentStatus`: `UNPAID`, `AUTHORIZED`, `PAID`, `FAILED`, or `REFUNDED`
+- `paymentStatus`: `UNPAID`, `AUTHORIZED`, `PAID`, `FAILED`, `REFUNDED`, or `DISPUTED`
 - `fulfillmentStatus`: `UNFULFILLED`, `PARTIAL`, `FULFILLED`, or `RETURNED`
 - `subtotal`, `discountTotal`, `shippingTotal`, `taxTotal`, `total`
 - `placedAt`
@@ -146,6 +146,21 @@ Important fields:
 
 Order items keep nullable links to `products` and `product_variants`, but the copied fields preserve the order history if catalog records change later.
 
+### `order_notes`
+
+Admin-only internal notes attached to an order.
+
+Important fields:
+
+- `orderId`
+- `body`
+- `authorEmail`
+- `createdAt`
+
+Notes are included in admin order responses only. Public order lookup and customer order history do not include internal notes.
+
+Admin order search includes note body and author email.
+
 ## Payments
 
 ### `payments`
@@ -164,7 +179,26 @@ Important fields:
 
 The pair `provider + providerPaymentId` is unique when a provider payment ID exists.
 
-Current backend payment routes support provider-agnostic manual payments and Stripe PaymentIntent records. Marking a payment `AUTHORIZED`, `PAID`, `FAILED`, or `REFUNDED` also updates the parent order `paymentStatus` in the same transaction. Stripe webhooks apply the same status updates for Stripe-created payments.
+Current backend payment routes support provider-agnostic manual payments and Stripe Checkout Session records. Stripe payments store the Checkout Session ID in `providerPaymentId` and provider details in `metadata`, including synced `paymentIntentId`, `chargeId`, Stripe status, and dispute fields when available. Marking a payment `AUTHORIZED`, `PAID`, `FAILED`, `REFUNDED`, or `DISPUTED` also updates the parent order `paymentStatus` in the same transaction. Stripe webhooks and the admin Stripe sync action apply the same status updates for Stripe-created payments.
+
+### `payment_status_events`
+
+Append-only history of payment status transitions.
+
+Important fields:
+
+- `paymentId`
+- `orderId`
+- `fromStatus`
+- `toStatus`
+- `source`: `SYSTEM`, `ADMIN_MANUAL`, `ADMIN_SYNC`, or `STRIPE_WEBHOOK`
+- `providerEventId`: Stripe webhook event ID when available
+- `providerObjectId`: provider-side object ID such as a Checkout Session, PaymentIntent, Charge, or Dispute ID
+- `reason`
+- `metadata`
+- `createdAt`
+
+Existing payments were backfilled with one `SYSTEM` event that records their current status at migration time.
 
 ## Fulfillment
 
@@ -181,6 +215,44 @@ Important fields:
 - `deliveredAt`
 
 Current shipment records are order-level, not line-item-level. Marking a shipment shipped or delivered marks the parent order `FULFILLED`; marking a shipment returned marks the parent order `RETURNED`. Add shipment line items before using `PARTIAL` fulfillment for split shipments.
+
+Shipment creation plus shipped/delivered transitions require the parent order payment status to be `PAID` or `AUTHORIZED`. This prevents fulfillment on unpaid, failed, disputed, or refunded orders.
+
+### `shipment_status_events`
+
+Append-only history of shipment status transitions.
+
+Important fields:
+
+- `shipmentId`
+- `orderId`
+- `fromStatus`
+- `toStatus`
+- `source`: `SYSTEM` or `ADMIN_MANUAL`
+- `reason`
+- `metadata`
+- `createdAt`
+
+Existing shipments were backfilled with one `SYSTEM` event that records their current status at migration time. New shipment creation and shipment status changes write admin manual events.
+
+### `shipment_tracking_events`
+
+Append-only history of shipment carrier and tracking number changes.
+
+Important fields:
+
+- `shipmentId`
+- `orderId`
+- `fromCarrier`
+- `toCarrier`
+- `fromTrackingNumber`
+- `toTrackingNumber`
+- `source`: `SYSTEM` or `ADMIN_MANUAL`
+- `reason`
+- `metadata`
+- `createdAt`
+
+Existing shipments with carrier or tracking values were backfilled with one `SYSTEM` event that records their current tracking details at migration time. New shipment creation with tracking details and later tracking edits write admin manual events.
 
 ## Design Decisions
 

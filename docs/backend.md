@@ -1,6 +1,6 @@
-# Backend Architecture
+# Backend
 
-This doc describes how backend code should be organized. Endpoint details live in [Backend API](backend-api.md), ecommerce process details live in [Ecommerce Flows](ecommerce-flows.md), and database table details live in [Database Schema](database-schema.md).
+This doc describes how backend code should be organized. Endpoint details live in [API](api.md), ecommerce process details live in [Flows](flows.md), fulfillment details live in [Fulfillment](fulfillment.md), and database table details live in [Database](database.md).
 
 ## Request Flow
 
@@ -154,6 +154,13 @@ Current routes:
 - `GET /admin/orders`
 - `POST /admin/orders/:id/place`
 - `POST /admin/orders/:id/cancel`
+- `POST /admin/orders/:id/notes`
+
+The admin order list accepts search, payment/fulfillment filters, event date ranges, sort, page, and page size query params. The backend uses SQL for matching, counting, ranking, and pagination, then fetches the selected order rows with their admin relations for the response envelope. Search includes order fields, customer names, line items, SKUs, note bodies/authors, and status text.
+
+Admin notes are internal order records. They are included only in admin order responses and store the signed-in admin email when Cognito provides it.
+
+The admin frontend builds a combined order timeline from the admin order response. Timeline rows include order creation/placement, notes, payment status events, shipment status events, and tracking changes. Detailed payment and shipment histories remain available behind folded per-record history controls.
 
 Admin order status changes should be explicit service functions, not arbitrary patch objects, so state transitions stay controlled.
 
@@ -161,9 +168,9 @@ Admin order status changes should be explicit service functions, not arbitrary p
 
 Current responsibilities:
 
-- Create Stripe PaymentIntents for orders
-- Handle Stripe PaymentIntent webhook status updates
-- Support Stripe Elements from the frontend checkout
+- Create Stripe Checkout Sessions for orders
+- Handle Stripe Checkout Session webhook status updates
+- Support Checkout Elements from the frontend checkout
 - Record provider-agnostic payment attempts
 - Mark payments authorized
 - Mark payments paid
@@ -173,7 +180,7 @@ Current responsibilities:
 
 Current routes:
 
-- `POST /orders/:id/stripe-payment-intent`
+- `POST /orders/:id/stripe-checkout-session`
 - `POST /admin/orders/:id/payments`
 - `POST /admin/payments/:id/authorize`
 - `POST /admin/payments/:id/pay`
@@ -183,7 +190,7 @@ Current routes:
 
 Main service functions:
 
-- `createStripePaymentIntent`
+- `createStripeCheckoutSession`
 - `handleStripeWebhook`
 - `createPayment`
 - `markPaymentAuthorized`
@@ -191,7 +198,7 @@ Main service functions:
 - `markPaymentFailed`
 - `refundPayment`
 
-Payment status changes happen in a Prisma transaction with the parent order update. Stripe webhooks update the local Stripe payment row and parent order status from PaymentIntent events.
+Payment status changes happen in a Prisma transaction with the parent order update. Stripe webhooks update the local Stripe payment row and parent order status from Checkout Session events. PaymentIntent events are still handled for older local payment rows.
 
 ### Shipments
 
@@ -221,3 +228,11 @@ Main service functions:
 - `markShipmentReturned`
 
 Shipment status changes happen in a Prisma transaction with the parent order update.
+
+Shipment creation plus shipped/delivered transitions are guarded by payment status. The backend only allows fulfillment when the order is `PAID` or `AUTHORIZED`; existing shipments can still be marked returned.
+
+Shipment creation and status changes write `shipment_status_events` rows for admin history.
+
+Tracking creation and edits write `shipment_tracking_events` rows when carrier or tracking number values are present and actually change.
+
+See [Fulfillment](fulfillment.md) for the full shipment workflow and tracking-link behavior.

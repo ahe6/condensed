@@ -143,7 +143,19 @@ Frontend Stripe Elements needs:
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 ```
 
-The webhook secret should start with `whsec_`. The frontend publishable key should start with `pk_`.
+Use test keys for local/dev testing and live keys only for production. The backend API key should start with `sk_`, the webhook secret should start with `whsec_`, and the frontend publishable key should start with `pk_`.
+
+Stripe checkout uses Checkout Sessions with Checkout Elements. Configure deployed webhook endpoints to send:
+
+- `checkout.session.completed`
+- `checkout.session.async_payment_succeeded`
+- `checkout.session.async_payment_failed`
+- `checkout.session.expired`
+- `charge.dispute.created`
+- `charge.dispute.updated`
+- `charge.dispute.closed`
+
+PaymentIntent events can stay enabled for backwards compatibility with older local payment rows, but new checkout payments are reconciled from Checkout Session events. See [Payments](payments.md) for the full payment, webhook, sync, dispute, and refund behavior.
 
 For local webhook testing, use the Stripe CLI to forward events to:
 

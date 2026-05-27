@@ -1,6 +1,6 @@
-# Ecommerce Flows
+# Flows
 
-This doc describes how ecommerce information moves through the backend. Code organization lives in [Backend Architecture](backend-architecture.md), endpoint details live in [Backend API](backend-api.md), and database table details live in [Database Schema](database-schema.md).
+This doc describes how ecommerce information moves through the backend. Code organization lives in [Backend](backend.md), endpoint details live in [API](api.md), fulfillment details live in [Fulfillment](fulfillment.md), and database table details live in [Database](database.md).
 
 ## Catalog Management
 
@@ -64,10 +64,14 @@ client requests order by order number
 
 Admin order status changes should use explicit service functions and routes, not arbitrary patch objects.
 
+The admin order list is queried through SQL-backed search, filters, sorting, and pagination. Admin search covers order fields, customer names, line items, SKUs, status text, and internal notes.
+
+Expanded admin orders include an internal timeline built from order creation/placement, admin notes, payment status events, shipment status events, and shipment tracking changes. Detailed payment and fulfillment histories stay folded until an admin opens the relevant history control.
+
 ## Payment Update
 
 ```text
-Stripe PaymentIntent or admin action updates payment
+Stripe Checkout Session webhook or admin action updates payment
 backend records payment state
 backend updates order payment status
 ```
@@ -86,6 +90,14 @@ backend updates order fulfillment status
 ```
 
 Current shipment records are order-level. Marking a shipment shipped or delivered marks the parent order `FULFILLED`; marking a shipment returned marks the parent order `RETURNED`.
+
+Fulfillment actions are blocked unless payment is `PAID` or `AUTHORIZED`. Orders with `UNPAID`, `FAILED`, `DISPUTED`, or `REFUNDED` payment status should not be shipped.
+
+Shipment creation and status changes are recorded in `shipment_status_events` so admin can see the fulfillment timeline. Carrier and tracking number changes are recorded in `shipment_tracking_events` so corrected labels remain auditable.
+
+When a shipment has a supported carrier and tracking number, the frontend builds a public tracking link. Supported carrier names currently include UPS, USPS, FedEx, and DHL. This is a link-out only; the app does not call carrier APIs for live tracking updates.
+
+See [Fulfillment](fulfillment.md) for the full shipment and tracking behavior.
 
 ## Design Rules
 

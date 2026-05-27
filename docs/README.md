@@ -4,12 +4,15 @@ This directory holds the working documentation for `tele`.
 
 ## Start Here
 
-- [Local Development](local-dev.md): run Postgres, backend, and frontend locally.
-- [Backend Architecture](backend-architecture.md): request flow, module conventions, and current backend modules.
-- [Backend API](backend-api.md): route reference and request shapes.
+- [Getting Started](getting-started.md): run Postgres, backend, and frontend locally.
+- [Frontend](frontend.md): Next.js app structure, shop flow, admin UI, auth, Stripe Elements, and UI conventions.
+- [Backend](backend.md): request flow, module conventions, and current backend modules.
+- [API](api.md): route reference and request shapes.
 - [Auth](auth.md): Cognito login, local auth setup, user linking, and admin group access.
-- [Ecommerce Flows](ecommerce-flows.md): catalog, cart, checkout, order, payment, and shipment business flows.
-- [Database Schema](database-schema.md): Prisma models, relationships, and migration notes.
+- [Payments](payments.md): Stripe checkout, webhooks, admin sync, disputes, refunds, and test cards.
+- [Fulfillment](fulfillment.md): shipment creation, tracking updates, fulfillment guardrails, and tracking links.
+- [Flows](flows.md): catalog, cart, checkout, order, payment, and shipment business flows.
+- [Database](database.md): Prisma models, relationships, and migration notes.
 
 ## Operations
 
