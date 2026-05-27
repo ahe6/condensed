@@ -59,6 +59,8 @@ Do not mix `localhost` and `127.0.0.1` in the same login attempt. Browser storag
 
 Cognito sends confirmation links for new signups.
 
+The link currently lands on Cognito's managed confirmation page, which shows Cognito's default continue flow back to sign-in. This is acceptable for now because it keeps signup mostly managed by Cognito.
+
 If a signup is interrupted, or a user is stuck as unconfirmed, open:
 
 ```text
@@ -109,5 +111,7 @@ make dev-auth-delete-user EMAIL=user@example.com
 Cognito is HIPAA eligible, but HIPAA use still requires the right AWS BAA, configuration, logging, operational controls, and application behavior.
 
 Cognito's default email sender is acceptable for dev, but production should use SES with a verified domain and SPF, DKIM, and DMARC for better deliverability.
+
+Future UX polish: route confirmation links through the app instead of Cognito's managed confirmation page. The app could confirm the signup and show clearer copy such as `Sign In`, but that means owning more of the signup confirmation flow.
 
 Admin authorization currently uses a single Cognito group. Add finer-grained roles or permissions before adding multiple admin personas.
