@@ -80,10 +80,11 @@ Payment state should not be trusted from the browser alone. Stripe webhooks or a
 
 ## Admin
 
-`app/admin/page.tsx` is a single-page admin order workspace.
+`app/admin/page.tsx` is a single-page admin workspace with order and catalog tabs.
 
 Main admin capabilities:
 
+- Switch between order operations and catalog management.
 - Search/filter/sort/page admin orders through SQL-backed `GET /admin/orders`.
 - Search across order fields, customer names, line items, SKUs, statuses, note bodies, and note authors.
 - Filter by payment status, fulfillment status, event date range, and page size.
@@ -95,6 +96,13 @@ Main admin capabilities:
 - Sync Stripe payment status for Stripe payments.
 - Create shipments, save carrier/tracking edits, and mark shipments shipped, delivered, or returned.
 - Open public carrier tracking links for UPS, USPS, FedEx, and DHL.
+- Search/filter admin products.
+- Create products and categories.
+- Edit product name, slug, description, and status.
+- Publish or archive products.
+- Assign and remove product categories.
+- Add product images.
+- Add and edit product variants, prices, currencies, and inventory.
 
 The expanded order row is the main work surface. It includes:
 
@@ -106,6 +114,8 @@ The expanded order row is the main work surface. It includes:
 
 Detailed payment and shipment audit history is folded behind per-record `History` buttons so the current operational controls stay visible.
 
+The expanded catalog row is the main product work surface. It includes product fields, category chips, variant editing, inventory controls, and image links.
+
 See [Fulfillment](fulfillment.md) for shipment guardrails and tracking-link behavior.
 
 ## Styling
@@ -116,6 +126,7 @@ Current UI conventions:
 
 - Panels use restrained borders and compact spacing.
 - Admin order rows are clickable and expand inline.
+- Catalog product rows are clickable and expand inline.
 - Status values use pill styling from `statusClass`.
 - Payment and shipment action buttons use `actionButtonClass`.
 - Tracking URLs are derived in `trackingUrl`; the app does not call carrier APIs.

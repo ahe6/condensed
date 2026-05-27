@@ -120,6 +120,9 @@ Admin route at `/admin`:
 - Keeps detailed payment and shipment audit history folded behind per-record history controls.
 - Shows public tracking links for UPS, USPS, FedEx, and DHL when carrier and tracking number are available.
 - Allows admins to overwrite carrier/tracking values from each shipment row if tracking was entered incorrectly, with changes recorded in shipment tracking history.
+- Switches to a catalog tab for product management.
+- Creates products and categories.
+- Edits product fields, publishes or archives products, assigns categories, adds images, creates variants, and updates inventory.
 - Requires a signed-in Cognito user in the `admin` group.
 - Runs on port `3001`.
 

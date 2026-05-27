@@ -5,24 +5,44 @@ import { useEffect, useState } from "react";
 import {
   AdminOrdersResponse,
   ApiStatus,
+  Category,
+  CreateProductInput,
   Order,
   Payment,
   PaymentStatus,
   PaymentWithOrder,
+  Product,
+  ProductStatus,
+  ProductVariant,
+  UpdateProductInput,
+  UpdateProductVariantInput,
+  addProductImage,
   apiBaseUrl,
+  archiveProduct,
   authorizePayment,
+  createCategory,
   createManualPayment,
   createOrderNote,
+  createProduct,
+  createProductVariant,
   createShipment,
   getReadiness,
+  listAdminProducts,
   listAdminOrders,
+  listCategories,
   markPaymentFailed,
   markPaymentPaid,
   markShipmentDelivered,
   markShipmentReturned,
   markShipmentShipped,
+  publishProduct,
   refundPayment,
+  removeProductCategory,
+  assignProductCategory,
+  setVariantInventory,
   syncStripePayment,
+  updateProduct,
+  updateProductVariant,
   updateShipmentTracking
 } from "../../src/lib/api";
 import { getSession, isAuthConfigured, signOut, startLogin } from "../../src/lib/auth";
@@ -71,8 +91,37 @@ const orderSortOptions = [
   { label: "Lowest total", value: "TOTAL_ASC" }
 ] as const;
 const orderPageSizeOptions = [5, 10, 20];
+const productStatusOptions: ProductStatus[] = ["DRAFT", "ACTIVE", "ARCHIVED"];
 type DateFilterField = (typeof dateFilterOptions)[number]["value"];
 type OrderSortField = (typeof orderSortOptions)[number]["value"];
+type AdminView = "orders" | "catalog";
+
+const emptyProductDraft = {
+  slug: "",
+  name: "",
+  description: "",
+  status: "DRAFT" as ProductStatus,
+  categoryId: ""
+};
+
+const emptyVariantDraft = {
+  sku: "",
+  title: "",
+  price: "",
+  currency: "USD",
+  inventoryQuantity: "0"
+};
+
+const emptyImageDraft = {
+  url: "",
+  altText: "",
+  sortOrder: "0"
+};
+
+const emptyCategoryDraft = {
+  slug: "",
+  name: ""
+};
 
 function isPaymentActionDisabled(payment: Payment, targetStatus: PaymentStatus, isBusy: boolean) {
   return isBusy || payment.status === targetStatus;
@@ -96,6 +145,18 @@ function orderItemCount(order: Order) {
 
 function pluralizeItems(count: number) {
   return count === 1 ? "1 item" : `${count} items`;
+}
+
+function variantCount(product: Product) {
+  return product.variants.length === 1 ? "1 variant" : `${product.variants.length} variants`;
+}
+
+function totalInventory(product: Product) {
+  return product.variants.reduce((total, variant) => total + variant.inventoryQuantity, 0);
+}
+
+function productCategoryNames(product: Product) {
+  return product.categories.map((item) => item.category.name).join(", ") || "No categories";
 }
 
 function eventSourceLabel(source: string) {
@@ -307,10 +368,23 @@ function AdminOrderTimeline({ order }: { order: Order }) {
 
 export default function AdminPage() {
   const [status, setStatus] = useState<ApiStatus>("checking");
+  const [activeView, setActiveView] = useState<AdminView>("orders");
   const [adminOrders, setAdminOrders] = useState<Order[]>([]);
   const [adminOrderTotal, setAdminOrderTotal] = useState(0);
   const [adminOrderPageCount, setAdminOrderPageCount] = useState(1);
   const [selectedAdminOrderId, setSelectedAdminOrderId] = useState("");
+  const [adminProducts, setAdminProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState("");
+  const [productSearch, setProductSearch] = useState("");
+  const [productStatusFilter, setProductStatusFilter] = useState<"ALL" | ProductStatus>("ALL");
+  const [productDraft, setProductDraft] = useState(emptyProductDraft);
+  const [categoryDraft, setCategoryDraft] = useState(emptyCategoryDraft);
+  const [productEditDrafts, setProductEditDrafts] = useState<Record<string, typeof emptyProductDraft>>({});
+  const [variantDrafts, setVariantDrafts] = useState<Record<string, typeof emptyVariantDraft>>({});
+  const [variantEditDrafts, setVariantEditDrafts] = useState<Record<string, typeof emptyVariantDraft>>({});
+  const [imageDrafts, setImageDrafts] = useState<Record<string, typeof emptyImageDraft>>({});
+  const [categorySelectDrafts, setCategorySelectDrafts] = useState<Record<string, string>>({});
   const [newShipmentCarrier, setNewShipmentCarrier] = useState("UPS");
   const [newShipmentTrackingNumber, setNewShipmentTrackingNumber] = useState("");
   const [shipmentTrackingDrafts, setShipmentTrackingDrafts] = useState<
@@ -336,6 +410,23 @@ export default function AdminPage() {
   const visibleOrderPage = Math.min(orderPage, adminOrderPageCount);
   const selectedAdminOrder =
     adminOrders.find((order) => order.id === selectedAdminOrderId) ?? adminOrders[0] ?? null;
+  const filteredProducts = adminProducts.filter((product) => {
+    const search = productSearch.trim().toLowerCase();
+    const matchesStatus = productStatusFilter === "ALL" || product.status === productStatusFilter;
+    const matchesSearch =
+      !search ||
+      product.name.toLowerCase().includes(search) ||
+      product.slug.toLowerCase().includes(search) ||
+      product.variants.some(
+        (variant) =>
+          variant.sku.toLowerCase().includes(search) || variant.title.toLowerCase().includes(search)
+      ) ||
+      product.categories.some((item) => item.category.name.toLowerCase().includes(search));
+
+    return matchesStatus && matchesSearch;
+  });
+  const selectedProduct =
+    filteredProducts.find((product) => product.id === selectedProductId) ?? filteredProducts[0] ?? null;
 
   useEffect(() => {
     let isMounted = true;
@@ -352,13 +443,18 @@ export default function AdminPage() {
         }
 
         await getReadiness();
-        const response = await listAdminOrders(adminOrderQuery(1));
+        const [ordersResponse, productsResponse, categoriesResponse] = await Promise.all([
+          listAdminOrders(adminOrderQuery(1)),
+          listAdminProducts(),
+          listCategories()
+        ]);
 
         if (!isMounted) {
           return;
         }
 
-        applyAdminOrders(response);
+        applyAdminOrders(ordersResponse);
+        applyCatalog(productsResponse, categoriesResponse);
         setStatus("online");
         setError(null);
       } catch (caught) {
@@ -438,6 +534,91 @@ export default function AdminPage() {
     });
   }
 
+  function applyCatalog(products: Product[], nextCategories = categories, preferredProductId?: string) {
+    setAdminProducts(products);
+    setCategories(nextCategories);
+    setSelectedProductId((current) => {
+      if (preferredProductId && products.some((product) => product.id === preferredProductId)) {
+        return preferredProductId;
+      }
+
+      return current && products.some((product) => product.id === current)
+        ? current
+        : products[0]?.id ?? "";
+    });
+    syncCatalogDrafts(products, nextCategories);
+  }
+
+  function syncCatalogDrafts(products: Product[], nextCategories = categories) {
+    setProductEditDrafts((current) => {
+      const next = { ...current };
+
+      for (const product of products) {
+        next[product.id] = {
+          slug: product.slug,
+          name: product.name,
+          description: product.description ?? "",
+          status: product.status,
+          categoryId: next[product.id]?.categoryId ?? ""
+        };
+      }
+
+      return next;
+    });
+    setVariantDrafts((current) => {
+      const next = { ...current };
+
+      for (const product of products) {
+        next[product.id] = next[product.id] ?? emptyVariantDraft;
+      }
+
+      return next;
+    });
+    setImageDrafts((current) => {
+      const next = { ...current };
+
+      for (const product of products) {
+        next[product.id] = next[product.id] ?? emptyImageDraft;
+      }
+
+      return next;
+    });
+    setCategorySelectDrafts((current) => {
+      const next = { ...current };
+      const firstCategoryId = nextCategories[0]?.id ?? "";
+
+      for (const product of products) {
+        next[product.id] = next[product.id] ?? firstCategoryId;
+      }
+
+      return next;
+    });
+    setVariantEditDrafts((current) => {
+      const next = { ...current };
+
+      for (const product of products) {
+        for (const variant of product.variants) {
+          next[variant.id] = {
+            sku: variant.sku,
+            title: variant.title,
+            price: variant.price,
+            currency: variant.currency,
+            inventoryQuantity: String(variant.inventoryQuantity)
+          };
+        }
+      }
+
+      return next;
+    });
+  }
+
+  async function reloadCatalog(preferredProductId?: string) {
+    const [productsResponse, categoriesResponse] = await Promise.all([listAdminProducts(), listCategories()]);
+    applyCatalog(productsResponse, categoriesResponse, preferredProductId);
+
+    return productsResponse;
+  }
+
   function syncAdminOrder(order: Order) {
     setAdminOrders((current) => {
       if (!current.some((item) => item.id === order.id)) {
@@ -476,6 +657,357 @@ export default function AdminPage() {
       setStatus("online");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not refresh orders");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function refreshCatalog() {
+    setPendingAction("catalog");
+    setError(null);
+    setNotice(null);
+
+    try {
+      await reloadCatalog(selectedProduct?.id);
+      setStatus("online");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not refresh catalog");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function handleCreateCategory() {
+    const slug = categoryDraft.slug.trim();
+    const name = categoryDraft.name.trim();
+
+    if (!slug || !name) {
+      return;
+    }
+
+    setPendingAction("create-category");
+    setError(null);
+    setNotice(null);
+
+    try {
+      const category = await createCategory({
+        slug,
+        name
+      });
+      const products = await reloadCatalog(selectedProduct?.id);
+      setCategoryDraft(emptyCategoryDraft);
+      setProductDraft((current) => ({
+        ...current,
+        categoryId: category.id
+      }));
+      setNotice(`Created category ${category.name}`);
+      if (products.length === 0) {
+        setSelectedProductId("");
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not create category");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  function createProductInput(): CreateProductInput {
+    return {
+      slug: productDraft.slug.trim(),
+      name: productDraft.name.trim(),
+      description: productDraft.description.trim() || undefined,
+      status: productDraft.status,
+      categoryIds: productDraft.categoryId ? [productDraft.categoryId] : []
+    };
+  }
+
+  async function handleCreateProduct() {
+    const input = createProductInput();
+
+    if (!input.slug || !input.name) {
+      return;
+    }
+
+    setPendingAction("create-product");
+    setError(null);
+    setNotice(null);
+
+    try {
+      const product = await createProduct(input);
+      await reloadCatalog(product.id);
+      setProductDraft(emptyProductDraft);
+      setActiveView("catalog");
+      setNotice(`Created product ${product.name}`);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not create product");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  function updateProductEditDraft(productId: string, field: keyof typeof emptyProductDraft, value: string) {
+    setProductEditDrafts((current) => ({
+      ...current,
+      [productId]: {
+        ...(current[productId] ?? emptyProductDraft),
+        [field]: value
+      }
+    }));
+  }
+
+  function productUpdateInput(product: Product): UpdateProductInput {
+    const draft = productEditDrafts[product.id] ?? {
+      ...emptyProductDraft,
+      slug: product.slug,
+      name: product.name,
+      description: product.description ?? "",
+      status: product.status
+    };
+
+    return {
+      slug: draft.slug.trim(),
+      name: draft.name.trim(),
+      description: draft.description.trim() || null,
+      status: draft.status
+    };
+  }
+
+  async function handleUpdateProduct(product: Product) {
+    setPendingAction(`product-${product.id}`);
+    setError(null);
+    setNotice(null);
+
+    try {
+      const updatedProduct = await updateProduct(product.id, productUpdateInput(product));
+      await reloadCatalog(updatedProduct.id);
+      setNotice(`Updated ${updatedProduct.name}`);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not update product");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function handleProductStatus(product: Product, statusAction: "publish" | "archive") {
+    setPendingAction(`product-status-${product.id}`);
+    setError(null);
+    setNotice(null);
+
+    try {
+      const updatedProduct =
+        statusAction === "publish" ? await publishProduct(product.id) : await archiveProduct(product.id);
+      await reloadCatalog(updatedProduct.id);
+      setNotice(`${updatedProduct.name} is ${updatedProduct.status}`);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not update product status");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  function updateVariantDraft(
+    productId: string,
+    field: keyof typeof emptyVariantDraft,
+    value: string
+  ) {
+    setVariantDrafts((current) => ({
+      ...current,
+      [productId]: {
+        ...(current[productId] ?? emptyVariantDraft),
+        [field]: value
+      }
+    }));
+  }
+
+  function variantInput(productId: string) {
+    const draft = variantDrafts[productId] ?? emptyVariantDraft;
+
+    return {
+      sku: draft.sku.trim(),
+      title: draft.title.trim(),
+      price: draft.price.trim(),
+      currency: draft.currency.trim() || "USD",
+      inventoryQuantity: Number(draft.inventoryQuantity || 0)
+    };
+  }
+
+  async function handleCreateVariant(product: Product) {
+    const input = variantInput(product.id);
+
+    if (!input.sku || !input.title || !input.price || Number.isNaN(input.inventoryQuantity)) {
+      return;
+    }
+
+    setPendingAction(`variant-create-${product.id}`);
+    setError(null);
+    setNotice(null);
+
+    try {
+      await createProductVariant(product.id, input);
+      await reloadCatalog(product.id);
+      setVariantDrafts((current) => ({
+        ...current,
+        [product.id]: emptyVariantDraft
+      }));
+      setNotice(`Added variant to ${product.name}`);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not create variant");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  function updateVariantEditDraft(
+    variantId: string,
+    field: keyof typeof emptyVariantDraft,
+    value: string
+  ) {
+    setVariantEditDrafts((current) => ({
+      ...current,
+      [variantId]: {
+        ...(current[variantId] ?? emptyVariantDraft),
+        [field]: value
+      }
+    }));
+  }
+
+  function variantUpdateInput(variant: ProductVariant): UpdateProductVariantInput {
+    const draft = variantEditDrafts[variant.id] ?? {
+      sku: variant.sku,
+      title: variant.title,
+      price: variant.price,
+      currency: variant.currency,
+      inventoryQuantity: String(variant.inventoryQuantity)
+    };
+
+    return {
+      sku: draft.sku.trim(),
+      title: draft.title.trim(),
+      price: draft.price.trim(),
+      currency: draft.currency.trim() || "USD",
+      inventoryQuantity: Number(draft.inventoryQuantity || 0)
+    };
+  }
+
+  async function handleUpdateVariant(product: Product, variant: ProductVariant) {
+    const input = variantUpdateInput(variant);
+
+    if (!input.sku || !input.title || !input.price || Number.isNaN(input.inventoryQuantity)) {
+      return;
+    }
+
+    setPendingAction(`variant-${variant.id}`);
+    setError(null);
+    setNotice(null);
+
+    try {
+      await updateProductVariant(variant.id, input);
+      await reloadCatalog(product.id);
+      setNotice(`Updated ${input.sku}`);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not update variant");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function handleSetInventory(product: Product, variant: ProductVariant) {
+    const draft = variantEditDrafts[variant.id] ?? emptyVariantDraft;
+    const inventoryQuantity = Number(draft.inventoryQuantity || 0);
+
+    if (Number.isNaN(inventoryQuantity)) {
+      return;
+    }
+
+    setPendingAction(`inventory-${variant.id}`);
+    setError(null);
+    setNotice(null);
+
+    try {
+      await setVariantInventory(variant.id, inventoryQuantity);
+      await reloadCatalog(product.id);
+      setNotice(`Set ${variant.sku} inventory to ${inventoryQuantity}`);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not update inventory");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  function updateImageDraft(productId: string, field: keyof typeof emptyImageDraft, value: string) {
+    setImageDrafts((current) => ({
+      ...current,
+      [productId]: {
+        ...(current[productId] ?? emptyImageDraft),
+        [field]: value
+      }
+    }));
+  }
+
+  async function handleAddImage(product: Product) {
+    const draft = imageDrafts[product.id] ?? emptyImageDraft;
+    const url = draft.url.trim();
+
+    if (!url) {
+      return;
+    }
+
+    setPendingAction(`image-${product.id}`);
+    setError(null);
+    setNotice(null);
+
+    try {
+      await addProductImage(product.id, {
+        url,
+        altText: draft.altText.trim() || undefined,
+        sortOrder: Number(draft.sortOrder || 0)
+      });
+      await reloadCatalog(product.id);
+      setImageDrafts((current) => ({
+        ...current,
+        [product.id]: emptyImageDraft
+      }));
+      setNotice(`Added image to ${product.name}`);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not add image");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function handleAssignCategory(product: Product) {
+    const categoryId = categorySelectDrafts[product.id];
+
+    if (!categoryId) {
+      return;
+    }
+
+    setPendingAction(`category-${product.id}`);
+    setError(null);
+    setNotice(null);
+
+    try {
+      const updatedProduct = await assignProductCategory(product.id, categoryId);
+      await reloadCatalog(updatedProduct.id);
+      setNotice(`Updated categories for ${updatedProduct.name}`);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not assign category");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function handleRemoveCategory(product: Product, categoryId: string) {
+    setPendingAction(`category-${product.id}`);
+    setError(null);
+    setNotice(null);
+
+    try {
+      const updatedProduct = await removeProductCategory(product.id, categoryId);
+      await reloadCatalog(updatedProduct.id);
+      setNotice(`Updated categories for ${updatedProduct.name}`);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not remove category");
     } finally {
       setPendingAction(null);
     }
@@ -657,6 +1189,598 @@ export default function AdminPage() {
       ...current,
       [shipmentId]: !current[shipmentId]
     }));
+  }
+
+  function renderCatalogSection() {
+    return (
+      <section className="catalog" aria-label="Catalog">
+        <section className="panel admin-panel">
+          <div className="panel-heading">
+            <h2>Catalog</h2>
+            <button
+              className="secondary"
+              type="button"
+              disabled={pendingAction === "catalog"}
+              onClick={() => void refreshCatalog()}
+            >
+              {pendingAction === "catalog" ? "Refreshing" : "Refresh"}
+            </button>
+          </div>
+
+          <div className="admin-order-tools catalog-tools">
+            <label className="admin-order-search">
+              <span>Search</span>
+              <input
+                value={productSearch}
+                onChange={(event) => setProductSearch(event.target.value)}
+                placeholder="Product, slug, SKU, category"
+              />
+            </label>
+            <label>
+              <span>Status</span>
+              <select
+                value={productStatusFilter}
+                onChange={(event) => setProductStatusFilter(event.target.value as "ALL" | ProductStatus)}
+              >
+                <option value="ALL">All products</option>
+                {productStatusOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <section className="admin-work-section" aria-label="Create product">
+            <div className="panel-heading">
+              <h3>Create Product</h3>
+            </div>
+            <div className="catalog-form-grid">
+              <label>
+                <span>Name</span>
+                <input
+                  value={productDraft.name}
+                  onChange={(event) =>
+                    setProductDraft((current) => ({
+                      ...current,
+                      name: event.target.value
+                    }))
+                  }
+                  placeholder="Dev Mug"
+                />
+              </label>
+              <label>
+                <span>Slug</span>
+                <input
+                  value={productDraft.slug}
+                  onChange={(event) =>
+                    setProductDraft((current) => ({
+                      ...current,
+                      slug: event.target.value
+                    }))
+                  }
+                  placeholder="dev-mug"
+                />
+              </label>
+              <label>
+                <span>Status</span>
+                <select
+                  value={productDraft.status}
+                  onChange={(event) =>
+                    setProductDraft((current) => ({
+                      ...current,
+                      status: event.target.value as ProductStatus
+                    }))
+                  }
+                >
+                  {productStatusOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Category</span>
+                <select
+                  value={productDraft.categoryId}
+                  onChange={(event) =>
+                    setProductDraft((current) => ({
+                      ...current,
+                      categoryId: event.target.value
+                    }))
+                  }
+                >
+                  <option value="">No category</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="catalog-wide-field">
+                <span>Description</span>
+                <textarea
+                  value={productDraft.description}
+                  onChange={(event) =>
+                    setProductDraft((current) => ({
+                      ...current,
+                      description: event.target.value
+                    }))
+                  }
+                  placeholder="Short product description"
+                />
+              </label>
+              <button
+                type="button"
+                disabled={
+                  pendingAction === "create-product" ||
+                  productDraft.name.trim().length === 0 ||
+                  productDraft.slug.trim().length === 0
+                }
+                onClick={() => void handleCreateProduct()}
+              >
+                {pendingAction === "create-product" ? "Creating" : "Create Product"}
+              </button>
+            </div>
+          </section>
+
+          <section className="admin-work-section" aria-label="Create category">
+            <div className="panel-heading">
+              <h3>Create Category</h3>
+            </div>
+            <div className="catalog-inline-form">
+              <label>
+                <span>Name</span>
+                <input
+                  value={categoryDraft.name}
+                  onChange={(event) =>
+                    setCategoryDraft((current) => ({
+                      ...current,
+                      name: event.target.value
+                    }))
+                  }
+                  placeholder="Drinkware"
+                />
+              </label>
+              <label>
+                <span>Slug</span>
+                <input
+                  value={categoryDraft.slug}
+                  onChange={(event) =>
+                    setCategoryDraft((current) => ({
+                      ...current,
+                      slug: event.target.value
+                    }))
+                  }
+                  placeholder="drinkware"
+                />
+              </label>
+              <button
+                type="button"
+                disabled={
+                  pendingAction === "create-category" ||
+                  categoryDraft.name.trim().length === 0 ||
+                  categoryDraft.slug.trim().length === 0
+                }
+                onClick={() => void handleCreateCategory()}
+              >
+                {pendingAction === "create-category" ? "Creating" : "Create Category"}
+              </button>
+            </div>
+          </section>
+
+          <div className="admin-order-list-summary">
+            <span>{filteredProducts.length} matching products</span>
+            <span>{categories.length} categories</span>
+          </div>
+
+          <div className="catalog-product-list" aria-label="Products">
+            {filteredProducts.length === 0 ? (
+              <div className="empty-state compact">No matching products</div>
+            ) : null}
+
+            {filteredProducts.map((product) => {
+              const isSelected = product.id === selectedProduct?.id;
+              const editDraft = productEditDrafts[product.id] ?? {
+                ...emptyProductDraft,
+                slug: product.slug,
+                name: product.name,
+                description: product.description ?? "",
+                status: product.status
+              };
+              const variantDraft = variantDrafts[product.id] ?? emptyVariantDraft;
+              const imageDraft = imageDrafts[product.id] ?? emptyImageDraft;
+
+              return (
+                <article className={`catalog-product-row${isSelected ? " selected" : ""}`} key={product.id}>
+                  <button
+                    aria-expanded={isSelected}
+                    aria-pressed={isSelected}
+                    className="admin-order-row-trigger"
+                    type="button"
+                    onClick={() => setSelectedProductId(product.id)}
+                  >
+                    <div className="admin-order-row-main">
+                      <div>
+                        <strong>{product.name}</strong>
+                        <span>{product.slug}</span>
+                        <small>{productCategoryNames(product)}</small>
+                      </div>
+                      <strong>{variantCount(product)}</strong>
+                    </div>
+                    <div className="admin-order-row-meta">
+                      <span>{totalInventory(product)} in stock</span>
+                      <span>Updated {formatDateTime(product.updatedAt)}</span>
+                    </div>
+                    <div className="status-row">
+                      <span className={`pill ${statusClass(product.status)}`}>{product.status}</span>
+                    </div>
+                  </button>
+
+                  {isSelected ? (
+                    <div className="catalog-product-expanded">
+                      <section className="admin-work-section" aria-label="Edit product">
+                        <div className="panel-heading">
+                          <h3>Product</h3>
+                          <div className="catalog-row-actions">
+                            <button
+                              className="secondary"
+                              type="button"
+                              disabled={pendingAction === `product-status-${product.id}` || product.status === "ACTIVE"}
+                              onClick={() => void handleProductStatus(product, "publish")}
+                            >
+                              Publish
+                            </button>
+                            <button
+                              className="secondary"
+                              type="button"
+                              disabled={
+                                pendingAction === `product-status-${product.id}` ||
+                                product.status === "ARCHIVED"
+                              }
+                              onClick={() => void handleProductStatus(product, "archive")}
+                            >
+                              Archive
+                            </button>
+                          </div>
+                        </div>
+                        <div className="catalog-form-grid">
+                          <label>
+                            <span>Name</span>
+                            <input
+                              value={editDraft.name}
+                              onChange={(event) =>
+                                updateProductEditDraft(product.id, "name", event.target.value)
+                              }
+                            />
+                          </label>
+                          <label>
+                            <span>Slug</span>
+                            <input
+                              value={editDraft.slug}
+                              onChange={(event) =>
+                                updateProductEditDraft(product.id, "slug", event.target.value)
+                              }
+                            />
+                          </label>
+                          <label>
+                            <span>Status</span>
+                            <select
+                              value={editDraft.status}
+                              onChange={(event) =>
+                                updateProductEditDraft(product.id, "status", event.target.value)
+                              }
+                            >
+                              {productStatusOptions.map((option) => (
+                                <option key={option} value={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="catalog-wide-field">
+                            <span>Description</span>
+                            <textarea
+                              value={editDraft.description}
+                              onChange={(event) =>
+                                updateProductEditDraft(product.id, "description", event.target.value)
+                              }
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            disabled={pendingAction === `product-${product.id}`}
+                            onClick={() => void handleUpdateProduct(product)}
+                          >
+                            {pendingAction === `product-${product.id}` ? "Saving" : "Save Product"}
+                          </button>
+                        </div>
+                      </section>
+
+                      <section className="admin-work-section" aria-label="Product categories">
+                        <div className="panel-heading">
+                          <h3>Categories</h3>
+                        </div>
+                        <div className="category-row catalog-category-row">
+                          {product.categories.length === 0 ? <span>No categories</span> : null}
+                          {product.categories.map((item) => (
+                            <button
+                              className="category-chip"
+                              key={item.categoryId}
+                              type="button"
+                              disabled={pendingAction === `category-${product.id}`}
+                              onClick={() => void handleRemoveCategory(product, item.categoryId)}
+                            >
+                              {item.category.name}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="catalog-inline-form">
+                          <label>
+                            <span>Add category</span>
+                            <select
+                              value={categorySelectDrafts[product.id] ?? categories[0]?.id ?? ""}
+                              onChange={(event) =>
+                                setCategorySelectDrafts((current) => ({
+                                  ...current,
+                                  [product.id]: event.target.value
+                                }))
+                              }
+                            >
+                              <option value="">Select category</option>
+                              {categories.map((category) => (
+                                <option key={category.id} value={category.id}>
+                                  {category.name}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <button
+                            type="button"
+                            disabled={
+                              pendingAction === `category-${product.id}` ||
+                              !categorySelectDrafts[product.id]
+                            }
+                            onClick={() => void handleAssignCategory(product)}
+                          >
+                            Add Category
+                          </button>
+                        </div>
+                      </section>
+
+                      <section className="admin-work-section" aria-label="Product variants">
+                        <div className="panel-heading">
+                          <h3>Variants</h3>
+                        </div>
+                        <div className="variant-list">
+                          {product.variants.length === 0 ? (
+                            <div className="empty-state compact">No variants</div>
+                          ) : null}
+                          {product.variants.map((variant) => {
+                            const variantEditDraft = variantEditDrafts[variant.id] ?? {
+                              sku: variant.sku,
+                              title: variant.title,
+                              price: variant.price,
+                              currency: variant.currency,
+                              inventoryQuantity: String(variant.inventoryQuantity)
+                            };
+
+                            return (
+                              <article className="variant-row" key={variant.id}>
+                                <div className="variant-row-heading">
+                                  <div>
+                                    <strong>{variant.sku}</strong>
+                                    <span>{variant.title}</span>
+                                  </div>
+                                  <strong>{formatMoney(variant.price, variant.currency)}</strong>
+                                </div>
+                                <div className="catalog-form-grid variant-edit-grid">
+                                  <label>
+                                    <span>SKU</span>
+                                    <input
+                                      value={variantEditDraft.sku}
+                                      onChange={(event) =>
+                                        updateVariantEditDraft(variant.id, "sku", event.target.value)
+                                      }
+                                    />
+                                  </label>
+                                  <label>
+                                    <span>Title</span>
+                                    <input
+                                      value={variantEditDraft.title}
+                                      onChange={(event) =>
+                                        updateVariantEditDraft(variant.id, "title", event.target.value)
+                                      }
+                                    />
+                                  </label>
+                                  <label>
+                                    <span>Price</span>
+                                    <input
+                                      value={variantEditDraft.price}
+                                      inputMode="decimal"
+                                      onChange={(event) =>
+                                        updateVariantEditDraft(variant.id, "price", event.target.value)
+                                      }
+                                    />
+                                  </label>
+                                  <label>
+                                    <span>Currency</span>
+                                    <input
+                                      value={variantEditDraft.currency}
+                                      onChange={(event) =>
+                                        updateVariantEditDraft(variant.id, "currency", event.target.value)
+                                      }
+                                    />
+                                  </label>
+                                  <label>
+                                    <span>Inventory</span>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      value={variantEditDraft.inventoryQuantity}
+                                      onChange={(event) =>
+                                        updateVariantEditDraft(
+                                          variant.id,
+                                          "inventoryQuantity",
+                                          event.target.value
+                                        )
+                                      }
+                                    />
+                                  </label>
+                                  <div className="catalog-row-actions">
+                                    <button
+                                      type="button"
+                                      disabled={pendingAction === `variant-${variant.id}`}
+                                      onClick={() => void handleUpdateVariant(product, variant)}
+                                    >
+                                      Save Variant
+                                    </button>
+                                    <button
+                                      className="secondary"
+                                      type="button"
+                                      disabled={pendingAction === `inventory-${variant.id}`}
+                                      onClick={() => void handleSetInventory(product, variant)}
+                                    >
+                                      Set Stock
+                                    </button>
+                                  </div>
+                                </div>
+                              </article>
+                            );
+                          })}
+                        </div>
+
+                        <div className="catalog-form-grid">
+                          <label>
+                            <span>New SKU</span>
+                            <input
+                              value={variantDraft.sku}
+                              onChange={(event) => updateVariantDraft(product.id, "sku", event.target.value)}
+                              placeholder="MUG-001"
+                            />
+                          </label>
+                          <label>
+                            <span>Title</span>
+                            <input
+                              value={variantDraft.title}
+                              onChange={(event) => updateVariantDraft(product.id, "title", event.target.value)}
+                              placeholder="Default"
+                            />
+                          </label>
+                          <label>
+                            <span>Price</span>
+                            <input
+                              value={variantDraft.price}
+                              inputMode="decimal"
+                              onChange={(event) => updateVariantDraft(product.id, "price", event.target.value)}
+                              placeholder="24.00"
+                            />
+                          </label>
+                          <label>
+                            <span>Currency</span>
+                            <input
+                              value={variantDraft.currency}
+                              onChange={(event) =>
+                                updateVariantDraft(product.id, "currency", event.target.value)
+                              }
+                            />
+                          </label>
+                          <label>
+                            <span>Inventory</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={variantDraft.inventoryQuantity}
+                              onChange={(event) =>
+                                updateVariantDraft(product.id, "inventoryQuantity", event.target.value)
+                              }
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            disabled={
+                              pendingAction === `variant-create-${product.id}` ||
+                              variantDraft.sku.trim().length === 0 ||
+                              variantDraft.title.trim().length === 0 ||
+                              variantDraft.price.trim().length === 0
+                            }
+                            onClick={() => void handleCreateVariant(product)}
+                          >
+                            {pendingAction === `variant-create-${product.id}` ? "Adding" : "Add Variant"}
+                          </button>
+                        </div>
+                      </section>
+
+                      <section className="admin-work-section" aria-label="Product images">
+                        <div className="panel-heading">
+                          <h3>Images</h3>
+                        </div>
+                        <div className="image-list">
+                          {product.images.length === 0 ? (
+                            <div className="empty-state compact">No images</div>
+                          ) : null}
+                          {product.images.map((image) => (
+                            <div className="image-row" key={image.id}>
+                              <span>{image.sortOrder}</span>
+                              <a href={image.url} rel="noreferrer" target="_blank">
+                                {image.altText ?? image.url}
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="catalog-form-grid">
+                          <label className="catalog-wide-field">
+                            <span>Image URL</span>
+                            <input
+                              value={imageDraft.url}
+                              onChange={(event) => updateImageDraft(product.id, "url", event.target.value)}
+                              placeholder="https://..."
+                            />
+                          </label>
+                          <label>
+                            <span>Alt text</span>
+                            <input
+                              value={imageDraft.altText}
+                              onChange={(event) =>
+                                updateImageDraft(product.id, "altText", event.target.value)
+                              }
+                            />
+                          </label>
+                          <label>
+                            <span>Sort</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={imageDraft.sortOrder}
+                              onChange={(event) =>
+                                updateImageDraft(product.id, "sortOrder", event.target.value)
+                              }
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            disabled={
+                              pendingAction === `image-${product.id}` ||
+                              imageDraft.url.trim().length === 0
+                            }
+                            onClick={() => void handleAddImage(product)}
+                          >
+                            {pendingAction === `image-${product.id}` ? "Adding" : "Add Image"}
+                          </button>
+                        </div>
+                      </section>
+                    </div>
+                  ) : null}
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      </section>
+    );
   }
 
   function renderPaymentSection(order: Order) {
@@ -1080,12 +2204,12 @@ export default function AdminPage() {
           <strong>{adminOrderTotal}</strong>
         </div>
         <div className="metric">
-          <span>Payment</span>
-          <strong>{selectedAdminOrder?.paymentStatus ?? "-"}</strong>
+          <span>Products</span>
+          <strong>{adminProducts.length}</strong>
         </div>
         <div className="metric">
-          <span>Fulfillment</span>
-          <strong>{selectedAdminOrder?.fulfillmentStatus ?? "-"}</strong>
+          <span>View</span>
+          <strong>{activeView === "orders" ? "Orders" : "Catalog"}</strong>
         </div>
       </section>
 
@@ -1098,6 +2222,26 @@ export default function AdminPage() {
         </section>
       ) : (
         <section className="workspace">
+          <nav className="admin-tabs" aria-label="Admin sections">
+            <button
+              className={activeView === "orders" ? "status-action active" : "status-action"}
+              type="button"
+              onClick={() => setActiveView("orders")}
+            >
+              Orders
+            </button>
+            <button
+              className={activeView === "catalog" ? "status-action active" : "status-action"}
+              type="button"
+              onClick={() => setActiveView("catalog")}
+            >
+              Catalog
+            </button>
+          </nav>
+
+          {activeView === "catalog" ? renderCatalogSection() : null}
+
+          {activeView === "orders" ? (
         <section className="catalog" aria-label="Orders">
           <section className="panel admin-panel">
             <div className="panel-heading">
@@ -1294,6 +2438,7 @@ export default function AdminPage() {
             </>
           </section>
         </section>
+          ) : null}
       </section>
       )}
     </main>

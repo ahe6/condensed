@@ -60,6 +60,57 @@ export type Product = {
   }>;
 };
 
+export type ProductStatus = Product["status"];
+
+export type CreateCategoryInput = {
+  slug: string;
+  name: string;
+  parentId?: string;
+};
+
+export type CreateProductInput = {
+  slug: string;
+  name: string;
+  description?: string;
+  status?: ProductStatus;
+  categoryIds?: string[];
+  images?: Array<{
+    url: string;
+    altText?: string;
+    sortOrder?: number;
+  }>;
+  variants?: Array<{
+    sku: string;
+    title: string;
+    price: string;
+    currency?: string;
+    inventoryQuantity?: number;
+  }>;
+};
+
+export type UpdateProductInput = Partial<{
+  slug: string;
+  name: string;
+  description: string | null;
+  status: ProductStatus;
+}>;
+
+export type CreateProductVariantInput = {
+  sku: string;
+  title: string;
+  price: string;
+  currency?: string;
+  inventoryQuantity?: number;
+};
+
+export type UpdateProductVariantInput = Partial<{
+  sku: string;
+  title: string;
+  price: string;
+  currency: string;
+  inventoryQuantity: number;
+}>;
+
 export type CartItem = {
   id: string;
   cartId: string;
@@ -314,6 +365,95 @@ export async function getMyOrders() {
 
 export async function listProducts() {
   return request<Product[]>("/products");
+}
+
+export async function listCategories() {
+  return request<Category[]>("/categories");
+}
+
+export async function listAdminProducts() {
+  return request<Product[]>("/admin/products");
+}
+
+export async function createCategory(input: CreateCategoryInput) {
+  return request<Category>("/admin/categories", {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
+}
+
+export async function createProduct(input: CreateProductInput) {
+  return request<Product>("/admin/products", {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
+}
+
+export async function updateProduct(productId: string, input: UpdateProductInput) {
+  return request<Product>(`/admin/products/${productId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input)
+  });
+}
+
+export async function publishProduct(productId: string) {
+  return request<Product>(`/admin/products/${productId}/publish`, {
+    method: "POST"
+  });
+}
+
+export async function archiveProduct(productId: string) {
+  return request<Product>(`/admin/products/${productId}/archive`, {
+    method: "POST"
+  });
+}
+
+export async function assignProductCategory(productId: string, categoryId: string) {
+  return request<Product>(`/admin/products/${productId}/categories`, {
+    method: "POST",
+    body: JSON.stringify({
+      categoryId
+    })
+  });
+}
+
+export async function removeProductCategory(productId: string, categoryId: string) {
+  return request<Product>(`/admin/products/${productId}/categories/${categoryId}`, {
+    method: "DELETE"
+  });
+}
+
+export async function addProductImage(
+  productId: string,
+  input: { url: string; altText?: string; sortOrder?: number }
+) {
+  return request<ProductImage>(`/admin/products/${productId}/images`, {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
+}
+
+export async function createProductVariant(productId: string, input: CreateProductVariantInput) {
+  return request<ProductVariant>(`/admin/products/${productId}/variants`, {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
+}
+
+export async function updateProductVariant(variantId: string, input: UpdateProductVariantInput) {
+  return request<ProductVariant>(`/admin/variants/${variantId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input)
+  });
+}
+
+export async function setVariantInventory(variantId: string, inventoryQuantity: number) {
+  return request<ProductVariant>(`/admin/variants/${variantId}/inventory`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      inventoryQuantity
+    })
+  });
 }
 
 export async function createCart() {

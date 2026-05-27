@@ -169,6 +169,8 @@ POST   /admin/categories
 
 `GET /admin/products` returns all products, including drafts and archived products.
 
+The admin frontend uses these routes for the catalog tab in `/admin`. Product row changes are saved through product, variant, image, category, and inventory routes, then the frontend reloads the admin product list.
+
 `PATCH /admin/products/:id` accepts any subset of:
 
 ```json
