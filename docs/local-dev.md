@@ -89,6 +89,7 @@ Shop route at `/`:
 
 Admin route at `/admin`:
 
+- Is opened directly; the public shop nav does not link to it.
 - Lists recent admin orders through `GET /admin/orders`.
 - Creates manual payments and marks them authorized, paid, failed, or refunded.
 - Creates shipments, updates tracking, and marks shipments shipped, delivered, or returned.

@@ -23,6 +23,8 @@ Open:
 - Shop: `http://localhost:3001`
 - Admin: `http://localhost:3001/admin`
 
+The public shop nav does not link to admin. Admin users open `/admin` directly.
+
 ## Check Local Health
 
 ```sh

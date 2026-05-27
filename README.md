@@ -24,7 +24,7 @@ Implemented backend modules:
 - `shipments`
 - `auth`
 
-The frontend is split into a local shop route and an admin route. `/` covers catalog browsing, cart management, checkout, account login, order history, and order lookup. `/admin` covers order payment and fulfillment controls for Cognito users in the `admin` group.
+The frontend is split into a local shop route and an admin route. `/` covers catalog browsing, cart management, checkout, account login, order history, and order lookup. Admin users can open `/admin` directly for payment and fulfillment controls.
 
 ## Quickstart
 

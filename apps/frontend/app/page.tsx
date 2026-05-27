@@ -361,9 +361,6 @@ export default function Home() {
               </button>
             )
           ) : null}
-          <Link className="nav-link" href="/admin">
-            Admin
-          </Link>
           <div className={`status ${status}`}>
             <span aria-hidden="true" />
             {status}
