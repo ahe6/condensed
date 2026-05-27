@@ -176,6 +176,12 @@ export type ShipmentWithOrder = Shipment & {
   order: Order;
 };
 
+export type StripePaymentIntent = {
+  clientSecret: string;
+  paymentIntentId: string;
+  payment: PaymentWithOrder;
+};
+
 export const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://127.0.0.1:3000";
 
@@ -286,6 +292,12 @@ export async function createManualPayment(order: Order) {
       amount: order.total,
       currency: order.currency
     })
+  });
+}
+
+export async function createStripePaymentIntent(orderId: string) {
+  return request<StripePaymentIntent>(`/orders/${orderId}/stripe-payment-intent`, {
+    method: "POST"
   });
 }
 

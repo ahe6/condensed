@@ -128,6 +128,23 @@ npm run db:deploy
 
 The deploy script is `apps/backend/scripts/prisma-deploy.mjs`. It builds a concrete `DATABASE_URL` from the AWS-injected `DB_SECRET_JSON`, `DB_HOST`, `DB_PORT`, and `DB_NAME`.
 
+## Stripe
+
+Backend Stripe integration needs:
+
+```text
+STRIPE_API_KEY
+STRIPE_WEBHOOK_SECRET
+```
+
+For local webhook testing, use the Stripe CLI to forward events to:
+
+```text
+http://127.0.0.1:3000/webhooks/stripe
+```
+
+Use the webhook signing secret printed by the CLI as `STRIPE_WEBHOOK_SECRET`.
+
 ## Enable The Public Backend Service
 
 The public backend service is disabled by default:

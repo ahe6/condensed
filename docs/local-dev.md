@@ -26,7 +26,7 @@ username: tele_admin
 password: tele_password
 ```
 
-The backend reads local env from `apps/backend/.env`. The example is `apps/backend/.env.example`.
+The backend reads local env from the repo root `.env` and `apps/backend/.env`. Backend-local values take precedence. Examples are `.env.example` and `apps/backend/.env.example`.
 
 The frontend can read local env from `apps/frontend/.env.local`. The example is `apps/frontend/.env.example`.
 
@@ -73,6 +73,15 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:3000
 Override `NEXT_PUBLIC_API_URL` when pointing the frontend at a deployed backend.
 
 Auth setup, signup recovery, and admin access commands are covered in [Auth](auth.md).
+
+Stripe payment testing needs:
+
+```text
+STRIPE_API_KEY
+STRIPE_WEBHOOK_SECRET
+```
+
+`STRIPE_WEBHOOK_SECRET` is only required when testing Stripe webhooks.
 
 Current frontend scope:
 

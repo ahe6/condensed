@@ -10,6 +10,7 @@ import { CheckoutError } from "./modules/checkout/checkout.service.js";
 import { checkoutRoutes } from "./modules/checkout/checkout.routes.js";
 import { ordersRoutes } from "./modules/orders/orders.routes.js";
 import { paymentsRoutes } from "./modules/payments/payments.routes.js";
+import { PaymentError } from "./modules/payments/payments.service.js";
 import { shipmentsRoutes } from "./modules/shipments/shipments.routes.js";
 import { usersRoutes } from "./modules/users/users.routes.js";
 import { config } from "./config.js";
@@ -24,6 +25,20 @@ export function buildServer() {
 
   server.register(cors, {
     origin: true
+  });
+
+  server.removeContentTypeParser("application/json");
+  server.addContentTypeParser("application/json", { parseAs: "string" }, (request, body, done) => {
+    if (request.url === "/webhooks/stripe") {
+      done(null, body);
+      return;
+    }
+
+    try {
+      done(null, body ? JSON.parse(body as string) : null);
+    } catch (error) {
+      done(error as Error);
+    }
   });
 
   server.setErrorHandler((error, _request, reply) => {
@@ -41,6 +56,12 @@ export function buildServer() {
     }
 
     if (error instanceof AuthError) {
+      return reply.code(error.statusCode).send({
+        error: error.message
+      });
+    }
+
+    if (error instanceof PaymentError) {
       return reply.code(error.statusCode).send({
         error: error.message
       });

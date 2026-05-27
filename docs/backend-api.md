@@ -379,11 +379,25 @@ Order status changes use explicit routes so callers cannot arbitrarily patch ord
 ## Payments
 
 ```text
+POST /orders/:id/stripe-payment-intent
 POST /admin/orders/:id/payments
 POST /admin/payments/:id/authorize
 POST /admin/payments/:id/pay
 POST /admin/payments/:id/fail
 POST /admin/payments/:id/refund
+POST /webhooks/stripe
+```
+
+`POST /orders/:id/stripe-payment-intent` creates or reuses a Stripe PaymentIntent for an order and records a local `payments` row with provider `stripe`.
+
+Response:
+
+```json
+{
+  "clientSecret": "pi_...",
+  "paymentIntentId": "pi_...",
+  "payment": {}
+}
 ```
 
 `POST /admin/orders/:id/payments` records a provider-agnostic payment attempt:
@@ -405,6 +419,13 @@ Payment status routes update the payment and the parent order `paymentStatus` in
 - `pay` sets both to `PAID`
 - `fail` sets both to `FAILED`
 - `refund` sets both to `REFUNDED`
+
+`POST /webhooks/stripe` verifies the Stripe signature when `STRIPE_WEBHOOK_SECRET` is configured and updates local payment/order status for:
+
+- `payment_intent.succeeded` -> `PAID`
+- `payment_intent.payment_failed` -> `FAILED`
+- `payment_intent.canceled` -> `FAILED`
+- `payment_intent.amount_capturable_updated` -> `AUTHORIZED`
 
 ## Shipments
 

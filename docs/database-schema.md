@@ -164,7 +164,7 @@ Important fields:
 
 The pair `provider + providerPaymentId` is unique when a provider payment ID exists.
 
-Current backend payment routes are provider-agnostic. Marking a payment `AUTHORIZED`, `PAID`, `FAILED`, or `REFUNDED` also updates the parent order `paymentStatus` in the same transaction.
+Current backend payment routes support provider-agnostic manual payments and Stripe PaymentIntent records. Marking a payment `AUTHORIZED`, `PAID`, `FAILED`, or `REFUNDED` also updates the parent order `paymentStatus` in the same transaction. Stripe webhooks apply the same status updates for Stripe-created payments.
 
 ## Fulfillment
 

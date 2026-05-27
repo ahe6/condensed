@@ -18,6 +18,10 @@ export const paymentIdParamsSchema = z.object({
   id: z.string().uuid()
 });
 
+export const orderIdParamsSchema = z.object({
+  id: z.string().uuid()
+});
+
 export const createPaymentSchema = z.object({
   provider: z.string().trim().min(1),
   providerPaymentId: z.string().trim().min(1).optional(),

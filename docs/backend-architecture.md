@@ -161,6 +161,8 @@ Admin order status changes should be explicit service functions, not arbitrary p
 
 Current responsibilities:
 
+- Create Stripe PaymentIntents for orders
+- Handle Stripe PaymentIntent webhook status updates
 - Record provider-agnostic payment attempts
 - Mark payments authorized
 - Mark payments paid
@@ -170,21 +172,25 @@ Current responsibilities:
 
 Current routes:
 
+- `POST /orders/:id/stripe-payment-intent`
 - `POST /admin/orders/:id/payments`
 - `POST /admin/payments/:id/authorize`
 - `POST /admin/payments/:id/pay`
 - `POST /admin/payments/:id/fail`
 - `POST /admin/payments/:id/refund`
+- `POST /webhooks/stripe`
 
 Main service functions:
 
+- `createStripePaymentIntent`
+- `handleStripeWebhook`
 - `createPayment`
 - `markPaymentAuthorized`
 - `markPaymentPaid`
 - `markPaymentFailed`
 - `refundPayment`
 
-Payment status changes happen in a Prisma transaction with the parent order update. Early implementation is internal and provider-agnostic. Later, Stripe or another provider can call these functions from webhook handlers.
+Payment status changes happen in a Prisma transaction with the parent order update. Stripe webhooks update the local Stripe payment row and parent order status from PaymentIntent events.
 
 ### Shipments
 

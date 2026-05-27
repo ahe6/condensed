@@ -1,5 +1,12 @@
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
 import { z } from "zod";
+
+loadEnv({
+  path: "../../.env"
+});
+loadEnv({
+  override: true
+});
 
 const dbSecretSchema = z.object({
   username: z.string(),
@@ -14,6 +21,8 @@ const envSchema = z.object({
   DB_NAME: z.string().default("tele"),
   COGNITO_ISSUER: z.string().url().optional(),
   COGNITO_CLIENT_ID: z.string().optional(),
+  STRIPE_API_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
   HOST: z.string().default("0.0.0.0"),
   PORT: z.coerce.number().int().positive().default(3000),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info")

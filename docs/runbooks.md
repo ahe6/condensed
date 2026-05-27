@@ -33,6 +33,16 @@ curl -s http://127.0.0.1:3000/health
 curl -s http://127.0.0.1:3000/ready
 ```
 
+## Test Stripe Webhooks Locally
+
+Run the backend, then forward Stripe webhook events:
+
+```sh
+stripe listen --forward-to http://127.0.0.1:3000/webhooks/stripe
+```
+
+Put the printed `whsec_...` value in `STRIPE_WEBHOOK_SECRET`, then restart the backend.
+
 ## Reset Local Database
 
 This removes local Postgres data.

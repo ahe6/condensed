@@ -67,12 +67,12 @@ Admin order status changes should use explicit service functions and routes, not
 ## Payment Update
 
 ```text
-payment provider or dev-admin action updates payment
+Stripe PaymentIntent or admin action updates payment
 backend records payment state
 backend updates order payment status
 ```
 
-Do not mark an order paid only from the frontend. Payment state should come from backend-controlled provider confirmation or a dev-admin path.
+Do not mark an order paid only from the frontend. Payment state should come from backend-controlled Stripe webhook confirmation or an admin path.
 
 Current payment status changes update the payment and parent order in the same Prisma transaction.
 
@@ -105,5 +105,5 @@ Local database records are disposable during early development unless we add see
 
 Recommended sequence:
 
-1. Add provider webhook handlers when a real payment provider is chosen.
+1. Add frontend Stripe Elements checkout UI.
 2. Add fulfillment quantity support if orders need split or partial shipments.
