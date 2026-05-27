@@ -92,6 +92,12 @@ variable "allowed_postgres_cidr_blocks" {
   default     = []
 }
 
+variable "deploy_app_stack" {
+  description = "Whether to deploy network, RDS, ECR, ECS, and backend infrastructure. Set false to deploy Cognito only."
+  type        = bool
+  default     = true
+}
+
 variable "backend_service_enabled" {
   description = "Whether to run the backend ECS service and public load balancer."
   type        = bool
@@ -126,4 +132,22 @@ variable "backend_memory" {
   description = "Backend ECS task memory in MiB."
   type        = number
   default     = 512
+}
+
+variable "auth_callback_urls" {
+  description = "Allowed Cognito Hosted UI callback URLs."
+  type        = list(string)
+  default = [
+    "http://localhost:3001/auth/callback",
+    "http://127.0.0.1:3001/auth/callback"
+  ]
+}
+
+variable "auth_logout_urls" {
+  description = "Allowed Cognito Hosted UI logout URLs."
+  type        = list(string)
+  default = [
+    "http://localhost:3001",
+    "http://127.0.0.1:3001"
+  ]
 }

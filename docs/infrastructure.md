@@ -4,7 +4,7 @@ Infrastructure is managed with Terraform.
 
 ## Current State
 
-AWS dev resources in `infra/envs/dev` are currently destroyed to avoid AWS dev costs.
+Cognito is deployed for local auth testing. Costly AWS dev app resources in `infra/envs/dev` are currently destroyed to avoid AWS dev costs.
 
 Retained infrastructure:
 
@@ -14,6 +14,11 @@ Retained infrastructure:
 Active development database:
 
 - Local Docker Postgres from `docker-compose.yml`
+
+Auth:
+
+- Terraform has deployed a Cognito user pool, Hosted UI domain, and public frontend app client in auth-only mode.
+- Cognito is HIPAA eligible under the AWS HIPAA eligible services program, but the app still needs the right AWS BAA, configuration, logging, and operational controls for HIPAA use.
 
 ## AWS Account
 
@@ -39,8 +44,8 @@ infra/bootstrap
   one-time S3 Terraform state bucket setup
 
 infra/envs/dev
-  VPC, subnets, RDS, ECR, ECS cluster, migration task,
-  and optional public backend service
+  Cognito auth plus optional VPC, subnets, RDS, ECR, ECS cluster,
+  migration task, and public backend service
 ```
 
 Common commands:
@@ -53,9 +58,16 @@ make bootstrap-plan
 make bootstrap-apply
 make dev-init
 make dev-plan
+make dev-auth-plan
 ```
 
-Apply dev resources:
+Apply Cognito only:
+
+```sh
+make dev-auth-apply
+```
+
+Apply full dev resources:
 
 ```sh
 terraform -chdir=infra/envs/dev apply
@@ -77,6 +89,8 @@ Terraform dev creates:
 - Backend security group for workloads that need Postgres access
 - Postgres security group
 - Optional ALB security group when the backend service is enabled
+
+These resources are skipped when `deploy_app_stack=false`.
 
 ## RDS Postgres
 
@@ -103,6 +117,8 @@ Security model:
 
 Approximate RDS cost before credits: about `$14/month`.
 
+RDS is skipped when `deploy_app_stack=false`.
+
 ## Backend AWS Resources
 
 When dev is recreated, Terraform creates:
@@ -118,6 +134,38 @@ The ECR repository URL is:
 ```text
 173748329850.dkr.ecr.us-east-2.amazonaws.com/tele-dev-backend
 ```
+
+Backend AWS resources are skipped when `deploy_app_stack=false`.
+
+## Cognito
+
+Terraform always creates Cognito resources, including in auth-only mode:
+
+- Cognito user pool: `tele-dev`
+- Cognito Hosted UI domain using the AWS account ID for uniqueness
+- Public app client for the Next.js frontend
+- Link-based email confirmation for new signups
+- OAuth authorization code flow with PKCE
+- Local callback URLs:
+  - `http://localhost:3001/auth/callback`
+  - `http://127.0.0.1:3001/auth/callback`
+
+Useful Terraform outputs:
+
+- `cognito_user_pool_id`
+- `cognito_frontend_client_id`
+- `cognito_issuer`
+- `cognito_hosted_ui_domain`
+
+Auth-only commands:
+
+```sh
+make dev-auth-plan
+make dev-auth-apply
+make dev-auth-env
+```
+
+`make dev-auth-env` writes Terraform Cognito outputs into ignored local env files for backend and frontend development.
 
 ## Optional Public Backend Service
 

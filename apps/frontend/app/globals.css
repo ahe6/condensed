@@ -95,6 +95,10 @@ button.status-action.active:hover:not(:disabled) {
   padding: 28px 0;
 }
 
+.narrow-shell {
+  width: min(560px, calc(100% - 32px));
+}
+
 .topbar {
   display: flex;
   align-items: center;
@@ -422,9 +426,16 @@ output {
 }
 
 .checkout-form,
+.auth-form,
 .billing-fields {
   display: grid;
   gap: 12px;
+}
+
+.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .form-grid {
@@ -577,6 +588,23 @@ output {
 .order-lines {
   display: grid;
   gap: 8px;
+}
+
+.account-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.account-panel > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.account-panel span,
+.muted-text {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .order-lines span {

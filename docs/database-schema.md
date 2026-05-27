@@ -21,6 +21,7 @@ Customer or account identity.
 
 Important fields:
 
+- `externalAuthId`: optional unique external identity ID, currently Cognito `sub`
 - `email`: unique login/contact email
 - `name`: optional display name
 - `phone`: optional contact phone

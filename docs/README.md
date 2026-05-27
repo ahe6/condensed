@@ -18,4 +18,4 @@ This directory holds the working documentation for `tele`.
 
 ## Current Environment
 
-Local development is active. AWS dev resources in `infra/envs/dev` are currently destroyed to avoid cost; bootstrap state storage remains.
+Local development is active. Cognito is deployed for local auth testing. Costly AWS app resources in `infra/envs/dev` are destroyed to avoid cost; bootstrap state storage remains.

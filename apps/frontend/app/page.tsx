@@ -9,18 +9,22 @@ import {
   Cart,
   Order,
   Product,
+  User,
   addCartItem,
   apiBaseUrl,
   checkoutCart,
   clearCart,
   createCart,
   getCart,
+  getMe,
   getOrder,
+  getMyOrders,
   getReadiness,
   listProducts,
   removeCartItem,
   updateCartItem
 } from "../src/lib/api";
+import { isAuthConfigured, signOut, startLogin } from "../src/lib/auth";
 import { formatMoney } from "../src/lib/format";
 
 const cartStorageKey = "tele.cartId";
@@ -60,6 +64,8 @@ export default function Home() {
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
   const [orderLookup, setOrderLookup] = useState("");
   const [lookedUpOrder, setLookedUpOrder] = useState<Order | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [myOrders, setMyOrders] = useState<Order[]>([]);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,7 +84,11 @@ export default function Home() {
     async function load() {
       try {
         await getReadiness();
-        const [nextProducts, savedCart] = await Promise.all([listProducts(), loadSavedCart()]);
+        const [nextProducts, savedCart, authState] = await Promise.all([
+          listProducts(),
+          loadSavedCart(),
+          loadAuthState()
+        ]);
 
         if (!isMounted) {
           return;
@@ -86,6 +96,8 @@ export default function Home() {
 
         setProducts(nextProducts);
         setCart(savedCart);
+        setCurrentUser(authState.user);
+        setMyOrders(authState.orders);
         setStatus("online");
         setError(null);
       } catch (caught) {
@@ -129,6 +141,29 @@ export default function Home() {
     } catch {
       window.localStorage.removeItem(cartStorageKey);
       return null;
+    }
+  }
+
+  async function loadAuthState() {
+    if (!isAuthConfigured()) {
+      return {
+        user: null,
+        orders: []
+      };
+    }
+
+    try {
+      const [user, orders] = await Promise.all([getMe(), getMyOrders()]);
+
+      return {
+        user,
+        orders
+      };
+    } catch {
+      return {
+        user: null,
+        orders: []
+      };
     }
   }
 
@@ -252,6 +287,9 @@ export default function Home() {
       setLastOrder(order);
       setLookedUpOrder(order);
       setOrderLookup(order.orderNumber);
+      if (currentUser) {
+        setMyOrders(await getMyOrders());
+      }
       setCart(null);
       window.localStorage.removeItem(cartStorageKey);
       setEmail("");
@@ -291,6 +329,19 @@ export default function Home() {
     }));
   }
 
+  async function refreshMyOrders() {
+    setPendingAction("my-orders");
+    setError(null);
+
+    try {
+      setMyOrders(await getMyOrders());
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not refresh order history");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
   return (
     <main className="shell">
       <section className="topbar" aria-label="Workspace status">
@@ -299,6 +350,17 @@ export default function Home() {
           <h1>Shop</h1>
         </div>
         <div className="nav-actions">
+          {isAuthConfigured() ? (
+            currentUser ? (
+              <button className="secondary" type="button" onClick={signOut}>
+                Sign Out
+              </button>
+            ) : (
+              <button className="secondary" type="button" onClick={() => void startLogin()}>
+                Sign In
+              </button>
+            )
+          ) : null}
           <Link className="nav-link" href="/admin">
             Admin
           </Link>
@@ -667,6 +729,47 @@ export default function Home() {
             </form>
 
             {lookedUpOrder ? <OrderSummary order={lookedUpOrder} /> : null}
+          </section>
+
+          <section className="panel" aria-label="Account orders">
+            <div className="panel-heading">
+              <h2>Account</h2>
+              {currentUser ? (
+                <button
+                  className="secondary"
+                  type="button"
+                  disabled={pendingAction === "my-orders"}
+                  onClick={() => void refreshMyOrders()}
+                >
+                  Refresh
+                </button>
+              ) : null}
+            </div>
+
+            {!isAuthConfigured() ? (
+              <div className="empty-state compact">Cognito is not configured</div>
+            ) : currentUser ? (
+              <div className="account-panel">
+                <div>
+                  <span>Signed in</span>
+                  <strong>{currentUser.email}</strong>
+                </div>
+                {myOrders.length === 0 ? (
+                  <div className="empty-state compact">No order history</div>
+                ) : (
+                  myOrders.map((order) => <OrderSummary key={order.id} order={order} />)
+                )}
+              </div>
+            ) : (
+              <div className="account-panel">
+                <button type="button" onClick={() => void startLogin()}>
+                  Sign In
+                </button>
+                <Link className="nav-link" href="/auth/confirm">
+                  Confirm Account
+                </Link>
+              </div>
+            )}
           </section>
         </aside>
       </section>

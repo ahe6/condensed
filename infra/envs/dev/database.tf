@@ -1,7 +1,9 @@
 resource "aws_security_group" "postgres" {
+  count = local.deploy_app_stack ? 1 : 0
+
   name        = "${local.name_prefix}-postgres"
   description = "Controls access to the ${local.name_prefix} Postgres database"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = aws_vpc.main[0].id
 
   tags = {
     Name = "${local.name_prefix}-postgres"
@@ -9,9 +11,11 @@ resource "aws_security_group" "postgres" {
 }
 
 resource "aws_security_group" "backend" {
+  count = local.deploy_app_stack ? 1 : 0
+
   name        = "${local.name_prefix}-backend"
   description = "Security group for ${local.name_prefix} backend workloads"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = aws_vpc.main[0].id
 
   tags = {
     Name = "${local.name_prefix}-backend"
@@ -19,15 +23,19 @@ resource "aws_security_group" "backend" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "backend_all" {
-  security_group_id = aws_security_group.backend.id
+  count = local.deploy_app_stack ? 1 : 0
+
+  security_group_id = aws_security_group.backend[0].id
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "-1"
   description       = "Allow outbound traffic"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "postgres_backend" {
-  security_group_id            = aws_security_group.postgres.id
-  referenced_security_group_id = aws_security_group.backend.id
+  count = local.deploy_app_stack ? 1 : 0
+
+  security_group_id            = aws_security_group.postgres[0].id
+  referenced_security_group_id = aws_security_group.backend[0].id
   from_port                    = 5432
   ip_protocol                  = "tcp"
   to_port                      = 5432
@@ -35,9 +43,9 @@ resource "aws_vpc_security_group_ingress_rule" "postgres_backend" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "postgres_cidr" {
-  for_each = var.allowed_postgres_cidr_blocks
+  for_each = local.deploy_app_stack ? var.allowed_postgres_cidr_blocks : toset([])
 
-  security_group_id = aws_security_group.postgres.id
+  security_group_id = aws_security_group.postgres[0].id
   cidr_ipv4         = each.value
   from_port         = 5432
   ip_protocol       = "tcp"
@@ -46,13 +54,17 @@ resource "aws_vpc_security_group_ingress_rule" "postgres_cidr" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "postgres_all" {
-  security_group_id = aws_security_group.postgres.id
+  count = local.deploy_app_stack ? 1 : 0
+
+  security_group_id = aws_security_group.postgres[0].id
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "-1"
   description       = "Allow outbound traffic"
 }
 
 resource "aws_db_instance" "postgres" {
+  count = local.deploy_app_stack ? 1 : 0
+
   identifier = "${local.name_prefix}-postgres"
 
   engine         = "postgres"
@@ -68,8 +80,8 @@ resource "aws_db_instance" "postgres" {
 
   manage_master_user_password = true
 
-  db_subnet_group_name   = aws_db_subnet_group.postgres.name
-  vpc_security_group_ids = [aws_security_group.postgres.id]
+  db_subnet_group_name   = aws_db_subnet_group.postgres[0].name
+  vpc_security_group_ids = [aws_security_group.postgres[0].id]
   publicly_accessible    = false
 
   backup_retention_period = var.postgres_backup_retention_days

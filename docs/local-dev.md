@@ -14,8 +14,8 @@ Local development uses Docker Postgres, the Fastify backend, and the Next.js fro
 Local URLs:
 
 - Backend API: `http://127.0.0.1:3000`
-- Shop frontend: `http://127.0.0.1:3001`
-- Admin frontend: `http://127.0.0.1:3001/admin`
+- Shop frontend: `http://localhost:3001`
+- Admin frontend: `http://localhost:3001/admin`
 - Postgres: `127.0.0.1:5432`
 
 Docker Compose Postgres settings:
@@ -27,6 +27,8 @@ password: tele_password
 ```
 
 The backend reads local env from `apps/backend/.env`. The example is `apps/backend/.env.example`.
+
+The frontend can read local env from `apps/frontend/.env.local`. The example is `apps/frontend/.env.example`.
 
 ## Start Local Development
 
@@ -70,6 +72,53 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:3000
 
 Override `NEXT_PUBLIC_API_URL` when pointing the frontend at a deployed backend.
 
+Cognito login is disabled until these frontend env vars are set:
+
+```text
+NEXT_PUBLIC_COGNITO_DOMAIN
+NEXT_PUBLIC_COGNITO_CLIENT_ID
+NEXT_PUBLIC_COGNITO_REGION
+```
+
+The backend also needs:
+
+```text
+COGNITO_ISSUER
+COGNITO_CLIENT_ID
+```
+
+Use the auth-only Terraform apply to create Cognito without recreating RDS/ECS:
+
+```sh
+make dev-init
+make dev-auth-plan
+make dev-auth-apply
+```
+
+Then write Cognito outputs into local env files:
+
+```sh
+make dev-auth-env
+```
+
+This updates `apps/backend/.env` and `apps/frontend/.env.local`. Restart the backend and frontend dev servers after changing these env files.
+
+New signups receive a Cognito confirmation link. If a signup is interrupted or the link email is hard to find, use:
+
+```text
+http://localhost:3001/auth/confirm
+```
+
+That page can confirm the existing unconfirmed account with a code or resend the confirmation email.
+
+During local dev, use `http://localhost:3001` consistently. `http://127.0.0.1:3001` is also allowed, but avoid mixing the two in the same login attempt. The frontend sends Cognito back to the current browser origin so the PKCE verifier remains available.
+
+Delete throwaway Cognito dev users with:
+
+```sh
+make dev-auth-delete-user EMAIL=user@example.com
+```
+
 Current frontend scope:
 
 Shop route at `/`:
@@ -79,6 +128,8 @@ Shop route at `/`:
 - Creates and resumes browser-local carts.
 - Adds, updates, removes, and clears cart items.
 - Submits checkout through `POST /checkout`.
+- Links checkout orders to the signed-in Cognito user when auth is configured.
+- Shows signed-in customer order history through `GET /me/orders`.
 - Looks up orders through `GET /orders/:orderNumber`.
 
 Admin route at `/admin`:
@@ -92,6 +143,7 @@ Admin route at `/admin`:
 
 - `GET /health`: process health
 - `GET /ready`: database connectivity check
+- `GET /me`, `GET /me/orders`: authenticated account and order history
 - `GET /products`, `GET /products/:slug`, `GET /categories`: public catalog
 - `POST /carts`, `GET /carts/:id`, `POST /carts/:id/items`: cart flow
 - `POST /checkout`: convert a cart into an order

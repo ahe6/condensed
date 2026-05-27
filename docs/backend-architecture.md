@@ -45,6 +45,22 @@ Avoid adding a repository layer until there is a real repeated data-access patte
 
 ## Current Modules
 
+### Auth
+
+Current responsibilities:
+
+- Verify Cognito ID tokens
+- Upsert or link local users by Cognito subject and email
+- Return the current account profile
+- Return the current user's order history
+
+Current routes:
+
+- `GET /me`
+- `GET /me/orders`
+
+Checkout accepts the same bearer token and links the created order to the authenticated user when one is present.
+
 ### Users
 
 Current responsibilities:

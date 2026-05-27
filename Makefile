@@ -7,7 +7,7 @@ FRONTEND_TAG ?= latest
 BOOTSTRAP_DIR := infra/bootstrap
 DEV_DIR := infra/envs/dev
 
-.PHONY: aws-login aws-whoami fmt validate bootstrap-init bootstrap-plan bootstrap-apply dev-init dev-plan backend-docker-build frontend-docker-build backend-ecr-login backend-ecr-push backend-migrate-aws
+.PHONY: aws-login aws-whoami fmt validate bootstrap-init bootstrap-plan bootstrap-apply dev-init dev-plan dev-auth-plan dev-auth-apply dev-auth-env dev-auth-delete-user backend-docker-build frontend-docker-build backend-ecr-login backend-ecr-push backend-migrate-aws
 
 aws-login:
 	aws sso login --profile $(AWS_PROFILE)
@@ -36,6 +36,19 @@ dev-init:
 
 dev-plan:
 	terraform -chdir=$(DEV_DIR) plan
+
+dev-auth-plan:
+	terraform -chdir=$(DEV_DIR) plan -var deploy_app_stack=false
+
+dev-auth-apply:
+	terraform -chdir=$(DEV_DIR) apply -var deploy_app_stack=false
+
+dev-auth-env:
+	TERRAFORM_DIR=$(DEV_DIR) scripts/write-local-auth-env.sh
+
+dev-auth-delete-user:
+	@test -n "$(EMAIL)" || (echo "Usage: make dev-auth-delete-user EMAIL=user@example.com" >&2; exit 2)
+	AWS_PROFILE=$(AWS_PROFILE) AWS_REGION=$(AWS_REGION) TERRAFORM_DIR=$(DEV_DIR) scripts/delete-cognito-user.sh "$(EMAIL)"
 
 backend-docker-build:
 	docker build -f apps/backend/Dockerfile -t $(BACKEND_IMAGE):$(BACKEND_TAG) .

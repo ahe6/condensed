@@ -48,15 +48,16 @@ enum ShipmentStatus {
 }
 
 model User {
-  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email     String    @unique
-  name      String?
-  phone     String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  addresses Address[]
-  carts     Cart[]
-  orders    Order[]
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  externalAuthId String?   @unique
+  email          String    @unique
+  name           String?
+  phone          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  addresses      Address[]
+  carts          Cart[]
+  orders         Order[]
 
   @@map("users")
 }

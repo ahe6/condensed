@@ -19,7 +19,7 @@ export class CheckoutError extends Error {
   }
 }
 
-export async function checkoutCart(input: CheckoutCartInput) {
+export async function checkoutCart(input: CheckoutCartInput, options: { userId?: string } = {}) {
   return prisma.$transaction(async (tx) => {
     const cart = await tx.cart.findUniqueOrThrow({
       where: {
@@ -81,7 +81,7 @@ export async function checkoutCart(input: CheckoutCartInput) {
 
     const order = await tx.order.create({
       data: {
-        userId: cart.userId,
+        userId: options.userId ?? cart.userId,
         orderNumber: generateOrderNumber(),
         email: input.email,
         status: OrderStatus.PLACED,

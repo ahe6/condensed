@@ -1,4 +1,16 @@
+import { getIdToken } from "./auth";
+
 export type ApiStatus = "checking" | "online" | "offline";
+
+export type User = {
+  id: string;
+  externalAuthId: string | null;
+  email: string;
+  name: string | null;
+  phone: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
 
 export type ProductVariant = {
   id: string;
@@ -169,9 +181,14 @@ export const apiBaseUrl =
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
+  const idToken = getIdToken();
 
   if (init?.body !== undefined && !headers.has("content-type")) {
     headers.set("content-type", "application/json");
+  }
+
+  if (idToken && !headers.has("authorization")) {
+    headers.set("authorization", `Bearer ${idToken}`);
   }
 
   const response = await fetch(`${apiBaseUrl}${path}`, {
@@ -189,6 +206,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export async function getReadiness() {
   return request<{ ok: boolean }>("/ready");
+}
+
+export async function getMe() {
+  return request<User>("/me");
+}
+
+export async function getMyOrders() {
+  return request<Order[]>("/me/orders");
 }
 
 export async function listProducts() {

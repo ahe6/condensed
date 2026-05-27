@@ -1,4 +1,6 @@
 resource "aws_ecr_repository" "backend" {
+  count = local.deploy_app_stack ? 1 : 0
+
   name                 = "${local.name_prefix}-backend"
   image_tag_mutability = "MUTABLE"
   force_delete         = true
@@ -9,7 +11,9 @@ resource "aws_ecr_repository" "backend" {
 }
 
 resource "aws_ecr_lifecycle_policy" "backend" {
-  repository = aws_ecr_repository.backend.name
+  count = local.deploy_app_stack ? 1 : 0
+
+  repository = aws_ecr_repository.backend[0].name
 
   policy = jsonencode({
     rules = [
@@ -30,20 +34,24 @@ resource "aws_ecr_lifecycle_policy" "backend" {
 }
 
 resource "aws_cloudwatch_log_group" "backend" {
+  count = local.deploy_app_stack ? 1 : 0
+
   name              = "/ecs/${local.name_prefix}-backend"
   retention_in_days = 14
 }
 
 resource "aws_ecs_cluster" "main" {
+  count = local.deploy_app_stack ? 1 : 0
+
   name = local.name_prefix
 }
 
 resource "aws_security_group" "alb" {
-  count = var.backend_service_enabled ? 1 : 0
+  count = local.deploy_app_stack && var.backend_service_enabled ? 1 : 0
 
   name        = "${local.name_prefix}-alb"
   description = "Public HTTP access to ${local.name_prefix} backend"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = aws_vpc.main[0].id
 
   tags = {
     Name = "${local.name_prefix}-alb"
@@ -51,7 +59,7 @@ resource "aws_security_group" "alb" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "alb_http" {
-  count = var.backend_service_enabled ? 1 : 0
+  count = local.deploy_app_stack && var.backend_service_enabled ? 1 : 0
 
   security_group_id = aws_security_group.alb[0].id
   cidr_ipv4         = "0.0.0.0/0"
@@ -62,10 +70,10 @@ resource "aws_vpc_security_group_ingress_rule" "alb_http" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "alb_backend" {
-  count = var.backend_service_enabled ? 1 : 0
+  count = local.deploy_app_stack && var.backend_service_enabled ? 1 : 0
 
   security_group_id            = aws_security_group.alb[0].id
-  referenced_security_group_id = aws_security_group.backend.id
+  referenced_security_group_id = aws_security_group.backend[0].id
   from_port                    = var.backend_container_port
   ip_protocol                  = "tcp"
   to_port                      = var.backend_container_port
@@ -73,9 +81,9 @@ resource "aws_vpc_security_group_egress_rule" "alb_backend" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "backend_alb" {
-  count = var.backend_service_enabled ? 1 : 0
+  count = local.deploy_app_stack && var.backend_service_enabled ? 1 : 0
 
-  security_group_id            = aws_security_group.backend.id
+  security_group_id            = aws_security_group.backend[0].id
   referenced_security_group_id = aws_security_group.alb[0].id
   from_port                    = var.backend_container_port
   ip_protocol                  = "tcp"
@@ -84,7 +92,7 @@ resource "aws_vpc_security_group_ingress_rule" "backend_alb" {
 }
 
 resource "aws_lb" "backend" {
-  count = var.backend_service_enabled ? 1 : 0
+  count = local.deploy_app_stack && var.backend_service_enabled ? 1 : 0
 
   name               = "${local.name_prefix}-backend"
   internal           = false
@@ -94,13 +102,13 @@ resource "aws_lb" "backend" {
 }
 
 resource "aws_lb_target_group" "backend" {
-  count = var.backend_service_enabled ? 1 : 0
+  count = local.deploy_app_stack && var.backend_service_enabled ? 1 : 0
 
   name        = "${local.name_prefix}-backend"
   port        = var.backend_container_port
   protocol    = "HTTP"
   target_type = "ip"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = aws_vpc.main[0].id
 
   health_check {
     enabled             = true
@@ -114,7 +122,7 @@ resource "aws_lb_target_group" "backend" {
 }
 
 resource "aws_lb_listener" "backend_http" {
-  count = var.backend_service_enabled ? 1 : 0
+  count = local.deploy_app_stack && var.backend_service_enabled ? 1 : 0
 
   load_balancer_arn = aws_lb.backend[0].arn
   port              = 80
@@ -127,6 +135,8 @@ resource "aws_lb_listener" "backend_http" {
 }
 
 resource "aws_iam_role" "backend_task_execution" {
+  count = local.deploy_app_stack ? 1 : 0
+
   name = "${local.name_prefix}-backend-execution"
 
   assume_role_policy = jsonencode({
@@ -144,13 +154,17 @@ resource "aws_iam_role" "backend_task_execution" {
 }
 
 resource "aws_iam_role_policy_attachment" "backend_task_execution" {
-  role       = aws_iam_role.backend_task_execution.name
+  count = local.deploy_app_stack ? 1 : 0
+
+  role       = aws_iam_role.backend_task_execution[0].name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
 resource "aws_iam_role_policy" "backend_task_execution_secrets" {
+  count = local.deploy_app_stack ? 1 : 0
+
   name = "${local.name_prefix}-backend-secrets"
-  role = aws_iam_role.backend_task_execution.id
+  role = aws_iam_role.backend_task_execution[0].id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -160,13 +174,15 @@ resource "aws_iam_role_policy" "backend_task_execution_secrets" {
         Action = [
           "secretsmanager:GetSecretValue"
         ]
-        Resource = aws_db_instance.postgres.master_user_secret[0].secret_arn
+        Resource = aws_db_instance.postgres[0].master_user_secret[0].secret_arn
       }
     ]
   })
 }
 
 resource "aws_iam_role" "backend_task" {
+  count = local.deploy_app_stack ? 1 : 0
+
   name = "${local.name_prefix}-backend-task"
 
   assume_role_policy = jsonencode({
@@ -184,15 +200,15 @@ resource "aws_iam_role" "backend_task" {
 }
 
 resource "aws_ecs_task_definition" "backend" {
-  count = var.backend_service_enabled ? 1 : 0
+  count = local.deploy_app_stack && var.backend_service_enabled ? 1 : 0
 
   family                   = "${local.name_prefix}-backend"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = var.backend_cpu
   memory                   = var.backend_memory
-  execution_role_arn       = aws_iam_role.backend_task_execution.arn
-  task_role_arn            = aws_iam_role.backend_task.arn
+  execution_role_arn       = aws_iam_role.backend_task_execution[0].arn
+  task_role_arn            = aws_iam_role.backend_task[0].arn
 
   runtime_platform {
     operating_system_family = "LINUX"
@@ -202,7 +218,7 @@ resource "aws_ecs_task_definition" "backend" {
   container_definitions = jsonencode([
     {
       name      = "backend"
-      image     = "${aws_ecr_repository.backend.repository_url}:${var.backend_image_tag}"
+      image     = "${aws_ecr_repository.backend[0].repository_url}:${var.backend_image_tag}"
       essential = true
       portMappings = [
         {
@@ -214,11 +230,11 @@ resource "aws_ecs_task_definition" "backend" {
       environment = [
         {
           name  = "DB_HOST"
-          value = aws_db_instance.postgres.address
+          value = aws_db_instance.postgres[0].address
         },
         {
           name  = "DB_PORT"
-          value = tostring(aws_db_instance.postgres.port)
+          value = tostring(aws_db_instance.postgres[0].port)
         },
         {
           name  = "DB_NAME"
@@ -235,18 +251,26 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name  = "LOG_LEVEL"
           value = "info"
+        },
+        {
+          name  = "COGNITO_ISSUER"
+          value = "https://cognito-idp.${var.aws_region}.amazonaws.com/${aws_cognito_user_pool.main.id}"
+        },
+        {
+          name  = "COGNITO_CLIENT_ID"
+          value = aws_cognito_user_pool_client.frontend.id
         }
       ]
       secrets = [
         {
           name      = "DB_SECRET_JSON"
-          valueFrom = aws_db_instance.postgres.master_user_secret[0].secret_arn
+          valueFrom = aws_db_instance.postgres[0].master_user_secret[0].secret_arn
         }
       ]
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = aws_cloudwatch_log_group.backend.name
+          awslogs-group         = aws_cloudwatch_log_group.backend[0].name
           awslogs-region        = var.aws_region
           awslogs-stream-prefix = "backend"
         }
@@ -256,13 +280,15 @@ resource "aws_ecs_task_definition" "backend" {
 }
 
 resource "aws_ecs_task_definition" "backend_migration" {
+  count = local.deploy_app_stack ? 1 : 0
+
   family                   = "${local.name_prefix}-backend-migration"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = var.backend_cpu
   memory                   = var.backend_memory
-  execution_role_arn       = aws_iam_role.backend_task_execution.arn
-  task_role_arn            = aws_iam_role.backend_task.arn
+  execution_role_arn       = aws_iam_role.backend_task_execution[0].arn
+  task_role_arn            = aws_iam_role.backend_task[0].arn
 
   runtime_platform {
     operating_system_family = "LINUX"
@@ -272,17 +298,17 @@ resource "aws_ecs_task_definition" "backend_migration" {
   container_definitions = jsonencode([
     {
       name      = "backend-migration"
-      image     = "${aws_ecr_repository.backend.repository_url}:${var.backend_image_tag}"
+      image     = "${aws_ecr_repository.backend[0].repository_url}:${var.backend_image_tag}"
       essential = true
       command   = ["npm", "run", "db:deploy"]
       environment = [
         {
           name  = "DB_HOST"
-          value = aws_db_instance.postgres.address
+          value = aws_db_instance.postgres[0].address
         },
         {
           name  = "DB_PORT"
-          value = tostring(aws_db_instance.postgres.port)
+          value = tostring(aws_db_instance.postgres[0].port)
         },
         {
           name  = "DB_NAME"
@@ -296,13 +322,13 @@ resource "aws_ecs_task_definition" "backend_migration" {
       secrets = [
         {
           name      = "DB_SECRET_JSON"
-          valueFrom = aws_db_instance.postgres.master_user_secret[0].secret_arn
+          valueFrom = aws_db_instance.postgres[0].master_user_secret[0].secret_arn
         }
       ]
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = aws_cloudwatch_log_group.backend.name
+          awslogs-group         = aws_cloudwatch_log_group.backend[0].name
           awslogs-region        = var.aws_region
           awslogs-stream-prefix = "migration"
         }
@@ -312,17 +338,17 @@ resource "aws_ecs_task_definition" "backend_migration" {
 }
 
 resource "aws_ecs_service" "backend" {
-  count = var.backend_service_enabled ? 1 : 0
+  count = local.deploy_app_stack && var.backend_service_enabled ? 1 : 0
 
   name            = "${local.name_prefix}-backend"
-  cluster         = aws_ecs_cluster.main.id
+  cluster         = aws_ecs_cluster.main[0].id
   task_definition = aws_ecs_task_definition.backend[0].arn
   desired_count   = var.backend_desired_count
   launch_type     = "FARGATE"
 
   network_configuration {
     subnets          = aws_subnet.app_public[*].id
-    security_groups  = [aws_security_group.backend.id]
+    security_groups  = [aws_security_group.backend[0].id]
     assign_public_ip = true
   }
 

@@ -20,8 +20,8 @@ npm run frontend:dev
 Open:
 
 - Backend: `http://127.0.0.1:3000/health`
-- Shop: `http://127.0.0.1:3001`
-- Admin: `http://127.0.0.1:3001/admin`
+- Shop: `http://localhost:3001`
+- Admin: `http://localhost:3001/admin`
 
 ## Check Local Health
 
@@ -82,6 +82,37 @@ make dev-plan
 terraform -chdir=infra/envs/dev apply
 ```
 
+## Deploy Cognito Only
+
+Use this for local auth development without recreating RDS/ECS:
+
+```sh
+make aws-login
+make aws-whoami
+make dev-init
+make dev-auth-plan
+make dev-auth-apply
+make dev-auth-env
+```
+
+Restart backend and frontend dev servers after `make dev-auth-env`.
+
+## Recover Unconfirmed Cognito Signup
+
+New signups receive a confirmation link. If Cognito says the user already exists but is not confirmed, open:
+
+```text
+http://localhost:3001/auth/confirm
+```
+
+Enter the email and confirmation code, or resend a new confirmation email from that page.
+
+To delete a throwaway Cognito dev user and start over:
+
+```sh
+make dev-auth-delete-user EMAIL=user@example.com
+```
+
 ## Push Backend Image To AWS
 
 ```sh
@@ -107,6 +138,9 @@ terraform -chdir=infra/envs/dev output
 Useful output names:
 
 - `backend_ecr_repository_url`
+- `cognito_frontend_client_id`
+- `cognito_hosted_ui_domain`
+- `cognito_issuer`
 - `ecs_cluster_name`
 - `backend_migration_task_definition_arn`
 - `backend_load_balancer_dns_name`

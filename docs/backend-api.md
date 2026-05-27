@@ -14,6 +14,9 @@ apps/backend/src/modules/
     users.routes.ts
     users.schemas.ts
     users.service.ts
+  auth/
+    auth.routes.ts
+    auth.service.ts
   catalog/
     catalog.routes.ts
     catalog.schemas.ts
@@ -46,6 +49,8 @@ Route files should stay thin: parse input, call a service, and shape the HTTP re
 
 All `/admin/*` routes are intentionally unauthenticated for local development. Add authentication and authorization before exposing them publicly.
 
+Authenticated customer routes expect a Cognito ID token in the `Authorization: Bearer <token>` header.
+
 ## Health
 
 ```text
@@ -75,6 +80,21 @@ POST /users
 ```
 
 Only `email` is required.
+
+## Auth
+
+```text
+GET /me
+GET /me/orders
+```
+
+`GET /me` verifies the Cognito ID token, upserts a local `users` row keyed by `externalAuthId`, and returns the local user.
+
+`GET /me/orders` returns orders linked to the current local user.
+
+`POST /checkout` also accepts the same bearer token. When present, the created order is linked to the authenticated user.
+
+The frontend confirmation page at `/auth/confirm` uses Cognito public signup APIs directly for confirm-code and resend-code recovery.
 
 ## Catalog
 

@@ -12,6 +12,8 @@ const envSchema = z.object({
   DB_HOST: z.string().optional(),
   DB_PORT: z.coerce.number().int().positive().default(5432),
   DB_NAME: z.string().default("tele"),
+  COGNITO_ISSUER: z.string().url().optional(),
+  COGNITO_CLIENT_ID: z.string().optional(),
   HOST: z.string().default("0.0.0.0"),
   PORT: z.coerce.number().int().positive().default(3000),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info")

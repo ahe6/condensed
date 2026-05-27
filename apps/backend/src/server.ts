@@ -2,6 +2,8 @@ import cors from "@fastify/cors";
 import { Prisma } from "@prisma/client";
 import Fastify from "fastify";
 import { ZodError } from "zod";
+import { authRoutes } from "./modules/auth/auth.routes.js";
+import { AuthError } from "./modules/auth/auth.service.js";
 import { cartsRoutes } from "./modules/carts/carts.routes.js";
 import { catalogRoutes } from "./modules/catalog/catalog.routes.js";
 import { CheckoutError } from "./modules/checkout/checkout.service.js";
@@ -33,6 +35,12 @@ export function buildServer() {
     }
 
     if (error instanceof CheckoutError) {
+      return reply.code(error.statusCode).send({
+        error: error.message
+      });
+    }
+
+    if (error instanceof AuthError) {
       return reply.code(error.statusCode).send({
         error: error.message
       });
@@ -86,6 +94,7 @@ export function buildServer() {
     };
   });
 
+  server.register(authRoutes);
   server.register(usersRoutes);
   server.register(catalogRoutes);
   server.register(cartsRoutes);
