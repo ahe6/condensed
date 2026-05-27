@@ -495,11 +495,19 @@ POST  /admin/shipments/:id/return
 ```json
 {
   "carrier": "UPS",
-  "trackingNumber": "1Z9999999999999999"
+  "trackingNumber": "1Z9999999999999999",
+  "items": [
+    {
+      "orderItemId": "00000000-0000-0000-0000-000000000000",
+      "quantity": 1
+    }
+  ]
 }
 ```
 
-Both fields are optional when creating a shipment, because fulfillment may be staged before a label exists.
+Carrier, tracking number, and items are optional when creating a shipment, because fulfillment may be staged before a label exists. If `items` is omitted or empty, the backend assigns all remaining unallocated order item quantities to the shipment.
+
+Shipment item quantities must belong to the order and cannot exceed remaining unallocated quantity.
 
 Shipment creation requires the parent order payment status to be `PAID` or `AUTHORIZED`.
 
@@ -517,13 +525,13 @@ Tracking updates overwrite the stored carrier/tracking values, which lets admins
 
 Shipment status routes update the shipment and the parent order `fulfillmentStatus` in one transaction:
 
-- `ship` sets shipment status to `SHIPPED`, sets `shippedAt`, and marks the order `FULFILLED`
-- `deliver` sets shipment status to `DELIVERED`, sets `deliveredAt`, and keeps the order `FULFILLED`
-- `return` sets shipment status to `RETURNED` and marks the order `RETURNED`
+- `ship` sets shipment status to `SHIPPED`, sets `shippedAt`, and recalculates order fulfillment
+- `deliver` sets shipment status to `DELIVERED`, sets `deliveredAt`, and recalculates order fulfillment
+- `return` sets shipment status to `RETURNED` and recalculates order fulfillment
 
 The `ship` and `deliver` actions require payment status `PAID` or `AUTHORIZED`. Returned shipment status can still be set for existing shipments so admin can clean up already-shipped orders.
 
-Shipment responses include `statusEvents`, an ordered audit trail of shipment status changes, and `trackingEvents`, an ordered audit trail of carrier/tracking changes.
+Shipment responses include `items`, `statusEvents`, an ordered audit trail of shipment status changes, and `trackingEvents`, an ordered audit trail of carrier/tracking changes.
 
 See [Fulfillment](fulfillment.md) for operator workflow, tracking links, and current limitations.
 

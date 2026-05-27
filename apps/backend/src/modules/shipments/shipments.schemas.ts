@@ -8,12 +8,23 @@ export const shipmentIdParamsSchema = z.object({
   id: z.string().uuid()
 });
 
-export const createShipmentSchema = z.object({
+const trackingFieldsSchema = z.object({
   carrier: z.string().trim().min(1).optional(),
   trackingNumber: z.string().trim().min(1).optional()
 });
 
-export const updateShipmentTrackingSchema = createShipmentSchema.refine(
+export const createShipmentSchema = trackingFieldsSchema.extend({
+  items: z
+    .array(
+      z.object({
+        orderItemId: z.string().uuid(),
+        quantity: z.number().int().min(1)
+      })
+    )
+    .optional()
+});
+
+export const updateShipmentTrackingSchema = trackingFieldsSchema.refine(
   (value) => value.carrier !== undefined || value.trackingNumber !== undefined,
   "At least one tracking field is required"
 );

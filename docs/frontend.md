@@ -90,11 +90,12 @@ Main admin capabilities:
 - Filter by payment status, fulfillment status, event date range, and page size.
 - Sort by created, edited, placed, shipped, delivered, or total.
 - Expand one order row inline.
+- Keep notes visible on expanded orders and open the activity/actions accordion for payments, fulfillment, and timeline.
 - Add internal admin-only notes.
 - Show a combined order timeline.
 - Create manual payments and mark payments authorized, paid, failed, or refunded.
 - Sync Stripe payment status for Stripe payments.
-- Create shipments, save carrier/tracking edits, and mark shipments shipped, delivered, or returned.
+- Create shipments with remaining line item quantities prefilled, save carrier/tracking edits, and mark shipments shipped, delivered, or returned.
 - Open public carrier tracking links for UPS, USPS, FedEx, and DHL.
 - Search/filter admin products.
 - Create products and categories.
@@ -107,12 +108,13 @@ Main admin capabilities:
 The expanded order row is the main work surface. It includes:
 
 - Order timestamps, customer, line items, and shipment summary
-- Timeline built from order events, notes, payment events, shipment events, and tracking changes
 - Notes composer and note list
 - Payments and payment actions
-- Fulfillment and shipment actions
+- Fulfillment line item allocation and shipment actions
+- Chronological timeline built from order events, notes, payment events, shipment events, and tracking changes
 
 Detailed payment and shipment audit history is folded behind per-record `History` buttons so the current operational controls stay visible.
+Notes stay visible on expanded orders. The activity and actions accordion starts collapsed per order so admins can scan orders first, then open the operational workspace when needed.
 
 The expanded catalog row is the main product work surface. It includes product fields, category chips, variant editing, inventory controls, and image links.
 

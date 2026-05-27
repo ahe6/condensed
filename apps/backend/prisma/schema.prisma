@@ -257,20 +257,21 @@ model OrderAddress {
 }
 
 model OrderItem {
-  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orderId      String          @db.Uuid
-  productId    String?         @db.Uuid
-  variantId    String?         @db.Uuid
-  productName  String
-  variantTitle String?
-  sku          String
-  unitPrice    Decimal         @db.Decimal(12, 2)
-  quantity     Int
-  total        Decimal         @db.Decimal(12, 2)
-  createdAt    DateTime        @default(now())
-  order        Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product      Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
-  variant      ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId       String          @db.Uuid
+  productId     String?         @db.Uuid
+  variantId     String?         @db.Uuid
+  productName   String
+  variantTitle  String?
+  sku           String
+  unitPrice     Decimal         @db.Decimal(12, 2)
+  quantity      Int
+  total         Decimal         @db.Decimal(12, 2)
+  createdAt     DateTime        @default(now())
+  order         Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product       Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variant       ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  shipmentItems ShipmentItem[]
 
   @@index([orderId])
   @@index([productId])
@@ -343,12 +344,28 @@ model Shipment {
   createdAt      DateTime                @default(now())
   updatedAt      DateTime                @updatedAt
   order          Order                   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  items          ShipmentItem[]
   statusEvents   ShipmentStatusEvent[]
   trackingEvents ShipmentTrackingEvent[]
 
   @@index([orderId])
   @@index([trackingNumber])
   @@map("shipments")
+}
+
+model ShipmentItem {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shipmentId  String    @db.Uuid
+  orderItemId String    @db.Uuid
+  quantity    Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  shipment    Shipment  @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  @@unique([shipmentId, orderItemId])
+  @@index([orderItemId])
+  @@map("shipment_items")
 }
 
 model ShipmentStatusEvent {

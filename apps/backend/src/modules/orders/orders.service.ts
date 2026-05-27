@@ -16,6 +16,14 @@ export const orderInclude = {
   },
   shipments: {
     include: {
+      items: {
+        include: {
+          orderItem: true
+        },
+        orderBy: {
+          createdAt: "asc" as const
+        }
+      },
       statusEvents: {
         orderBy: {
           createdAt: "asc" as const

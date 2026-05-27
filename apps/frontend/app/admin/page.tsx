@@ -143,6 +143,28 @@ function orderItemCount(order: Order) {
   return order.items.reduce((total, item) => total + item.quantity, 0);
 }
 
+function allocatedShipmentQuantity(order: Order, orderItemId: string) {
+  return order.shipments
+    .filter((shipment) => shipment.status !== "RETURNED")
+    .flatMap((shipment) => shipment.items)
+    .filter((item) => item.orderItemId === orderItemId)
+    .reduce((total, item) => total + item.quantity, 0);
+}
+
+function shippedShipmentQuantity(order: Order, orderItemId: string) {
+  return order.shipments
+    .filter((shipment) => shipment.status === "SHIPPED" || shipment.status === "DELIVERED")
+    .flatMap((shipment) => shipment.items)
+    .filter((item) => item.orderItemId === orderItemId)
+    .reduce((total, item) => total + item.quantity, 0);
+}
+
+function remainingShipmentQuantity(order: Order, orderItemId: string) {
+  const item = order.items.find((orderItem) => orderItem.id === orderItemId);
+
+  return Math.max(0, (item?.quantity ?? 0) - allocatedShipmentQuantity(order, orderItemId));
+}
+
 function pluralizeItems(count: number) {
   return count === 1 ? "1 item" : `${count} items`;
 }
@@ -269,7 +291,7 @@ function orderTimeline(order: Order): AdminTimelineItem[] {
     }
   }
 
-  return items.sort((first, second) => Date.parse(second.createdAt) - Date.parse(first.createdAt));
+  return items.sort((first, second) => Date.parse(first.createdAt) - Date.parse(second.createdAt));
 }
 
 function AdminOrderDetails({ order }: { order: Order }) {
@@ -332,6 +354,13 @@ function AdminOrderSnapshot({ order }: { order: Order }) {
                 ) : (
                   <small>No tracking</small>
                 )}
+                {shipment.items.length > 0 ? (
+                  <small>
+                    {shipment.items
+                      .map((item) => `${item.orderItem.sku} x ${item.quantity}`)
+                      .join(", ")}
+                  </small>
+                ) : null}
               </div>
             );
           })}
@@ -387,9 +416,11 @@ export default function AdminPage() {
   const [categorySelectDrafts, setCategorySelectDrafts] = useState<Record<string, string>>({});
   const [newShipmentCarrier, setNewShipmentCarrier] = useState("UPS");
   const [newShipmentTrackingNumber, setNewShipmentTrackingNumber] = useState("");
+  const [newShipmentItemDrafts, setNewShipmentItemDrafts] = useState<Record<string, Record<string, string>>>({});
   const [shipmentTrackingDrafts, setShipmentTrackingDrafts] = useState<
     Record<string, { carrier: string; trackingNumber: string }>
   >({});
+  const [orderActivityOpen, setOrderActivityOpen] = useState<Record<string, boolean>>({});
   const [paymentHistoryOpen, setPaymentHistoryOpen] = useState<Record<string, boolean>>({});
   const [shipmentHistoryOpen, setShipmentHistoryOpen] = useState<Record<string, boolean>>({});
   const [orderNoteDrafts, setOrderNoteDrafts] = useState<Record<string, string>>({});
@@ -1050,11 +1081,35 @@ export default function AdminPage() {
     }
   }
 
-  function newShipmentInput() {
+  function newShipmentInput(order: Order) {
+    const itemDrafts = newShipmentItemDrafts[order.id] ?? {};
+    const items = order.items
+      .map((item) => {
+        const remaining = remainingShipmentQuantity(order, item.id);
+        const draft = itemDrafts[item.id];
+
+        return {
+          orderItemId: item.id,
+          quantity: Number(draft ?? remaining)
+        };
+      })
+      .filter((item) => item.quantity > 0);
+
     return {
       carrier: newShipmentCarrier.trim() || undefined,
-      trackingNumber: newShipmentTrackingNumber.trim() || undefined
+      trackingNumber: newShipmentTrackingNumber.trim() || undefined,
+      items: items.length > 0 ? items : undefined
     };
+  }
+
+  function updateNewShipmentItemDraft(orderId: string, orderItemId: string, value: string) {
+    setNewShipmentItemDrafts((current) => ({
+      ...current,
+      [orderId]: {
+        ...(current[orderId] ?? {}),
+        [orderItemId]: value
+      }
+    }));
   }
 
   function shipmentTrackingInput(shipmentId: string) {
@@ -1129,9 +1184,13 @@ export default function AdminPage() {
     setNotice(null);
 
     try {
-      const shipment = await createShipment(order.id, newShipmentInput());
+      const shipment = await createShipment(order.id, newShipmentInput(order));
       syncAdminOrder(shipment.order);
       await reloadAdminOrders(shipment.order.id);
+      setNewShipmentItemDrafts((current) => ({
+        ...current,
+        [order.id]: {}
+      }));
       setNotice(`Created shipment for ${shipment.order.orderNumber}`);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not create shipment");
@@ -1188,6 +1247,17 @@ export default function AdminPage() {
     setShipmentHistoryOpen((current) => ({
       ...current,
       [shipmentId]: !current[shipmentId]
+    }));
+  }
+
+  function isOrderActivityOpen(orderId: string) {
+    return orderActivityOpen[orderId] ?? false;
+  }
+
+  function toggleOrderActivity(orderId: string) {
+    setOrderActivityOpen((current) => ({
+      ...current,
+      [orderId]: !(current[orderId] ?? false)
     }));
   }
 
@@ -1801,100 +1871,100 @@ export default function AdminPage() {
             </button>
           ) : (
             order.payments.map((payment) => {
-              const isBusy = pendingAction === `payment-${payment.id}`;
-              const isHistoryOpen = paymentHistoryOpen[payment.id] ?? false;
+                const isBusy = pendingAction === `payment-${payment.id}`;
+                const isHistoryOpen = paymentHistoryOpen[payment.id] ?? false;
 
-              return (
-                <article className="payment-row" key={payment.id}>
-                  <div className="payment-row-heading">
-                    <div>
-                      <span>{payment.provider}</span>
-                      <strong>{payment.status}</strong>
+                return (
+                  <article className="payment-row" key={payment.id}>
+                    <div className="payment-row-heading">
+                      <div>
+                        <span>{payment.provider}</span>
+                        <strong>{payment.status}</strong>
+                      </div>
+                      <strong>{formatMoney(payment.amount, payment.currency)}</strong>
                     </div>
-                    <strong>{formatMoney(payment.amount, payment.currency)}</strong>
-                  </div>
-                  <dl className="order-meta compact">
-                    <div>
-                      <dt>Created</dt>
-                      <dd>{formatDateTime(payment.createdAt)}</dd>
-                    </div>
-                    <div>
-                      <dt>Processed</dt>
-                      <dd>{formatDateTime(payment.processedAt)}</dd>
-                    </div>
-                  </dl>
-                  <div className="payment-controls">
-                    <button
-                      className={actionButtonClass(payment.status === "AUTHORIZED")}
-                      type="button"
-                      disabled={isPaymentActionDisabled(payment, "AUTHORIZED", isBusy)}
-                      onClick={() => void handlePaymentAction(payment.id, authorizePayment)}
-                    >
-                      Authorize
-                    </button>
-                    <button
-                      className={actionButtonClass(payment.status === "PAID")}
-                      type="button"
-                      disabled={isPaymentActionDisabled(payment, "PAID", isBusy)}
-                      onClick={() => void handlePaymentAction(payment.id, markPaymentPaid)}
-                    >
-                      Paid
-                    </button>
-                    <button
-                      className={actionButtonClass(payment.status === "FAILED")}
-                      type="button"
-                      disabled={isPaymentActionDisabled(payment, "FAILED", isBusy)}
-                      onClick={() => void handlePaymentAction(payment.id, markPaymentFailed)}
-                    >
-                      Failed
-                    </button>
-                    <button
-                      className={actionButtonClass(payment.status === "REFUNDED")}
-                      type="button"
-                      disabled={isPaymentActionDisabled(payment, "REFUNDED", isBusy)}
-                      onClick={() => void handlePaymentAction(payment.id, refundPayment)}
-                    >
-                      Refund
-                    </button>
-                    {payment.provider === "stripe" ? (
+                    <dl className="order-meta compact">
+                      <div>
+                        <dt>Created</dt>
+                        <dd>{formatDateTime(payment.createdAt)}</dd>
+                      </div>
+                      <div>
+                        <dt>Processed</dt>
+                        <dd>{formatDateTime(payment.processedAt)}</dd>
+                      </div>
+                    </dl>
+                    <div className="payment-controls">
                       <button
-                        className="status-action"
+                        className={actionButtonClass(payment.status === "AUTHORIZED")}
                         type="button"
-                        disabled={isBusy}
-                        onClick={() => void handlePaymentAction(payment.id, syncStripePayment)}
+                        disabled={isPaymentActionDisabled(payment, "AUTHORIZED", isBusy)}
+                        onClick={() => void handlePaymentAction(payment.id, authorizePayment)}
                       >
-                        Sync Stripe
+                        Authorize
                       </button>
-                    ) : null}
-                    {payment.statusEvents.length > 0 ? (
                       <button
-                        className="status-action"
+                        className={actionButtonClass(payment.status === "PAID")}
                         type="button"
-                        onClick={() => togglePaymentHistory(payment.id)}
+                        disabled={isPaymentActionDisabled(payment, "PAID", isBusy)}
+                        onClick={() => void handlePaymentAction(payment.id, markPaymentPaid)}
                       >
-                        {isHistoryOpen ? "Hide History" : `History (${payment.statusEvents.length})`}
+                        Paid
                       </button>
-                    ) : null}
-                  </div>
+                      <button
+                        className={actionButtonClass(payment.status === "FAILED")}
+                        type="button"
+                        disabled={isPaymentActionDisabled(payment, "FAILED", isBusy)}
+                        onClick={() => void handlePaymentAction(payment.id, markPaymentFailed)}
+                      >
+                        Failed
+                      </button>
+                      <button
+                        className={actionButtonClass(payment.status === "REFUNDED")}
+                        type="button"
+                        disabled={isPaymentActionDisabled(payment, "REFUNDED", isBusy)}
+                        onClick={() => void handlePaymentAction(payment.id, refundPayment)}
+                      >
+                        Refund
+                      </button>
+                      {payment.provider === "stripe" ? (
+                        <button
+                          className="status-action"
+                          type="button"
+                          disabled={isBusy}
+                          onClick={() => void handlePaymentAction(payment.id, syncStripePayment)}
+                        >
+                          Sync Stripe
+                        </button>
+                      ) : null}
+                      {payment.statusEvents.length > 0 ? (
+                        <button
+                          className="status-action"
+                          type="button"
+                          onClick={() => togglePaymentHistory(payment.id)}
+                        >
+                          {isHistoryOpen ? "Hide History" : `History (${payment.statusEvents.length})`}
+                        </button>
+                      ) : null}
+                    </div>
 
-                  {isHistoryOpen ? (
-                    <ol className="status-event-list" aria-label="Payment status history">
-                      {payment.statusEvents.map((event) => (
-                        <li key={event.id}>
-                          <span>{formatDateTime(event.createdAt)}</span>
-                          <strong>
-                            {event.fromStatus ?? "START"} {"->"} {event.toStatus}
-                          </strong>
-                          <small>
-                            {eventSourceLabel(event.source)}
-                            {event.reason ? `: ${event.reason}` : ""}
-                          </small>
-                        </li>
-                      ))}
-                    </ol>
-                  ) : null}
-                </article>
-              );
+                    {isHistoryOpen ? (
+                      <ol className="status-event-list" aria-label="Payment status history">
+                        {payment.statusEvents.map((event) => (
+                          <li key={event.id}>
+                            <span>{formatDateTime(event.createdAt)}</span>
+                            <strong>
+                              {event.fromStatus ?? "START"} {"->"} {event.toStatus}
+                            </strong>
+                            <small>
+                              {eventSourceLabel(event.source)}
+                              {event.reason ? `: ${event.reason}` : ""}
+                            </small>
+                          </li>
+                        ))}
+                      </ol>
+                    ) : null}
+                  </article>
+                );
             })
           )}
         </div>
@@ -1912,6 +1982,22 @@ export default function AdminPage() {
         <div className="panel-heading">
           <h3>Notes</h3>
         </div>
+
+        {notes.length > 0 ? (
+          <ol className="note-list" aria-label="Internal order notes">
+            {notes.map((note) => (
+              <li key={note.id}>
+                <div>
+                  <span>{formatDateTime(note.createdAt)}</span>
+                  <small>{note.authorEmail ?? "admin"}</small>
+                </div>
+                <p>{note.body}</p>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <div className="empty-state compact">No internal notes</div>
+        )}
 
         <div className="note-composer">
           <label>
@@ -1935,27 +2021,13 @@ export default function AdminPage() {
             {isBusy ? "Adding" : "Add Note"}
           </button>
         </div>
-
-        {notes.length > 0 ? (
-          <ol className="note-list" aria-label="Internal order notes">
-            {notes.map((note) => (
-              <li key={note.id}>
-                <div>
-                  <span>{formatDateTime(note.createdAt)}</span>
-                  <small>{note.authorEmail ?? "admin"}</small>
-                </div>
-                <p>{note.body}</p>
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <div className="empty-state compact">No internal notes</div>
-        )}
       </section>
     );
   }
 
   function renderFulfillmentSection(order: Order) {
+    const hasRemainingItems = order.items.some((item) => remainingShipmentQuantity(order, item.id) > 0);
+
     return (
       <section className="admin-work-section" aria-label="Admin fulfillment">
         <div className="panel-heading">
@@ -1966,7 +2038,7 @@ export default function AdminPage() {
           <p className="warning">Payment is {order.paymentStatus}; do not fulfill this order.</p>
         ) : null}
 
-        {order.shipments.length === 0 ? (
+        {hasRemainingItems ? (
           <div className="form-grid">
             <label>
               <span>Carrier</span>
@@ -1989,11 +2061,36 @@ export default function AdminPage() {
                 placeholder="1Z..."
               />
             </label>
+            <div className="shipment-item-picker">
+              {order.items.map((item) => {
+                const remaining = remainingShipmentQuantity(order, item.id);
+                const shipped = shippedShipmentQuantity(order, item.id);
+
+	                return (
+	                  <label key={item.id}>
+	                    <span>
+                      {item.sku} ordered {item.quantity} / fulfilled {shipped} / unallocated {remaining}
+	                    </span>
+	                    <input
+	                      type="number"
+	                      min="0"
+	                      max={remaining}
+	                      value={newShipmentItemDrafts[order.id]?.[item.id] ?? String(remaining)}
+	                      disabled={remaining === 0}
+	                      onChange={(event) =>
+	                        updateNewShipmentItemDraft(order.id, item.id, event.target.value)
+	                      }
+	                      placeholder={String(remaining)}
+	                    />
+	                  </label>
+                );
+              })}
+            </div>
           </div>
         ) : null}
 
         <div className="shipment-list">
-          {order.shipments.length === 0 ? (
+          {hasRemainingItems ? (
             <button
               type="button"
               disabled={pendingAction === `create-shipment-${order.id}` || !canFulfillOrder(order)}
@@ -2002,45 +2099,64 @@ export default function AdminPage() {
               {pendingAction === `create-shipment-${order.id}` ? "Creating" : "Create Shipment"}
             </button>
           ) : (
-            order.shipments.map((shipment) => {
-              const isBusy = pendingAction === `shipment-${shipment.id}`;
-              const url = trackingUrl(shipment.carrier, shipment.trackingNumber);
-              const isHistoryOpen = shipmentHistoryOpen[shipment.id] ?? false;
-              const historyCount = shipment.statusEvents.length + shipment.trackingEvents.length;
+            <div className="empty-state compact">All order items are allocated to shipments</div>
+          )}
 
-              return (
-                <article className="shipment-row" key={shipment.id}>
-                  <div className="shipment-row-heading">
-                    <div>
-                      <span>{shipment.carrier ?? "Carrier pending"}</span>
-                      <strong>{shipment.status}</strong>
+          {order.shipments.length === 0 ? (
+            hasRemainingItems ? null : <div className="empty-state compact">No shipments</div>
+          ) : (
+            order.shipments.map((shipment) => {
+                  const isBusy = pendingAction === `shipment-${shipment.id}`;
+                  const url = trackingUrl(shipment.carrier, shipment.trackingNumber);
+                  const isHistoryOpen = shipmentHistoryOpen[shipment.id] ?? false;
+                  const historyCount = shipment.statusEvents.length + shipment.trackingEvents.length;
+
+                  return (
+                    <article className="shipment-row" key={shipment.id}>
+                      <div className="shipment-row-heading">
+                        <div>
+                          <span>{shipment.carrier ?? "Carrier pending"}</span>
+                          <strong>{shipment.status}</strong>
+                        </div>
+                        {shipment.trackingNumber ? (
+                          url ? (
+                            <a href={url} rel="noreferrer" target="_blank">
+                              {shipment.trackingNumber}
+                            </a>
+                          ) : (
+                            <strong>{shipment.trackingNumber}</strong>
+                          )
+                        ) : (
+                          <strong>No tracking</strong>
+                        )}
+                      </div>
+                      <dl className="order-meta compact">
+                        <div>
+                          <dt>Created</dt>
+                          <dd>{formatDateTime(shipment.createdAt)}</dd>
+                        </div>
+                        <div>
+                          <dt>Shipped</dt>
+                          <dd>{formatDateTime(shipment.shippedAt)}</dd>
+                        </div>
+                        <div>
+                          <dt>Delivered</dt>
+                          <dd>{formatDateTime(shipment.deliveredAt)}</dd>
+                        </div>
+                      </dl>
+                  {shipment.items.length > 0 ? (
+                    <div className="shipment-item-list" aria-label="Shipment items">
+                      {shipment.items.map((item) => (
+                        <div key={item.id}>
+                          <span>{item.orderItem.sku}</span>
+                          <strong>
+                            {item.quantity} of {item.orderItem.quantity}
+                          </strong>
+                          <small>{item.orderItem.productName}</small>
+                        </div>
+                      ))}
                     </div>
-                    {shipment.trackingNumber ? (
-                      url ? (
-                        <a href={url} rel="noreferrer" target="_blank">
-                          {shipment.trackingNumber}
-                        </a>
-                      ) : (
-                        <strong>{shipment.trackingNumber}</strong>
-                      )
-                    ) : (
-                      <strong>No tracking</strong>
-                    )}
-                  </div>
-                  <dl className="order-meta compact">
-                    <div>
-                      <dt>Created</dt>
-                      <dd>{formatDateTime(shipment.createdAt)}</dd>
-                    </div>
-                    <div>
-                      <dt>Shipped</dt>
-                      <dd>{formatDateTime(shipment.shippedAt)}</dd>
-                    </div>
-                    <div>
-                      <dt>Delivered</dt>
-                      <dd>{formatDateTime(shipment.deliveredAt)}</dd>
-                    </div>
-                  </dl>
+                  ) : null}
                   <div className="form-grid">
                     <label>
                       <span>Carrier</span>
@@ -2406,10 +2522,34 @@ export default function AdminPage() {
                         {isSelected ? (
                           <div className="admin-order-expanded">
                             <AdminOrderSnapshot order={order} />
-                            <AdminOrderTimeline order={order} />
+                            <section className="admin-work-section activity-accordion">
+                              <div className="panel-heading">
+                                <div>
+                                  <h3>Activity & Actions</h3>
+                                  <small>
+                                    {orderTimeline(order).length} events, {order.payments.length} payments,{" "}
+                                    {order.shipments.length} shipments
+                                  </small>
+                                </div>
+                                <button
+                                  aria-expanded={isOrderActivityOpen(order.id)}
+                                  className="status-action section-toggle"
+                                  type="button"
+                                  onClick={() => toggleOrderActivity(order.id)}
+                                >
+                                  {isOrderActivityOpen(order.id) ? "Collapse" : "Expand"}
+                                </button>
+                              </div>
+
+                              {isOrderActivityOpen(order.id) ? (
+                                <div className="activity-stack">
+                                  {renderPaymentSection(order)}
+                                  {renderFulfillmentSection(order)}
+                                  <AdminOrderTimeline order={order} />
+                                </div>
+                              ) : null}
+                            </section>
                             {renderNotesSection(order)}
-                            {renderPaymentSection(order)}
-                            {renderFulfillmentSection(order)}
                           </div>
                         ) : null}
                       </article>

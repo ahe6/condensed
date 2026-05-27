@@ -216,6 +216,16 @@ export type ShipmentTrackingEvent = {
   createdAt: string;
 };
 
+export type ShipmentItem = {
+  id: string;
+  shipmentId: string;
+  orderItemId: string;
+  quantity: number;
+  createdAt: string;
+  updatedAt: string;
+  orderItem: Order["items"][number];
+};
+
 export type Shipment = {
   id: string;
   orderId: string;
@@ -226,6 +236,7 @@ export type Shipment = {
   deliveredAt: string | null;
   createdAt: string;
   updatedAt: string;
+  items: ShipmentItem[];
   statusEvents: ShipmentStatusEvent[];
   trackingEvents: ShipmentTrackingEvent[];
 };
@@ -583,7 +594,17 @@ export async function syncStripePayment(paymentId: string) {
   });
 }
 
-export async function createShipment(orderId: string, input: { carrier?: string; trackingNumber?: string }) {
+export async function createShipment(
+  orderId: string,
+  input: {
+    carrier?: string;
+    trackingNumber?: string;
+    items?: Array<{
+      orderItemId: string;
+      quantity: number;
+    }>;
+  }
+) {
   return request<ShipmentWithOrder>(`/admin/orders/${orderId}/shipments`, {
     method: "POST",
     body: JSON.stringify(input)

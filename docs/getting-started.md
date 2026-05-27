@@ -115,7 +115,7 @@ Admin route at `/admin`:
 - Shows a combined order timeline with order, note, payment, fulfillment, and tracking activity.
 - Creates manual payments and marks them authorized, paid, failed, or refunded.
 - Syncs Stripe payment status from Stripe for Stripe payments.
-- Creates shipments, updates tracking, and marks shipments shipped, delivered, or returned.
+- Creates shipments, allocates order item quantities, updates tracking, and marks shipments shipped, delivered, or returned.
 - Blocks shipment creation, shipped, and delivered actions unless payment is `PAID` or `AUTHORIZED`.
 - Keeps detailed payment and shipment audit history folded behind per-record history controls.
 - Shows public tracking links for UPS, USPS, FedEx, and DHL when carrier and tracking number are available.

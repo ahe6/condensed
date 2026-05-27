@@ -4,23 +4,25 @@ This doc covers order shipment handling, tracking updates, and fulfillment histo
 
 ## Current Model
 
-Fulfillment is tracked at the order level.
+Fulfillment is tracked with shipment packages and shipment line items.
 
 - `shipments` stores the current shipment state for an order.
+- `shipment_items` stores which order item quantities belong to each shipment.
 - `shipment_status_events` stores append-only shipment status history.
 - `shipment_tracking_events` stores append-only carrier and tracking number history.
 - The parent order stores the current `fulfillmentStatus`.
 
-Shipment rows are not tied to individual order items yet. Add shipment line items before supporting partial or split fulfillment in production workflows.
+This supports split shipments and partial fulfillment. The parent order status is recalculated from shipment item quantities when shipments move to shipped, delivered, or returned.
 
 ## Admin Workflow
 
 ```text
 admin opens an order
 admin creates a shipment
+admin chooses order item quantities for that shipment
 admin saves carrier and tracking number when a label exists
 admin marks the shipment shipped, delivered, or returned
-backend updates shipment and order fulfillment status
+backend recalculates order fulfillment status
 backend records status and tracking events
 frontend shows the activity in the order timeline
 ```
@@ -28,6 +30,7 @@ frontend shows the activity in the order timeline
 The admin UI lets operators:
 
 - Create shipment placeholders.
+- Allocate order item quantities to a shipment.
 - Select carrier from a dropdown.
 - Save or overwrite tracking numbers.
 - Open public carrier tracking links.
@@ -46,15 +49,26 @@ POST  /admin/shipments/:id/deliver
 POST  /admin/shipments/:id/return
 ```
 
-`POST /admin/orders/:id/shipments` creates a shipment placeholder. Carrier and tracking number are optional.
+`POST /admin/orders/:id/shipments` creates a shipment placeholder. Carrier, tracking number, and line items are optional. When line items are omitted, the backend assigns all remaining unallocated order item quantities to the shipment.
 
 `PATCH /admin/shipments/:id/tracking` updates carrier, tracking number, or both. At least one field is required.
 
 Status actions update the shipment and parent order in one transaction:
 
-- `ship`: shipment becomes `SHIPPED`, `shippedAt` is set, and order fulfillment becomes `FULFILLED`.
-- `deliver`: shipment becomes `DELIVERED`, `deliveredAt` is set, and order fulfillment remains `FULFILLED`.
-- `return`: shipment becomes `RETURNED`, and order fulfillment becomes `RETURNED`.
+- `ship`: shipment becomes `SHIPPED`, `shippedAt` is set, and order fulfillment is recalculated.
+- `deliver`: shipment becomes `DELIVERED`, `deliveredAt` is set, and order fulfillment is recalculated.
+- `return`: shipment becomes `RETURNED`, and order fulfillment is recalculated.
+
+## Fulfillment Math
+
+Shipment creation validates that requested line item quantities belong to the order and do not exceed remaining unallocated quantity.
+
+Order fulfillment status is based on shipped or delivered shipment item quantity:
+
+- `UNFULFILLED`: no quantity has shipped.
+- `PARTIAL`: shipped quantity is greater than zero and less than the order total quantity.
+- `FULFILLED`: shipped quantity is greater than or equal to the order total quantity.
+- `RETURNED`: returned shipment item quantity covers the full order quantity.
 
 ## Payment Guardrails
 
@@ -89,8 +103,7 @@ Detailed shipment status and tracking events remain available behind folded `His
 
 ## Known Limits
 
-- No shipment line items yet.
-- No partial fulfillment math yet.
 - No carrier API integration yet.
 - No label purchase flow yet.
 - No webhook or polling integration for live carrier delivery updates yet.
+- Return handling is still shipment-level, not a full return merchandise authorization flow.

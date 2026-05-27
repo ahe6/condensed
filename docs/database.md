@@ -214,7 +214,28 @@ Important fields:
 - `shippedAt`
 - `deliveredAt`
 
-Current shipment records are order-level, not line-item-level. Marking a shipment shipped or delivered marks the parent order `FULFILLED`; marking a shipment returned marks the parent order `RETURNED`. Add shipment line items before using `PARTIAL` fulfillment for split shipments.
+Shipment records contain package-level carrier and tracking state. The shipped quantities live in `shipment_items`.
+
+Marking a shipment shipped or delivered recalculates the parent order fulfillment status from shipped/delivered shipment item quantities:
+
+- `UNFULFILLED`: no order item quantity is shipped
+- `PARTIAL`: some, but not all, order item quantity is shipped
+- `FULFILLED`: all order item quantity is shipped
+- `RETURNED`: all order item quantity is attached to returned shipments
+
+### `shipment_items`
+
+Line items assigned to a shipment.
+
+Important fields:
+
+- `shipmentId`
+- `orderItemId`
+- `quantity`
+
+`shipment_items` lets one order split across multiple shipments. Quantity must be positive. A shipment cannot contain the same order item more than once.
+
+Existing shipments were backfilled with every order item on the first shipment for each order, preserving the old order-level shipment behavior for local dev data.
 
 Shipment creation plus shipped/delivered transitions require the parent order payment status to be `PAID` or `AUTHORIZED`. This prevents fulfillment on unpaid, failed, disputed, or refunded orders.
 

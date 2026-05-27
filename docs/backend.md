@@ -205,11 +205,12 @@ Payment status changes happen in a Prisma transaction with the parent order upda
 Current responsibilities:
 
 - Create shipment placeholders
+- Assign order item quantities to shipments
 - Add or update tracking details
 - Mark shipments shipped
 - Mark shipments delivered
 - Mark shipments returned
-- Update the parent order `fulfillmentStatus` when shipment state changes
+- Recalculate the parent order `fulfillmentStatus` when shipment state changes
 
 Current routes:
 
@@ -227,7 +228,7 @@ Main service functions:
 - `markShipmentDelivered`
 - `markShipmentReturned`
 
-Shipment status changes happen in a Prisma transaction with the parent order update.
+Shipment status changes happen in a Prisma transaction with the parent order update. Parent order fulfillment status is calculated from shipped, delivered, and returned `shipment_items`.
 
 Shipment creation plus shipped/delivered transitions are guarded by payment status. The backend only allows fulfillment when the order is `PAID` or `AUTHORIZED`; existing shipments can still be marked returned.
 

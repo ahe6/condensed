@@ -84,12 +84,13 @@ Current payment status changes update the payment and parent order in the same P
 
 ```text
 admin creates shipment
+admin assigns order item quantities
 admin adds tracking
 admin marks shipment shipped or delivered
-backend updates order fulfillment status
+backend recalculates order fulfillment status
 ```
 
-Current shipment records are order-level. Marking a shipment shipped or delivered marks the parent order `FULFILLED`; marking a shipment returned marks the parent order `RETURNED`.
+Shipments contain `shipment_items`, so one order can be split across multiple packages. Marking shipments shipped or delivered recalculates the parent order as `UNFULFILLED`, `PARTIAL`, or `FULFILLED` based on shipped quantity. Returned shipments are excluded from shipped quantity and can mark the order `RETURNED` when returned quantity covers the full order.
 
 Fulfillment actions are blocked unless payment is `PAID` or `AUTHORIZED`. Orders with `UNPAID`, `FAILED`, `DISPUTED`, or `REFUNDED` payment status should not be shipped.
 
@@ -118,4 +119,4 @@ Local database records are disposable during early development unless we add see
 Recommended sequence:
 
 1. Improve checkout so payment is collected before the cart is cleared.
-2. Add fulfillment quantity support if orders need split or partial shipments.
+2. Add carrier label purchase or live carrier status sync when fulfillment leaves manual operations.
