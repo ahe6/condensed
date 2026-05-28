@@ -32,34 +32,36 @@ The frontend can read local env from `apps/frontend/.env.local`. The example is 
 
 ## Start Local Development
 
-Start Postgres:
+Start the full local stack:
+
+```sh
+make local-dev
+```
+
+This starts Docker Postgres, installs npm dependencies if `node_modules` is missing, applies Prisma migrations with `npm run db:deploy`, runs the backend, runs the frontend, and starts the Stripe CLI webhook listener when the Stripe CLI is available.
+
+Restart local backend, frontend, and Stripe listener processes after env changes:
+
+```sh
+make local-dev-restart
+```
+
+Equivalent npm commands:
+
+```sh
+npm run dev:local
+npm run dev:local:restart
+```
+
+Manual fallback:
 
 ```sh
 docker compose up -d postgres
-```
-
-Install dependencies:
-
-```sh
 npm install
-```
-
-Apply local migrations:
-
-```sh
-npm run db:migrate
-```
-
-Run the backend:
-
-```sh
+npm run db:deploy
 npm run backend:dev
-```
-
-Run the frontend:
-
-```sh
 npm run frontend:dev
+stripe listen --forward-to http://127.0.0.1:3000/webhooks/stripe
 ```
 
 ## Configuration

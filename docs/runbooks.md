@@ -5,16 +5,13 @@ These are common operational flows for the current project state.
 ## Start Local Dev
 
 ```sh
-docker compose up -d postgres
-npm install
-npm run db:migrate
-npm run backend:dev
+make local-dev
 ```
 
-In another terminal:
+Restart local app processes after env changes:
 
 ```sh
-npm run frontend:dev
+make local-dev-restart
 ```
 
 Open:
@@ -35,14 +32,19 @@ curl -s http://127.0.0.1:3000/ready
 
 ## Test Stripe Webhooks Locally
 
-Put Stripe test keys in `.env.test`, then sync them and forward Stripe webhook events:
+Put Stripe test keys in `.env.test`, then sync them:
 
 ```sh
 make dev-test-env
-stripe listen --forward-to http://127.0.0.1:3000/webhooks/stripe
 ```
 
-Put the printed `whsec_...` value in `.env.test` as `STRIPE_WEBHOOK_SECRET`, run `make dev-test-env` again, then restart the backend. Checkout payments use Checkout Session webhooks such as `checkout.session.completed`; the Stripe CLI forwards those during local testing.
+Start or restart local dev:
+
+```sh
+make local-dev-restart
+```
+
+The local dev script asks Stripe CLI for the local `whsec_...` signing secret, writes it to `.env` and `apps/backend/.env`, starts the backend with that secret, and forwards events to `http://127.0.0.1:3000/webhooks/stripe`. Checkout payments use Checkout Session webhooks such as `checkout.session.completed`; the Stripe CLI forwards those during local testing.
 
 See [Payments](payments.md) for test cards, admin Stripe sync, dispute behavior, and the current refund caveat.
 

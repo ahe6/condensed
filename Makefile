@@ -7,7 +7,7 @@ FRONTEND_TAG ?= latest
 BOOTSTRAP_DIR := infra/bootstrap
 DEV_DIR := infra/envs/dev
 
-.PHONY: aws-login aws-whoami fmt validate bootstrap-init bootstrap-plan bootstrap-apply dev-init dev-plan dev-auth-plan dev-auth-apply dev-jobs-plan dev-jobs-apply dev-auth-env dev-test-env dev-auth-add-admin dev-auth-delete-user backend-docker-build frontend-docker-build backend-ecr-login backend-ecr-push backend-migrate-aws orders-expire orders-expire-aws notifications-retry
+.PHONY: aws-login aws-whoami fmt validate local-dev local-dev-restart bootstrap-init bootstrap-plan bootstrap-apply dev-init dev-plan dev-auth-plan dev-auth-apply dev-jobs-plan dev-jobs-apply dev-auth-env dev-test-env dev-auth-add-admin dev-auth-delete-user backend-docker-build frontend-docker-build backend-ecr-login backend-ecr-push backend-migrate-aws orders-expire orders-expire-aws notifications-retry
 
 aws-login:
 	aws sso login --profile $(AWS_PROFILE)
@@ -21,6 +21,12 @@ fmt:
 validate:
 	terraform -chdir=$(BOOTSTRAP_DIR) validate
 	terraform -chdir=$(DEV_DIR) validate
+
+local-dev:
+	scripts/local-dev.sh
+
+local-dev-restart:
+	scripts/local-dev.sh --restart
 
 bootstrap-init:
 	terraform -chdir=$(BOOTSTRAP_DIR) init

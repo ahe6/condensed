@@ -11,6 +11,8 @@
     "backend:build": "npm --workspace apps/backend run build",
     "backend:start": "npm --workspace apps/backend run start",
     "backend:check": "npm --workspace apps/backend run check",
+    "dev:local": "scripts/local-dev.sh",
+    "dev:local:restart": "scripts/local-dev.sh --restart",
     "frontend:dev": "npm --workspace apps/frontend run dev",
     "frontend:build": "npm --workspace apps/frontend run build",
     "frontend:start": "npm --workspace apps/frontend run start",

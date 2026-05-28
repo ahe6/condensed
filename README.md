@@ -28,29 +28,16 @@ The frontend is split into local shop, cart, account, and admin routes. `/` cove
 
 ## Quickstart
 
-Start local Postgres:
+Start local Postgres, apply migrations, run the backend, run the frontend, and start the Stripe webhook listener when the Stripe CLI is available:
 
 ```sh
-docker compose up -d postgres
+make local-dev
 ```
 
-Install dependencies and apply local migrations:
+Restart the local app processes after env changes:
 
 ```sh
-npm install
-npm run db:migrate
-```
-
-Run the backend:
-
-```sh
-npm run backend:dev
-```
-
-Run the frontend:
-
-```sh
-npm run frontend:dev
+make local-dev-restart
 ```
 
 Local URLs:

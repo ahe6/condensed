@@ -65,17 +65,19 @@ Local webhook URL:
 http://127.0.0.1:3000/webhooks/stripe
 ```
 
-Local forwarding command:
+The normal local startup command refreshes the Stripe CLI webhook signing secret and starts forwarding:
+
+```sh
+make local-dev-restart
+```
+
+Manual forwarding command:
 
 ```sh
 stripe listen --forward-to http://127.0.0.1:3000/webhooks/stripe
 ```
 
-The backend verifies Stripe webhook signatures with `STRIPE_WEBHOOK_SECRET`. For local testing, this secret comes from the Stripe CLI listener and is synced into `apps/backend/.env` with:
-
-```sh
-make dev-test-env
-```
+The backend verifies Stripe webhook signatures with `STRIPE_WEBHOOK_SECRET`. For local testing, this secret comes from the Stripe CLI listener. The local dev script writes it to `.env` and `apps/backend/.env` before starting the backend.
 
 Handled Stripe events:
 
