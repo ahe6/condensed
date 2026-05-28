@@ -9,8 +9,10 @@ export const cartItemParamsSchema = z.object({
   itemId: z.string().uuid()
 });
 
-export const createCartSchema = z.object({
-  userId: z.string().uuid().optional()
+export const createCartSchema = z.object({});
+
+export const getMyCartSchema = z.object({
+  cartId: z.string().uuid().optional()
 });
 
 export const addCartItemSchema = z.object({
@@ -24,4 +26,5 @@ export const updateCartItemSchema = z.object({
 
 export type AddCartItemInput = z.infer<typeof addCartItemSchema>;
 export type CreateCartInput = z.infer<typeof createCartSchema>;
+export type GetMyCartInput = z.infer<typeof getMyCartSchema>;
 export type UpdateCartItemInput = z.infer<typeof updateCartItemSchema>;

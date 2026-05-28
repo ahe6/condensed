@@ -97,7 +97,7 @@ This lets one product appear in multiple categories.
 
 Mutable shopping cart.
 
-Current carts can belong to a user, but `userId` is nullable so anonymous carts can be supported later.
+Current carts can belong to a user, but `userId` is nullable so anonymous browser-local carts can be created before sign-in. Signed-in startup can adopt an anonymous cart or merge it into the user's latest cart.
 
 ### `cart_items`
 

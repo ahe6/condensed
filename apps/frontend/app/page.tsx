@@ -23,13 +23,14 @@ import {
   createStripeCheckoutSession,
   getCart,
   getMe,
+  getMyCart,
   getOrder,
   getReadiness,
   listProducts,
   removeCartItem,
   updateCartItem
 } from "../src/lib/api";
-import { isAuthConfigured, signOut, startLogin } from "../src/lib/auth";
+import { getSession, isAuthConfigured, signOut, startLogin } from "../src/lib/auth";
 import { formatMoney } from "../src/lib/format";
 
 const cartStorageKey = "tele.cartId";
@@ -166,6 +167,17 @@ export default function Home() {
   async function loadSavedCart() {
     const savedCartId = window.localStorage.getItem(cartStorageKey);
 
+    if (isAuthConfigured() && getSession()) {
+      try {
+        const accountCart = await getMyCart(savedCartId ?? undefined);
+        window.localStorage.setItem(cartStorageKey, accountCart.id);
+        return accountCart;
+      } catch {
+        window.localStorage.removeItem(cartStorageKey);
+        return null;
+      }
+    }
+
     if (!savedCartId) {
       return null;
     }
@@ -195,7 +207,7 @@ export default function Home() {
       return cart;
     }
 
-    const nextCart = await createCart();
+    const nextCart = isAuthConfigured() && getSession() ? await getMyCart() : await createCart();
     window.localStorage.setItem(cartStorageKey, nextCart.id);
     setCart(nextCart);
 

@@ -1,6 +1,11 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../prisma.js";
-import type { AddCartItemInput, CreateCartInput, UpdateCartItemInput } from "./carts.schemas.js";
+import type {
+  AddCartItemInput,
+  CreateCartInput,
+  GetMyCartInput,
+  UpdateCartItemInput
+} from "./carts.schemas.js";
 
 const cartInclude = {
   items: {
@@ -15,12 +20,36 @@ const cartInclude = {
       createdAt: "asc" as const
     }
   }
+} satisfies Prisma.CartInclude;
+
+type CartWithItems = Prisma.CartGetPayload<{
+  include: typeof cartInclude;
+}>;
+
+type CartWithTotals = CartWithItems & {
+  totals: {
+    itemCount: number;
+    subtotal: string;
+    total: string;
+  };
 };
 
-export async function createCart(input: CreateCartInput) {
+export class CartError extends Error {
+  constructor(
+    message: string,
+    public readonly statusCode = 400
+  ) {
+    super(message);
+  }
+}
+
+export async function createCart(
+  _input: CreateCartInput,
+  actorUserId?: string
+): Promise<CartWithTotals> {
   const cart = await prisma.cart.create({
     data: {
-      userId: input.userId
+      userId: actorUserId ?? null
     },
     include: cartInclude
   });
@@ -28,7 +57,35 @@ export async function createCart(input: CreateCartInput) {
   return withCartTotals(cart);
 }
 
-export async function getCart(cartId: string) {
+export async function getOrCreateUserCart(
+  userId: string,
+  input: GetMyCartInput = {}
+): Promise<CartWithTotals> {
+  if (input.cartId) {
+    return adoptCartForUser(userId, input.cartId);
+  }
+
+  const existingCart = await prisma.cart.findFirst({
+    where: {
+      userId
+    },
+    include: cartInclude,
+    orderBy: {
+      updatedAt: "desc"
+    }
+  });
+
+  if (existingCart) {
+    return withCartTotals(existingCart);
+  }
+
+  return createCart({}, userId);
+}
+
+export async function getCart(
+  cartId: string,
+  actorUserId?: string
+): Promise<CartWithTotals | null> {
   const cart = await prisma.cart.findUnique({
     where: {
       id: cartId
@@ -36,18 +93,21 @@ export async function getCart(cartId: string) {
     include: cartInclude
   });
 
-  return cart ? withCartTotals(cart) : null;
+  if (!cart) {
+    return null;
+  }
+
+  assertCartAccess(cart, actorUserId);
+
+  return withCartTotals(cart);
 }
 
-export async function addCartItem(cartId: string, input: AddCartItemInput) {
-  await prisma.cart.findUniqueOrThrow({
-    where: {
-      id: cartId
-    },
-    select: {
-      id: true
-    }
-  });
+export async function addCartItem(
+  cartId: string,
+  input: AddCartItemInput,
+  actorUserId?: string
+): Promise<CartWithTotals> {
+  await getCartOrThrow(cartId, actorUserId);
 
   await prisma.productVariant.findUniqueOrThrow({
     where: {
@@ -77,14 +137,17 @@ export async function addCartItem(cartId: string, input: AddCartItemInput) {
     }
   });
 
-  return getCartOrThrow(cartId);
+  return getCartOrThrow(cartId, actorUserId);
 }
 
 export async function updateCartItemQuantity(
   cartId: string,
   cartItemId: string,
-  input: UpdateCartItemInput
-) {
+  input: UpdateCartItemInput,
+  actorUserId?: string
+): Promise<CartWithTotals> {
+  await getCartOrThrow(cartId, actorUserId);
+
   await prisma.cartItem.findFirstOrThrow({
     where: {
       id: cartItemId,
@@ -104,10 +167,16 @@ export async function updateCartItemQuantity(
     }
   });
 
-  return getCartOrThrow(cartId);
+  return getCartOrThrow(cartId, actorUserId);
 }
 
-export async function removeCartItem(cartId: string, cartItemId: string) {
+export async function removeCartItem(
+  cartId: string,
+  cartItemId: string,
+  actorUserId?: string
+): Promise<CartWithTotals> {
+  await getCartOrThrow(cartId, actorUserId);
+
   await prisma.cartItem.findFirstOrThrow({
     where: {
       id: cartItemId,
@@ -124,20 +193,99 @@ export async function removeCartItem(cartId: string, cartItemId: string) {
     }
   });
 
-  return getCartOrThrow(cartId);
+  return getCartOrThrow(cartId, actorUserId);
 }
 
-export async function clearCart(cartId: string) {
+export async function clearCart(cartId: string, actorUserId?: string): Promise<CartWithTotals> {
+  await getCartOrThrow(cartId, actorUserId);
+
   await prisma.cartItem.deleteMany({
     where: {
       cartId
     }
   });
 
-  return getCartOrThrow(cartId);
+  return getCartOrThrow(cartId, actorUserId);
 }
 
-async function getCartOrThrow(cartId: string) {
+async function adoptCartForUser(userId: string, cartId: string): Promise<CartWithTotals> {
+  const sourceCart = await prisma.cart.findUnique({
+    where: {
+      id: cartId
+    },
+    include: {
+      items: true
+    }
+  });
+
+  if (!sourceCart) {
+    return getOrCreateUserCart(userId);
+  }
+
+  assertCartAccess(sourceCart, userId);
+
+  const existingCart = await prisma.cart.findFirst({
+    where: {
+      userId,
+      id: {
+        not: sourceCart.id
+      }
+    },
+    include: cartInclude,
+    orderBy: {
+      updatedAt: "desc"
+    }
+  });
+
+  if (!existingCart) {
+    const adoptedCart = await prisma.cart.update({
+      where: {
+        id: sourceCart.id
+      },
+      data: {
+        userId
+      },
+      include: cartInclude
+    });
+
+    return withCartTotals(adoptedCart);
+  }
+
+  if (sourceCart.items.length > 0) {
+    await prisma.$transaction(
+      sourceCart.items.map((item) =>
+        prisma.cartItem.upsert({
+          where: {
+            cartId_variantId: {
+              cartId: existingCart.id,
+              variantId: item.variantId
+            }
+          },
+          create: {
+            cartId: existingCart.id,
+            variantId: item.variantId,
+            quantity: item.quantity
+          },
+          update: {
+            quantity: {
+              increment: item.quantity
+            }
+          }
+        })
+      )
+    );
+  }
+
+  await prisma.cart.delete({
+    where: {
+      id: sourceCart.id
+    }
+  });
+
+  return getCartOrThrow(existingCart.id, userId);
+}
+
+async function getCartOrThrow(cartId: string, actorUserId?: string): Promise<CartWithTotals> {
   const cart = await prisma.cart.findUniqueOrThrow({
     where: {
       id: cartId
@@ -145,7 +293,15 @@ async function getCartOrThrow(cartId: string) {
     include: cartInclude
   });
 
+  assertCartAccess(cart, actorUserId);
+
   return withCartTotals(cart);
+}
+
+function assertCartAccess(cart: { userId: string | null }, actorUserId?: string) {
+  if (cart.userId && cart.userId !== actorUserId) {
+    throw new CartError("Cart access denied", 403);
+  }
 }
 
 function withCartTotals<T extends { items: Array<{ quantity: number; variant: { price: Prisma.Decimal } }> }>(

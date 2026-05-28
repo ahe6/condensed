@@ -42,6 +42,10 @@ export async function checkoutCart(input: CheckoutCartInput, options: { userId?:
       throw new CheckoutError("Cart is empty");
     }
 
+    if (cart.userId && cart.userId !== options.userId) {
+      throw new CheckoutError("Cart access denied", 403);
+    }
+
     const currency = cart.items[0]?.variant.currency ?? "USD";
     const subtotal = cart.items.reduce((total, item) => {
       if (item.variant.currency !== currency) {

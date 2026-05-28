@@ -103,7 +103,10 @@ Catalog services are the foundation for cart and checkout. Cart items should ref
 
 Current responsibilities:
 
-- Create anonymous or user-owned carts
+- Create anonymous carts
+- Create or reuse signed-in customer carts
+- Adopt or merge an anonymous browser-local cart into a signed-in customer cart
+- Enforce cart ownership for user-owned carts
 - Get a cart with items and calculated totals
 - Add variants to a cart
 - Increment existing cart item quantities
@@ -113,6 +116,8 @@ Current responsibilities:
 
 Current routes:
 
+- `GET /me/cart`
+- `POST /me/cart`
 - `POST /carts`
 - `GET /carts/:id`
 - `POST /carts/:id/items`
@@ -121,6 +126,8 @@ Current routes:
 - `DELETE /carts/:id/items`
 
 Cart totals are calculated from current variant prices and returned in the response. They are not stored in the database.
+
+Signed-in clients should use `POST /me/cart` at startup. Passing a browser-local `cartId` lets the backend attach that cart to the user or merge its items into the user's existing cart.
 
 ### Checkout
 

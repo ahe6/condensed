@@ -29,12 +29,13 @@ The frontend should treat variants as purchasable items. Product records are for
 
 ```text
 client creates or resumes cart
+signed-in client loads /me/cart and may pass browser-local cartId for adoption or merge
 client adds variant
 client updates quantities
 backend recalculates totals from current variant prices
 ```
 
-Cart totals are previews. Order totals become authoritative at checkout.
+Anonymous carts are browser-local by cart ID. Signed-in carts are attached to the current user, and user-owned carts can only be changed by that user. Cart totals are previews. Order totals become authoritative at checkout.
 
 ## Checkout
 

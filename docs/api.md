@@ -246,6 +246,8 @@ Prices are accepted as strings instead of JSON numbers so callers do not acciden
 ## Carts
 
 ```text
+GET    /me/cart
+POST   /me/cart
 POST   /carts
 GET    /carts/:id
 POST   /carts/:id/items
@@ -254,15 +256,21 @@ DELETE /carts/:id/items/:itemId
 DELETE /carts/:id/items
 ```
 
-`POST /carts` accepts an optional user ID:
+`GET /me/cart` requires a Cognito ID token. It returns the current user's latest cart or creates one.
+
+`POST /me/cart` also requires a Cognito ID token and can adopt or merge an existing browser-local anonymous cart into the signed-in user's cart:
 
 ```json
 {
-  "userId": "00000000-0000-0000-0000-000000000000"
+  "cartId": "00000000-0000-0000-0000-000000000000"
 }
 ```
 
-Send `{}` for an anonymous cart.
+If the user already has a cart, anonymous cart items are merged by variant and the anonymous cart is deleted. If the provided cart does not exist, the route still returns the user's current cart or creates one.
+
+`POST /carts` creates an anonymous cart when no bearer token is present. With a valid bearer token, it creates a cart for the signed-in user. Clients should prefer `POST /me/cart` for signed-in cart startup so existing user carts are reused.
+
+`GET /carts/:id` and cart item mutations allow anonymous carts without auth. User-owned carts can only be read or changed by the owning signed-in user.
 
 Cart responses include:
 

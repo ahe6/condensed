@@ -474,6 +474,15 @@ export async function createCart() {
   });
 }
 
+export async function getMyCart(cartId?: string) {
+  return request<Cart>("/me/cart", {
+    method: "POST",
+    body: JSON.stringify({
+      cartId
+    })
+  });
+}
+
 export async function getCart(cartId: string) {
   return request<Cart>(`/carts/${cartId}`);
 }
