@@ -747,12 +747,18 @@ function StripePaymentForm({
 }) {
   const checkoutState = useCheckoutElements();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPaymentElementReady, setIsPaymentElementReady] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const canSubmitPayment = checkoutState.type === "success" && isPaymentElementReady && !isSubmitting;
+
+  useEffect(() => {
+    setIsPaymentElementReady(false);
+  }, [order.id]);
 
   async function handlePayment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (checkoutState.type !== "success") {
+    if (!canSubmitPayment || checkoutState.type !== "success") {
       return;
     }
 
@@ -782,9 +788,13 @@ function StripePaymentForm({
 
   return (
     <form className="payment-form" onSubmit={handlePayment}>
-      <PaymentElement />
-      <button type="submit" disabled={checkoutState.type !== "success" || isSubmitting}>
-        {isSubmitting ? "Paying" : `Pay ${formatMoney(order.total, order.currency)}`}
+      <PaymentElement onReady={() => setIsPaymentElementReady(true)} />
+      <button type="submit" disabled={!canSubmitPayment}>
+        {isSubmitting
+          ? "Paying"
+          : isPaymentElementReady
+            ? `Pay ${formatMoney(order.total, order.currency)}`
+            : "Loading Payment"}
       </button>
       {checkoutState.type === "error" ? <p className="error">{checkoutState.error.message}</p> : null}
       {message ? <p className="notice">{message}</p> : null}
