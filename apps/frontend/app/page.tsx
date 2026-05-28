@@ -195,6 +195,10 @@ export default function Home() {
       return null;
     }
 
+    if (!getSession()) {
+      return null;
+    }
+
     try {
       return getMe();
     } catch {
