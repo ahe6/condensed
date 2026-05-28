@@ -1,18 +1,22 @@
 :root {
   color-scheme: light;
-  --bg: #f6f7f9;
+  --bg: #f4f6f8;
   --panel: #ffffff;
-  --surface: #fbfcfe;
-  --text: #18202f;
-  --muted: #647084;
-  --border: #d9dee8;
+  --surface: #f9fafb;
+  --surface-strong: #eef2f6;
+  --text: #151b26;
+  --muted: #667085;
+  --border: #d6dce5;
+  --border-strong: #b9c2d0;
   --accent: #0f766e;
-  --accent-strong: #115e59;
-  --blue: #2563eb;
+  --accent-strong: #0b5f59;
+  --accent-soft: #e4f4f1;
+  --blue: #315fbd;
   --ok: #12805c;
-  --warn: #a15c07;
+  --warn: #9a5b05;
   --bad: #b42318;
-  --shadow: 0 14px 34px rgba(24, 35, 66, 0.07);
+  --shadow: 0 10px 24px rgba(24, 35, 66, 0.08);
+  --shadow-soft: 0 1px 2px rgba(16, 24, 40, 0.08);
 }
 
 * {
@@ -28,7 +32,10 @@ body {
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
 }
 
 button,
@@ -40,17 +47,24 @@ textarea {
 
 button {
   min-height: 40px;
-  padding: 0 14px;
+  padding: 0 15px;
   border: 1px solid var(--accent);
   border-radius: 6px;
   background: var(--accent);
   color: #fff;
   cursor: pointer;
   font-weight: 700;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
 }
 
 button:hover:not(:disabled) {
   background: var(--accent-strong);
+  box-shadow: var(--shadow-soft);
+  transform: translateY(-1px);
 }
 
 button:disabled {
@@ -66,7 +80,7 @@ button.secondary {
 
 button.secondary:hover:not(:disabled) {
   border-color: var(--accent);
-  background: #eaf8f6;
+  background: var(--accent-soft);
 }
 
 button.status-action {
@@ -77,7 +91,7 @@ button.status-action {
 
 button.status-action:hover:not(:disabled) {
   border-color: var(--accent);
-  background: #eaf8f6;
+  background: var(--accent-soft);
 }
 
 button.status-action.active {
@@ -104,7 +118,7 @@ button.status-action.active:disabled {
 .shell {
   width: min(1440px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 28px 0;
+  padding: 24px 0 40px;
 }
 
 .narrow-shell {
@@ -116,7 +130,9 @@ button.status-action.active:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .nav-actions {
@@ -137,11 +153,18 @@ button.status-action.active:disabled {
   color: var(--text);
   font-weight: 700;
   text-decoration: none;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
 }
 
 .nav-link:hover {
   border-color: var(--accent);
-  background: #eaf8f6;
+  background: var(--accent-soft);
+  box-shadow: var(--shadow-soft);
+  transform: translateY(-1px);
 }
 
 .text-link {
@@ -173,12 +196,14 @@ p {
 }
 
 h1 {
-  font-size: 32px;
+  font-size: 34px;
   line-height: 1.1;
+  letter-spacing: 0;
 }
 
 h2 {
-  font-size: 18px;
+  font-size: 19px;
+  letter-spacing: 0;
 }
 
 h3 {
@@ -221,7 +246,7 @@ h3 {
   display: grid;
   grid-template-columns: minmax(280px, 2fr) repeat(3, minmax(120px, 1fr));
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
 .metric,
@@ -230,19 +255,20 @@ h3 {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--panel);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-soft);
 }
 
 .metric {
-  min-height: 78px;
+  min-height: 76px;
   display: grid;
   gap: 6px;
   padding: 15px;
+  align-content: center;
 }
 
 .metric strong {
   overflow-wrap: anywhere;
-  font-size: 16px;
+  font-size: 17px;
 }
 
 .workspace {
@@ -250,6 +276,11 @@ h3 {
   grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   align-items: start;
+}
+
+.shop-workspace {
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
+  gap: 20px;
 }
 
 .catalog {
@@ -266,6 +297,7 @@ h3 {
 
 .section-heading {
   margin-bottom: 14px;
+  padding: 0 2px;
 }
 
 .panel-heading {
@@ -274,36 +306,54 @@ h3 {
 
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
 }
 
 .product-card {
   overflow: hidden;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
+}
+
+.product-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
 }
 
 .product-media {
+  position: relative;
   aspect-ratio: 4 / 3;
   display: grid;
   place-items: center;
   border-bottom: 1px solid var(--border);
-  background: #e8eef2;
+  background: var(--surface-strong);
   color: #536173;
   font-size: 34px;
   font-weight: 800;
 }
 
 .product-media img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
+.product-media span {
+  position: relative;
+  z-index: 0;
+}
+
 .product-body {
   display: grid;
   gap: 14px;
-  padding: 15px;
+  padding: 16px;
 }
 
 .product-body p {
@@ -349,6 +399,7 @@ textarea {
   border-radius: 6px;
   background: #fff;
   color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(16, 24, 40, 0.02);
 }
 
 textarea {
@@ -389,8 +440,13 @@ textarea:focus {
   gap: 14px;
 }
 
+.shop-workspace .side-stack {
+  position: sticky;
+  top: 16px;
+}
+
 .panel {
-  padding: 16px;
+  padding: 17px;
 }
 
 .cart-list {
@@ -404,7 +460,7 @@ textarea:focus {
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--surface);
+  background: #fff;
 }
 
 .quantity-control {
@@ -509,7 +565,7 @@ output {
 .notice {
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--surface);
+  background: #fff;
 }
 
 .order-confirmation {
@@ -528,17 +584,22 @@ output {
 
 .admin-panel {
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
 .admin-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-strong);
 }
 
 .admin-tabs button {
   min-width: 112px;
+  box-shadow: none;
 }
 
 .order-summary-heading {
@@ -549,7 +610,7 @@ output {
 
 .admin-order-list {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .admin-order-tools {
@@ -557,6 +618,10 @@ output {
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px;
   align-items: end;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
 }
 
 .admin-order-search {
@@ -599,12 +664,13 @@ output {
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--surface);
+  background: #fff;
 }
 
 .catalog-product-row:hover,
 .catalog-product-row.selected {
   border-color: var(--accent);
+  box-shadow: var(--shadow-soft);
 }
 
 .catalog-product-expanded {
@@ -694,6 +760,7 @@ output {
 }
 
 .admin-order-list-summary {
+  padding: 0 2px;
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
@@ -702,10 +769,14 @@ output {
 .admin-order-row {
   display: grid;
   gap: 9px;
-  padding: 12px;
+  padding: 13px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--surface);
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .admin-order-row-trigger {
@@ -722,6 +793,11 @@ output {
 .admin-order-row:hover,
 .admin-order-row.selected {
   border-color: var(--accent);
+  box-shadow: var(--shadow);
+}
+
+.admin-order-row.selected {
+  background: linear-gradient(180deg, #ffffff, #fbfdfd);
 }
 
 .admin-order-row-main {
@@ -765,7 +841,7 @@ output {
 .admin-order-expanded {
   display: grid;
   gap: 12px;
-  padding-top: 12px;
+  padding: 14px 0 2px;
   border-top: 1px solid var(--border);
 }
 
@@ -783,12 +859,18 @@ output {
 .admin-work-section {
   display: grid;
   gap: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
 }
 
 .admin-work-section .panel-heading {
   margin-bottom: 0;
+}
+
+.activity-accordion {
+  padding: 13px;
 }
 
 .activity-accordion .panel-heading small {
@@ -808,8 +890,8 @@ output {
 }
 
 .activity-stack .admin-work-section:first-child {
-  padding-top: 0;
-  border-top: 0;
+  padding: 13px;
+  border: 1px solid var(--border);
 }
 
 .note-composer {
@@ -842,6 +924,7 @@ output {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: #fff;
+  box-shadow: var(--shadow-soft);
 }
 
 .timeline-list li {
@@ -851,6 +934,7 @@ output {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: #fff;
+  box-shadow: var(--shadow-soft);
 }
 
 .note-list div {
@@ -916,7 +1000,8 @@ output {
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--surface);
+  background: #fff;
+  box-shadow: var(--shadow-soft);
 }
 
 .payment-row-heading,
@@ -1042,6 +1127,7 @@ output {
   border: 1px solid var(--border);
   border-radius: 6px;
   background: #fff;
+  box-shadow: var(--shadow-soft);
 }
 
 .status-event-list span,
@@ -1162,7 +1248,8 @@ output {
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--surface);
+  background: #fff;
+  box-shadow: var(--shadow-soft);
 }
 
 .address-card > div:first-child {
@@ -1267,7 +1354,8 @@ output {
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--surface);
+  background: #fff;
+  box-shadow: var(--shadow-soft);
 }
 
 .address-list strong,
@@ -1290,6 +1378,7 @@ output {
   gap: 10px;
   place-items: center;
   padding: 36px 14px;
+  border-style: dashed;
   color: var(--muted);
   text-align: center;
   font-weight: 700;

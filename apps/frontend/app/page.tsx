@@ -508,7 +508,7 @@ export default function Home() {
 
       {error ? <p className="error global-error">{error}</p> : null}
 
-      <section className="workspace">
+      <section className="workspace shop-workspace">
         <section className="catalog" aria-label="Products">
           <div className="section-heading">
             <div>
@@ -534,7 +534,16 @@ export default function Home() {
                   <article className="product-card" key={product.id}>
                     <div className="product-media">
                       {image ? (
-                        <img src={image.url} alt={image.altText ?? product.name} />
+                        <>
+                          <img
+                            src={image.url}
+                            alt={image.altText ?? product.name}
+                            onError={(event) => {
+                              event.currentTarget.style.display = "none";
+                            }}
+                          />
+                          <span>{product.name.slice(0, 2).toUpperCase()}</span>
+                        </>
                       ) : (
                         <span>{product.name.slice(0, 2).toUpperCase()}</span>
                       )}
