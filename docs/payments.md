@@ -12,6 +12,7 @@ Current payment statuses:
 - `AUTHORIZED`
 - `PAID`
 - `FAILED`
+- `EXPIRED`
 - `REFUNDED`
 - `DISPUTED`
 
@@ -23,6 +24,7 @@ Payment status changes are stored in `payment_status_events`. This table is the 
 UNPAID -> PAID -> DISPUTED
 UNPAID -> PAID -> REFUNDED
 UNPAID -> FAILED
+UNPAID -> EXPIRED
 ```
 
 Each event stores:
@@ -90,6 +92,8 @@ Handled Stripe events:
 - `charge.dispute.closed`
 
 New checkout payments are reconciled from Checkout Session and dispute events. PaymentIntent events are still handled for compatibility with older local payment rows and direct PaymentIntent references.
+
+`checkout.session.expired` maps to `EXPIRED`, not `FAILED`. `EXPIRED` means the customer did not complete the hosted Checkout Session before it closed. `FAILED` is reserved for actual failed payment attempts such as `checkout.session.async_payment_failed` or `payment_intent.payment_failed`.
 
 ## Admin Sync
 

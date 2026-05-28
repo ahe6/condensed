@@ -1076,6 +1076,7 @@ output {
 }
 
 .pill.unpaid,
+.pill.expired,
 .pill.unfulfilled,
 .pill.partial,
 .pill.draft {

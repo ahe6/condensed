@@ -159,7 +159,7 @@ Current routes:
 
 Inventory changes and order creation happen in a Prisma transaction.
 
-Unpaid expiry is run by `npm run orders:expire` or `make orders-expire`. By default it cancels `PLACED`/`PENDING`, `UNPAID`/`FAILED`, unfulfilled orders older than 15 minutes, expires open Stripe Checkout Sessions, sets `inventoryReleasedAt`, and increments variant inventory for each order item. Configure with `ORDER_EXPIRY_MINUTES` and `ORDER_EXPIRY_BATCH_SIZE`.
+Unpaid expiry is run by `npm run orders:expire` or `make orders-expire`. By default it cancels `PLACED`/`PENDING`, `UNPAID`/`FAILED`/`EXPIRED`, unfulfilled orders older than 15 minutes, expires open Stripe Checkout Sessions, sets `inventoryReleasedAt`, and increments variant inventory for each order item. Configure with `ORDER_EXPIRY_MINUTES` and `ORDER_EXPIRY_BATCH_SIZE`.
 
 AWS dev can run the same command from EventBridge Scheduler through an ECS Fargate one-shot task. Terraform controls that with `deploy_jobs_stack`, `orders_expiry_enabled`, and `orders_expiry_schedule_expression`; it does not require the public backend service.
 

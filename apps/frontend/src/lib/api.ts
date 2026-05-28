@@ -189,7 +189,14 @@ export type CheckoutWithStripeInput = CheckoutInput & {
   returnBaseUrl: string;
 };
 
-export type PaymentStatus = "UNPAID" | "AUTHORIZED" | "PAID" | "FAILED" | "REFUNDED" | "DISPUTED";
+export type PaymentStatus =
+  | "UNPAID"
+  | "AUTHORIZED"
+  | "PAID"
+  | "FAILED"
+  | "EXPIRED"
+  | "REFUNDED"
+  | "DISPUTED";
 export type PaymentStatusEventSource = "SYSTEM" | "ADMIN_MANUAL" | "ADMIN_SYNC" | "STRIPE_WEBHOOK";
 
 export type PaymentStatusEvent = {

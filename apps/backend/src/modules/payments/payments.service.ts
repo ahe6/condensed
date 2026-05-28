@@ -282,8 +282,10 @@ export async function handleStripeWebhook(rawBody: string, signature: string | u
       await updateStripeCheckoutSession(event.data.object, PaymentStatus.PAID, event);
       break;
     case "checkout.session.async_payment_failed":
-    case "checkout.session.expired":
       await updateStripeCheckoutSession(event.data.object, PaymentStatus.FAILED, event);
+      break;
+    case "checkout.session.expired":
+      await updateStripeCheckoutSession(event.data.object, PaymentStatus.EXPIRED, event);
       break;
     case "payment_intent.succeeded":
       await updateStripePayment(event.data.object, PaymentStatus.PAID, event);
@@ -575,7 +577,7 @@ function statusFromCheckoutSession(
   }
 
   if (checkoutSession.status === "expired") {
-    return PaymentStatus.FAILED;
+    return PaymentStatus.EXPIRED;
   }
 
   return fallbackStatus;

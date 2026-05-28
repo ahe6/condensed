@@ -78,7 +78,7 @@ Order fulfillment status is based on shipped or delivered shipment item quantity
 
 Shipment creation, shipped status, and delivered status require the parent order payment status to be `PAID` or `AUTHORIZED`.
 
-Orders with `UNPAID`, `FAILED`, `DISPUTED`, or `REFUNDED` payment status should not be fulfilled.
+Orders with `UNPAID`, `FAILED`, `EXPIRED`, `DISPUTED`, or `REFUNDED` payment status should not be fulfilled.
 
 Return is allowed on existing shipments so admin can clean up orders that were already shipped before a later payment issue.
 

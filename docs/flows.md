@@ -107,7 +107,7 @@ backend queues notification event when delivered
 
 Shipments contain `shipment_items`, so one order can be split across multiple packages. Marking shipments shipped or delivered recalculates the parent order as `UNFULFILLED`, `PARTIAL`, or `FULFILLED` based on shipped quantity. Returned shipments are excluded from shipped quantity and can mark the order `RETURNED` when returned quantity covers the full order.
 
-Fulfillment actions are blocked unless payment is `PAID` or `AUTHORIZED`. Orders with `UNPAID`, `FAILED`, `DISPUTED`, or `REFUNDED` payment status should not be shipped.
+Fulfillment actions are blocked unless payment is `PAID` or `AUTHORIZED`. Orders with `UNPAID`, `FAILED`, `EXPIRED`, `DISPUTED`, or `REFUNDED` payment status should not be shipped.
 
 Shipment creation and status changes are recorded in `shipment_status_events` so admin can see the fulfillment timeline. Carrier and tracking number changes are recorded in `shipment_tracking_events` so corrected labels remain auditable.
 

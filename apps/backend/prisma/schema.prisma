@@ -25,6 +25,7 @@ enum PaymentStatus {
   AUTHORIZED
   PAID
   FAILED
+  EXPIRED
   REFUNDED
   DISPUTED
 }

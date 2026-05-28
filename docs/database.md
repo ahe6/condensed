@@ -116,7 +116,7 @@ Important fields:
 - `orderNumber`: unique human-facing order identifier
 - `email`: order contact email
 - `status`: `PENDING`, `PLACED`, `CANCELLED`, or `REFUNDED`
-- `paymentStatus`: `UNPAID`, `AUTHORIZED`, `PAID`, `FAILED`, `REFUNDED`, or `DISPUTED`
+- `paymentStatus`: `UNPAID`, `AUTHORIZED`, `PAID`, `FAILED`, `EXPIRED`, `REFUNDED`, or `DISPUTED`
 - `fulfillmentStatus`: `UNFULFILLED`, `PARTIAL`, `FULFILLED`, or `RETURNED`
 - `subtotal`, `discountTotal`, `shippingTotal`, `taxTotal`, `total`
 - `placedAt`

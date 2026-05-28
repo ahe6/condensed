@@ -3,7 +3,7 @@ import { z } from "zod";
 export const adminOrderQuerySchema = z.object({
   search: z.string().trim().optional().default(""),
   payment: z
-    .enum(["ALL", "UNPAID", "AUTHORIZED", "PAID", "FAILED", "REFUNDED", "DISPUTED"])
+    .enum(["ALL", "UNPAID", "AUTHORIZED", "PAID", "FAILED", "EXPIRED", "REFUNDED", "DISPUTED"])
     .optional()
     .default("ALL"),
   fulfillment: z

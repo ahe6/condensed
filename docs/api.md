@@ -469,7 +469,7 @@ POST /admin/orders/:id/notes
 Supported query params:
 
 - `search`: order number, customer email/name, item name, SKU, note text/author, or status text
-- `payment`: `ALL`, `UNPAID`, `AUTHORIZED`, `PAID`, `FAILED`, `REFUNDED`, or `DISPUTED`
+- `payment`: `ALL`, `UNPAID`, `AUTHORIZED`, `PAID`, `FAILED`, `EXPIRED`, `REFUNDED`, or `DISPUTED`
 - `fulfillment`: `ALL`, `UNFULFILLED`, `PARTIAL`, `FULFILLED`, or `RETURNED`
 - `dateField`: `ANY`, `ORDER_CREATED`, `ORDER_PLACED`, `ORDER_UPDATED`, `SHIPMENT_CREATED`, `SHIPMENT_SHIPPED`, or `SHIPMENT_DELIVERED`
 - `dateFrom` / `dateTo`: `YYYY-MM-DD`
@@ -556,7 +556,7 @@ Payment responses include `statusEvents`, an ordered audit trail of payment stat
 - `checkout.session.completed` -> `PAID` when Stripe reports paid or no payment required
 - `checkout.session.async_payment_succeeded` -> `PAID`
 - `checkout.session.async_payment_failed` -> `FAILED`
-- `checkout.session.expired` -> `FAILED`
+- `checkout.session.expired` -> `EXPIRED`
 - `payment_intent.succeeded` -> `PAID`
 - `payment_intent.payment_failed` -> `FAILED`
 - `payment_intent.canceled` -> `FAILED`

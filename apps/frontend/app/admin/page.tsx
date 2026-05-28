@@ -61,6 +61,7 @@ const paymentFilterOptions: Array<"ALL" | PaymentStatus> = [
   "AUTHORIZED",
   "PAID",
   "FAILED",
+  "EXPIRED",
   "REFUNDED",
   "DISPUTED"
 ];

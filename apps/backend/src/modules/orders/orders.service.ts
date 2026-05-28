@@ -196,7 +196,9 @@ export async function cancelOrder(orderId: string) {
     const shouldReleaseInventory =
       order.inventoryReleasedAt === null &&
       order.fulfillmentStatus === FulfillmentStatus.UNFULFILLED &&
-      (order.paymentStatus === PaymentStatus.UNPAID || order.paymentStatus === PaymentStatus.FAILED);
+      (order.paymentStatus === PaymentStatus.UNPAID ||
+        order.paymentStatus === PaymentStatus.FAILED ||
+        order.paymentStatus === PaymentStatus.EXPIRED);
 
     if (shouldReleaseInventory) {
       for (const item of order.items) {
@@ -384,7 +386,7 @@ function unpaidExpiryWhere(expiresBefore: Date) {
     fulfillmentStatus: FulfillmentStatus.UNFULFILLED,
     inventoryReleasedAt: null,
     paymentStatus: {
-      in: [PaymentStatus.UNPAID, PaymentStatus.FAILED]
+      in: [PaymentStatus.UNPAID, PaymentStatus.FAILED, PaymentStatus.EXPIRED]
     },
     status: {
       in: [OrderStatus.PENDING, OrderStatus.PLACED]
