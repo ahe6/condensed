@@ -187,7 +187,7 @@ Admin order status changes should be explicit service functions, not arbitrary p
 
 Current responsibilities:
 
-- Create Stripe Checkout Sessions for orders
+- Create Stripe Checkout Sessions for checkout and unpaid-order recovery
 - Handle Stripe Checkout Session webhook status updates
 - Support Checkout Elements from the frontend checkout
 - Record provider-agnostic payment attempts
@@ -199,7 +199,7 @@ Current responsibilities:
 
 Current routes:
 
-- `POST /orders/:id/stripe-checkout-session`
+- `POST /orders/:id/stripe-checkout-session` for existing unpaid order recovery
 - `POST /admin/orders/:id/payments`
 - `POST /admin/payments/:id/authorize`
 - `POST /admin/payments/:id/pay`

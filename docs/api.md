@@ -129,7 +129,7 @@ Send `null` for `name` or `phone` to clear it. Email is controlled by Cognito an
 
 `GET /me/orders` returns orders linked to the current local user.
 
-`POST /checkout` and `GET /orders/:orderNumber` also require the same bearer token. Checkout links the created order to the authenticated user. Order detail only returns an order when it belongs to that user.
+`POST /checkout`, `POST /checkout/stripe`, and `GET /orders/:orderNumber` also require the same bearer token. Checkout links the created order to the authenticated user. Order detail only returns an order when it belongs to that user.
 
 The frontend confirmation page at `/auth/confirm` uses Cognito public signup APIs directly for confirm-code and resend-email recovery.
 
@@ -507,7 +507,7 @@ POST /admin/payments/:id/sync-stripe
 POST /webhooks/stripe
 ```
 
-`POST /orders/:id/stripe-checkout-session` creates or reuses a card-only Stripe Checkout Session with `ui_mode: "elements"` for an order and records a local `payments` row with provider `stripe`. The session uses the order email as `customer_email` and enables phone collection, so the frontend confirms checkout with the shipping phone number.
+`POST /orders/:id/stripe-checkout-session` creates or reuses a card-only Stripe Checkout Session with `ui_mode: "elements"` for an existing unpaid order and records a local `payments` row with provider `stripe`. The normal customer checkout path uses `POST /checkout/stripe`; this route is kept for payment recovery. The session uses the order email as `customer_email` and enables phone collection, so the frontend confirms checkout with the shipping phone number.
 
 Request:
 

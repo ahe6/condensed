@@ -90,6 +90,7 @@ Current routes:
 - `GET /me/orders`
 - `GET /orders/:orderNumber`
 - `POST /checkout`
+- `POST /checkout/stripe`
 
 Account profile, account addresses, account cart, checkout, and customer order detail require a valid bearer token. Checkout links the created order to the authenticated local user, and order detail only returns orders owned by that local user. Email stays controlled by Cognito; local profile editing only updates name and phone.
 
