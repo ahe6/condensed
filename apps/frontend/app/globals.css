@@ -1124,6 +1124,25 @@ output {
   font-weight: 700;
 }
 
+.account-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.75fr) minmax(0, 1.7fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.account-profile,
+.account-orders,
+.account-order-list,
+.account-sign-in {
+  display: grid;
+  gap: 12px;
+}
+
+.account-sign-in {
+  justify-items: start;
+}
+
 .order-lines span {
   min-width: 0;
   overflow-wrap: anywhere;
@@ -1306,6 +1325,7 @@ output {
   }
 
   .side-stack,
+  .account-layout,
   .order-detail-layout,
   .form-grid,
   .form-grid.thirds,

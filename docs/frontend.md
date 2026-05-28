@@ -6,7 +6,8 @@ The frontend is a single Next.js app in `apps/frontend`. It serves both the publ
 
 Important files:
 
-- `app/page.tsx`: public shop, cart, signed-in checkout, and customer order history
+- `app/page.tsx`: public shop, cart, and signed-in checkout
+- `app/account/page.tsx`: signed-in customer profile summary and order history
 - `app/orders/[orderNumber]/page.tsx`: signed-in customer order detail view
 - `app/admin/page.tsx`: admin order search, notes, payments, fulfillment, and order timeline
 - `app/auth/callback/page.tsx`: Cognito hosted UI callback
@@ -75,9 +76,19 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 - Creates a Stripe Checkout Session with `POST /orders/:id/stripe-checkout-session`.
 - Renders Stripe Checkout Elements through `CheckoutElementsProvider` and `PaymentElement`.
 - Confirms checkout in the browser.
+
+## Customer Account
+
+`app/account/page.tsx` is the signed-in customer account view:
+
+- Requires Cognito session before loading customer data.
+- Loads the current profile with `GET /me`.
+- Shows order counts, open order count, paid total, and basic profile fields.
 - Shows signed-in customer order history with `GET /me/orders`.
 - Links order history summaries to `/orders/[orderNumber]`.
-- Shows a full order detail page with items, totals, addresses, payments, shipments, and tracking links.
+- Lets customers refresh order history after payment, shipment, or status changes.
+
+`app/orders/[orderNumber]/page.tsx` shows a full signed-in customer order detail page with items, totals, addresses, payments, shipments, and tracking links. The backend only returns the order if it belongs to the signed-in user.
 
 Payment state should not be trusted from the browser alone. Stripe webhooks or admin sync update the backend payment/order state.
 

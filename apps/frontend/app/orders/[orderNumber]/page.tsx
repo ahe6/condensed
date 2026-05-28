@@ -81,6 +81,9 @@ export default function OrderDetailPage() {
           <h1>{order?.orderNumber ?? orderNumber}</h1>
         </div>
         <div className="nav-actions">
+          <Link className="nav-link" href="/account">
+            Account
+          </Link>
           <Link className="nav-link" href="/">
             Shop
           </Link>

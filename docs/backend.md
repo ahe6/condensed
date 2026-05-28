@@ -60,7 +60,7 @@ Current routes:
 - `GET /me`
 - `GET /me/orders`
 
-Checkout accepts the same bearer token and links the created order to the authenticated user when one is present.
+Checkout requires the same bearer token and links the created order to the authenticated user.
 
 Backend `/admin/*` routes are protected by a global Fastify pre-handler in `server.ts`.
 

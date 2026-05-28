@@ -8,7 +8,6 @@ import {
 import { loadStripe } from "@stripe/stripe-js";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { OrderSummary } from "../src/components/OrderSummary";
 import {
   AddressInput,
   ApiStatus,
@@ -25,7 +24,6 @@ import {
   getCart,
   getMe,
   getOrder,
-  getMyOrders,
   getReadiness,
   listProducts,
   removeCartItem,
@@ -97,7 +95,6 @@ export default function Home() {
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
   const [checkoutClientSecret, setCheckoutClientSecret] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [myOrders, setMyOrders] = useState<Order[]>([]);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -128,8 +125,7 @@ export default function Home() {
 
         setProducts(nextProducts);
         setCart(savedCart);
-        setCurrentUser(authState.user);
-        setMyOrders(authState.orders);
+        setCurrentUser(authState);
         setStatus("online");
         setError(null);
       } catch (caught) {
@@ -184,24 +180,13 @@ export default function Home() {
 
   async function loadAuthState() {
     if (!isAuthConfigured()) {
-      return {
-        user: null,
-        orders: []
-      };
+      return null;
     }
 
     try {
-      const [user, orders] = await Promise.all([getMe(), getMyOrders()]);
-
-      return {
-        user,
-        orders
-      };
+      return getMe();
     } catch {
-      return {
-        user: null,
-        orders: []
-      };
+      return null;
     }
   }
 
@@ -338,9 +323,6 @@ export default function Home() {
       }
 
       setLastOrder(order);
-      if (currentUser) {
-        setMyOrders(await getMyOrders());
-      }
       setCart(null);
       window.localStorage.removeItem(cartStorageKey);
       setEmail("");
@@ -365,19 +347,6 @@ export default function Home() {
     }));
   }
 
-  async function refreshMyOrders() {
-    setPendingAction("my-orders");
-    setError(null);
-
-    try {
-      setMyOrders(await getMyOrders());
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not refresh order history");
-    } finally {
-      setPendingAction(null);
-    }
-  }
-
   return (
     <main className="shell">
       <section className="topbar" aria-label="Workspace status">
@@ -386,6 +355,9 @@ export default function Home() {
           <h1>Shop</h1>
         </div>
         <div className="nav-actions">
+          <Link className="nav-link" href="/account">
+            Account
+          </Link>
           {isAuthConfigured() ? (
             currentUser ? (
               <button className="secondary" type="button" onClick={signOut}>
@@ -767,56 +739,12 @@ export default function Home() {
                   onSubmitted={async () => {
                     const refreshedOrder = await getOrder(lastOrder.orderNumber);
                     setLastOrder(refreshedOrder);
-                    if (currentUser) {
-                      setMyOrders(await getMyOrders());
-                    }
                   }}
                 />
               </CheckoutElementsProvider>
             ) : lastOrder ? (
               <div className="empty-state compact">Stripe payment is not configured</div>
             ) : null}
-          </section>
-
-          <section className="panel" aria-label="Account orders">
-            <div className="panel-heading">
-              <h2>Account</h2>
-              {currentUser ? (
-                <button
-                  className="secondary"
-                  type="button"
-                  disabled={pendingAction === "my-orders"}
-                  onClick={() => void refreshMyOrders()}
-                >
-                  Refresh
-                </button>
-              ) : null}
-            </div>
-
-            {!isAuthConfigured() ? (
-              <div className="empty-state compact">Cognito is not configured</div>
-            ) : currentUser ? (
-              <div className="account-panel">
-                <div>
-                  <span>Signed in</span>
-                  <strong>{currentUser.email}</strong>
-                </div>
-                {myOrders.length === 0 ? (
-                  <div className="empty-state compact">No order history</div>
-                ) : (
-                  myOrders.map((order) => <OrderSummary key={order.id} order={order} />)
-                )}
-              </div>
-            ) : (
-              <div className="account-panel">
-                <button type="button" onClick={() => void startLogin()}>
-                  Sign In
-                </button>
-                <Link className="nav-link" href="/auth/confirm">
-                  Confirm Account
-                </Link>
-              </div>
-            )}
           </section>
         </aside>
       </section>
