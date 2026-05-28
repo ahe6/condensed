@@ -96,8 +96,6 @@ export default function Home() {
   const [billingSame, setBillingSame] = useState(true);
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
   const [checkoutClientSecret, setCheckoutClientSecret] = useState<string | null>(null);
-  const [orderLookup, setOrderLookup] = useState("");
-  const [lookedUpOrder, setLookedUpOrder] = useState<Order | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [myOrders, setMyOrders] = useState<Order[]>([]);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
@@ -162,6 +160,12 @@ export default function Home() {
       return next;
     });
   }, [products]);
+
+  useEffect(() => {
+    if (currentUser && !email) {
+      setEmail(currentUser.email);
+    }
+  }, [currentUser, email]);
 
   async function loadSavedCart() {
     const savedCartId = window.localStorage.getItem(cartStorageKey);
@@ -302,6 +306,11 @@ export default function Home() {
   async function handleCheckout(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (!currentUser) {
+      setError("Sign in before checkout");
+      return;
+    }
+
     if (!cart || cart.items.length === 0) {
       setError("Cart is empty");
       return;
@@ -329,8 +338,6 @@ export default function Home() {
       }
 
       setLastOrder(order);
-      setLookedUpOrder(order);
-      setOrderLookup(order.orderNumber);
       if (currentUser) {
         setMyOrders(await getMyOrders());
       }
@@ -339,21 +346,6 @@ export default function Home() {
       setEmail("");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Checkout failed");
-    } finally {
-      setPendingAction(null);
-    }
-  }
-
-  async function handleOrderLookup(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setPendingAction("order-lookup");
-    setError(null);
-
-    try {
-      setLookedUpOrder(await getOrder(orderLookup.trim()));
-    } catch (caught) {
-      setLookedUpOrder(null);
-      setError(caught instanceof Error ? caught.message : "Order not found");
     } finally {
       setPendingAction(null);
     }
@@ -738,11 +730,22 @@ export default function Home() {
 
               <button
                 type="submit"
-                disabled={!cart || cart.items.length === 0 || pendingAction === "checkout"}
+                disabled={!currentUser || !cart || cart.items.length === 0 || pendingAction === "checkout"}
               >
-                {pendingAction === "checkout" ? "Placing" : "Place Order"}
+                {!currentUser ? "Sign In To Checkout" : pendingAction === "checkout" ? "Placing" : "Place Order"}
               </button>
             </form>
+
+            {!currentUser ? (
+              <div className="empty-state compact">
+                <p>Sign in to place orders and view order history</p>
+                {isAuthConfigured() ? (
+                  <button type="button" onClick={() => void startLogin()}>
+                    Sign In
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
 
             {lastOrder ? (
               <div className="order-confirmation">
@@ -764,7 +767,6 @@ export default function Home() {
                   onSubmitted={async () => {
                     const refreshedOrder = await getOrder(lastOrder.orderNumber);
                     setLastOrder(refreshedOrder);
-                    setLookedUpOrder(refreshedOrder);
                     if (currentUser) {
                       setMyOrders(await getMyOrders());
                     }
@@ -774,26 +776,6 @@ export default function Home() {
             ) : lastOrder ? (
               <div className="empty-state compact">Stripe payment is not configured</div>
             ) : null}
-          </section>
-
-          <section className="panel" aria-label="Order lookup">
-            <div className="panel-heading">
-              <h2>Order</h2>
-            </div>
-
-            <form className="lookup-form" onSubmit={handleOrderLookup}>
-              <input
-                value={orderLookup}
-                onChange={(event) => setOrderLookup(event.target.value)}
-                placeholder="TELE-..."
-                required
-              />
-              <button type="submit" disabled={pendingAction === "order-lookup"}>
-                Find
-              </button>
-            </form>
-
-            {lookedUpOrder ? <OrderSummary order={lookedUpOrder} /> : null}
           </section>
 
           <section className="panel" aria-label="Account orders">

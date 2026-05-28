@@ -157,7 +157,7 @@ Important fields:
 - `authorEmail`
 - `createdAt`
 
-Notes are included in admin order responses only. Public order lookup and customer order history do not include internal notes.
+Notes are included in admin order responses only. Customer order detail and customer order history do not include internal notes.
 
 Admin order search includes note body and author email.
 

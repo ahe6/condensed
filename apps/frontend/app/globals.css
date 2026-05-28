@@ -1228,6 +1228,9 @@ output {
 }
 
 .empty-state {
+  display: grid;
+  gap: 10px;
+  place-items: center;
   padding: 36px 14px;
   color: var(--muted);
   text-align: center;

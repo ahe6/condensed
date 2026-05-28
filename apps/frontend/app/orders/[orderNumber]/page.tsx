@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Order, getOrder } from "../../../src/lib/api";
+import { getSession, isAuthConfigured, startLogin } from "../../../src/lib/auth";
 import { formatDateTime, formatMoney, statusClass, trackingUrl } from "../../../src/lib/format";
 
 function addressLabel(address: Order["addresses"][number]) {
@@ -21,6 +22,7 @@ export default function OrderDetailPage() {
   const params = useParams<{ orderNumber: string }>();
   const orderNumber = decodeURIComponent(params.orderNumber);
   const [order, setOrder] = useState<Order | null>(null);
+  const [needsSignIn, setNeedsSignIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,6 +32,21 @@ export default function OrderDetailPage() {
     async function loadOrder() {
       setIsLoading(true);
       setError(null);
+      setNeedsSignIn(false);
+
+      if (!isAuthConfigured()) {
+        setOrder(null);
+        setError("Auth is not configured");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!getSession()) {
+        setOrder(null);
+        setNeedsSignIn(true);
+        setIsLoading(false);
+        return;
+      }
 
       try {
         const nextOrder = await getOrder(orderNumber);
@@ -70,7 +87,7 @@ export default function OrderDetailPage() {
           <button
             className="secondary"
             type="button"
-            disabled={isLoading}
+            disabled={isLoading || needsSignIn}
             onClick={() => {
               void getOrder(orderNumber)
                 .then(setOrder)
@@ -86,7 +103,16 @@ export default function OrderDetailPage() {
 
       {error ? <p className="error global-error">{error}</p> : null}
 
-      {!order && !error ? (
+      {needsSignIn ? (
+        <section className="panel">
+          <div className="empty-state compact">Sign in to view this order</div>
+          <button type="button" onClick={() => void startLogin()}>
+            Sign In
+          </button>
+        </section>
+      ) : null}
+
+      {!order && !error && !needsSignIn ? (
         <section className="panel">
           <div className="empty-state compact">Loading order</div>
         </section>

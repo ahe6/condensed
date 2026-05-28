@@ -103,9 +103,9 @@ Shop route at `/`:
 - Creates and resumes browser-local carts.
 - Adds, updates, removes, and clears cart items.
 - Submits checkout through `POST /checkout`.
-- Links checkout orders to the signed-in Cognito user when auth is configured.
+- Requires sign-in for checkout and links checkout orders to the signed-in Cognito user.
 - Shows signed-in customer order history through `GET /me/orders`.
-- Looks up orders through `GET /orders/:orderNumber`.
+- Shows signed-in customer order details through `GET /orders/:orderNumber`.
 
 Admin route at `/admin`:
 
@@ -135,8 +135,8 @@ See [Fulfillment](fulfillment.md) for shipment guardrails, tracking links, and f
 - `GET /me`, `GET /me/orders`: authenticated account and order history
 - `GET /products`, `GET /products/:slug`, `GET /categories`: public catalog
 - `POST /carts`, `GET /carts/:id`, `POST /carts/:id/items`: cart flow
-- `POST /checkout`: convert a cart into an order
-- `GET /orders/:orderNumber`: customer order lookup
+- `POST /checkout`: convert a cart into an order for the signed-in customer
+- `GET /orders/:orderNumber`: signed-in customer order detail
 - `/admin/*`: admin catalog, order, payment, and shipment routes
 
 See [API](api.md) for the full route reference.
@@ -157,6 +157,7 @@ npm run test:stripe-checkout
 ```
 
 The smoke test restocks `dev-mug` locally before creating an order.
+Because checkout now requires sign-in, set `PLAYWRIGHT_AUTH_STATE` to a Playwright storage-state JSON file for a signed-in customer before running it.
 It uses installed Google Chrome through Playwright, so no Playwright browser download is required.
 
 ## Local Containers

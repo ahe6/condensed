@@ -94,7 +94,7 @@ GET /me/orders
 
 `GET /me/orders` returns orders linked to the current local user.
 
-`POST /checkout` also accepts the same bearer token. When present, the created order is linked to the authenticated user.
+`POST /checkout` and `GET /orders/:orderNumber` also require the same bearer token. Checkout links the created order to the authenticated user. Order detail only returns an order when it belongs to that user.
 
 The frontend confirmation page at `/auth/confirm` uses Cognito public signup APIs directly for confirm-code and resend-email recovery.
 
@@ -312,7 +312,7 @@ Quantity must be positive. Use `DELETE /carts/:id/items/:itemId` to remove an it
 POST /checkout
 ```
 
-`POST /checkout` converts a cart into an order in a database transaction.
+`POST /checkout` converts a cart into an order in a database transaction. It requires a Cognito ID token and links the order to the current local user.
 
 It validates:
 
@@ -369,7 +369,7 @@ POST /admin/orders/:id/cancel
 POST /admin/orders/:id/notes
 ```
 
-`GET /orders/:orderNumber` returns one order by its human-facing order number.
+`GET /orders/:orderNumber` returns one order by its human-facing order number only when the signed-in user owns that order.
 
 `GET /admin/orders` returns a paged admin order result:
 
@@ -407,7 +407,7 @@ The backend applies admin order matching, counting, sorting, and pagination in S
 }
 ```
 
-The backend stores the signed-in admin email when available from Cognito. Notes are returned by admin order responses and are not included in public order lookup or customer order history.
+The backend stores the signed-in admin email when available from Cognito. Notes are returned by admin order responses and are not included in customer order detail or customer order history.
 
 Order status changes use explicit routes so callers cannot arbitrarily patch order state.
 

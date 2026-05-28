@@ -81,9 +81,10 @@ Current routes:
 
 - `GET /me`
 - `GET /me/orders`
-- `POST /checkout`, when a token is present
+- `GET /orders/:orderNumber`
+- `POST /checkout`
 
-Checkout links the created order to the authenticated local user when the bearer token is valid.
+Checkout and customer order detail require a valid bearer token. Checkout links the created order to the authenticated local user, and order detail only returns orders owned by that local user.
 
 ## Admin Access
 

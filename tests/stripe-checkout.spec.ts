@@ -2,6 +2,8 @@ import { expect, test, type APIRequestContext, type Frame, type Page } from "@pl
 
 const apiBaseUrl = process.env.PLAYWRIGHT_API_URL ?? "http://127.0.0.1:3000";
 
+test.skip(!process.env.PLAYWRIGHT_AUTH_STATE, "Stripe smoke test requires signed-in storage state");
+
 test("customer can pay for a dev mug with Stripe test card", async ({ page, request }) => {
   await expectReady(request);
 
@@ -27,7 +29,7 @@ test("customer can pay for a dev mug with Stripe test card", async ({ page, requ
   await fillStripePaymentElement(page);
   await page.getByRole("button", { name: /Pay / }).click();
 
-  await expect.poll(async () => getOrderPaymentStatus(request, orderNumber), {
+  await expect.poll(async () => getOrderPaymentStatus(page, request, orderNumber), {
     timeout: 30_000
   }).toBe("PAID");
 });
@@ -38,10 +40,16 @@ async function expectReady(request: APIRequestContext) {
 }
 
 async function getOrderPaymentStatus(
+  page: Page,
   request: APIRequestContext,
   orderNumber: string
 ) {
-  const response = await request.get(`${apiBaseUrl}/orders/${encodeURIComponent(orderNumber)}`);
+  const token = await getIdToken(page);
+  const response = await request.get(`${apiBaseUrl}/orders/${encodeURIComponent(orderNumber)}`, {
+    headers: {
+      authorization: `Bearer ${token}`
+    }
+  });
 
   if (!response.ok()) {
     return "UNKNOWN";
@@ -50,6 +58,18 @@ async function getOrderPaymentStatus(
   const order = (await response.json()) as { paymentStatus?: string };
 
   return order.paymentStatus ?? "UNKNOWN";
+}
+
+async function getIdToken(page: Page) {
+  return page.evaluate(() => {
+    const raw = window.localStorage.getItem("tele.auth");
+
+    if (!raw) {
+      throw new Error("Missing Playwright auth session");
+    }
+
+    return (JSON.parse(raw) as { idToken: string }).idToken;
+  });
 }
 
 async function fillStripePaymentElement(page: Page) {

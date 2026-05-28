@@ -56,6 +56,16 @@ export function getOrderByNumber(orderNumber: string) {
   });
 }
 
+export function getOrderByNumberForUser(orderNumber: string, userId: string) {
+  return prisma.order.findFirst({
+    where: {
+      orderNumber,
+      userId
+    },
+    include: orderInclude
+  });
+}
+
 type OrderWithRelations = Prisma.OrderGetPayload<{
   include: typeof adminOrderInclude;
 }>;
@@ -97,7 +107,7 @@ export async function listOrders(query: AdminOrderQuery) {
         in: ids
       }
     },
-    include: adminOrderInclude,
+    include: adminOrderInclude
   });
   const ordersById = new Map(orders.map((order) => [order.id, order]));
 

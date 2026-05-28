@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
-import { getAdminIdentity } from "../auth/auth.service.js";
+import { getAdminIdentity, getCurrentUser } from "../auth/auth.service.js";
 import {
   adminOrderQuerySchema,
   createOrderNoteSchema,
@@ -9,7 +9,7 @@ import {
 import {
   cancelOrder,
   createOrderNote,
-  getOrderByNumber,
+  getOrderByNumberForUser,
   listOrders,
   markOrderPlaced
 } from "./orders.service.js";
@@ -17,7 +17,8 @@ import {
 export const ordersRoutes: FastifyPluginAsync = async (server) => {
   server.get("/orders/:orderNumber", async (request, reply) => {
     const { orderNumber } = orderNumberParamsSchema.parse(request.params);
-    const order = await getOrderByNumber(orderNumber);
+    const currentUser = await getCurrentUser(request.headers.authorization);
+    const order = await getOrderByNumberForUser(orderNumber, currentUser.id);
 
     if (!order) {
       return reply.code(404).send({
