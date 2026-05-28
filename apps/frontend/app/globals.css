@@ -167,6 +167,22 @@ button.status-action.active:disabled {
   transform: translateY(-1px);
 }
 
+.cart-nav-link {
+  gap: 8px;
+}
+
+.cart-nav-link strong {
+  min-width: 22px;
+  min-height: 22px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+}
+
 .text-link {
   color: var(--accent);
   font-weight: 700;
@@ -269,6 +285,21 @@ h3 {
 .metric strong {
   overflow-wrap: anywhere;
   font-size: 17px;
+}
+
+.metric-link {
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
+}
+
+.metric-link:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
 }
 
 .workspace {
@@ -443,6 +474,13 @@ textarea:focus {
 .shop-workspace .side-stack {
   position: sticky;
   top: 16px;
+}
+
+.cart-page-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 520px);
+  gap: 18px;
+  align-items: start;
 }
 
 .panel {
@@ -1420,6 +1458,7 @@ output {
 }
 
 @media (max-width: 1040px) {
+  .cart-page-layout,
   .workspace,
   .summary-grid {
     grid-template-columns: 1fr;
@@ -1453,6 +1492,7 @@ output {
   }
 
   .side-stack,
+  .cart-page-layout,
   .account-layout,
   .order-detail-layout,
   .form-grid,

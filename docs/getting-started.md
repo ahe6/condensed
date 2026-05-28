@@ -111,10 +111,18 @@ Shop route at `/`:
 - Lists active products through `GET /products`.
 - Creates and resumes browser-local carts before sign-in.
 - Loads, reuses, and adopts signed-in account carts through `POST /me/cart`.
-- Adds, updates, removes, and clears cart items.
+- Adds variants to the active cart.
+
+Cart route at `/cart`:
+
+- Loads the active cart from browser local storage.
+- Updates, removes, and clears cart items.
 - Saves account addresses and uses them as checkout shipping or billing addresses.
 - Submits Stripe checkout through `POST /checkout/stripe`.
 - Requires sign-in for checkout and links checkout orders to the signed-in Cognito user.
+
+Account and order routes:
+
 - Shows signed-in customer order history through `GET /me/orders`.
 - Shows signed-in customer order details through `GET /orders/:orderNumber`.
 - Expires old unpaid orders locally with `npm run orders:expire` or `make orders-expire`.

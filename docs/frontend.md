@@ -6,7 +6,8 @@ The frontend is a single Next.js app in `apps/frontend`. It serves both the publ
 
 Important files:
 
-- `app/page.tsx`: public shop, cart, and signed-in checkout
+- `app/page.tsx`: public product catalog and add-to-cart flow
+- `app/cart/page.tsx`: cart review, signed-in checkout, and Stripe Checkout Elements
 - `app/account/page.tsx`: signed-in customer profile summary and order history
 - `app/orders/[orderNumber]/page.tsx`: signed-in customer order detail view
 - `app/admin/page.tsx`: admin order search, notes, payments, fulfillment, and order timeline
@@ -64,14 +65,20 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 
 ## Public Shop
 
-`app/page.tsx` owns the current public shopping flow:
+`app/page.tsx` owns the public catalog flow:
 
 - Checks backend readiness with `GET /ready`.
 - Lists active products from `GET /products`.
 - Stores the active cart ID in browser local storage under `tele.cartId`.
 - Uses `POST /me/cart` when signed in to load the account cart and adopt or merge the browser-local cart.
-- Creates, resumes, updates, clears, and removes cart items through cart API routes.
-- Disables add/increase controls when the cart already has the current available stock.
+- Creates or resumes carts and adds variants to the cart.
+- Disables add controls when the cart already has the current available stock.
+
+`app/cart/page.tsx` owns cart review and checkout:
+
+- Loads the same active cart from browser local storage under `tele.cartId`.
+- Uses `POST /me/cart` when signed in to load, adopt, or merge the browser-local cart.
+- Updates item quantities, removes items, and clears carts through cart API routes.
 - Collects checkout email, shipping address, and billing address.
 - Lets signed-in customers select saved shipping and billing addresses, while still allowing custom address entry.
 - Requires sign-in before checkout.

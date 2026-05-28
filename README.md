@@ -24,7 +24,7 @@ Implemented backend modules:
 - `shipments`
 - `auth`
 
-The frontend is split into a local shop route and an admin route. `/` covers catalog browsing, cart management, checkout, account login, order history, and order lookup. Admin users can open `/admin` directly for payment and fulfillment controls.
+The frontend is split into local shop, cart, account, and admin routes. `/` covers catalog browsing and add-to-cart, `/cart` covers cart review and checkout, `/account` covers customer profile and order history, and `/admin` is opened directly by admin users for payment and fulfillment controls.
 
 ## Quickstart
 
