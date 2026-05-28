@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { OrderSummary } from "../../src/components/OrderSummary";
 import { Order, User, getMe, getMyOrders } from "../../src/lib/api";
-import { getSession, isAuthConfigured, signOut, startLogin } from "../../src/lib/auth";
+import { getSession, isAuthConfigured, startLogin } from "../../src/lib/auth";
 import { formatMoney } from "../../src/lib/format";
 
 type OrderFilter = "ALL" | "OPEN" | "PAID" | "UNPAID" | "FULFILLED" | "CANCELLED";
@@ -138,11 +138,6 @@ export default function OrdersPage() {
           <Link className="nav-link" href="/account">
             Account
           </Link>
-          {currentUser ? (
-            <button className="secondary" type="button" onClick={signOut}>
-              Sign Out
-            </button>
-          ) : null}
         </div>
       </section>
 

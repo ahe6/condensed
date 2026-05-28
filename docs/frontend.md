@@ -8,7 +8,8 @@ Important files:
 
 - `app/page.tsx`: public product catalog and add-to-cart flow
 - `app/cart/page.tsx`: cart review, signed-in checkout, and Stripe Checkout Elements
-- `app/account/page.tsx`: signed-in customer profile and saved addresses
+- `app/account/page.tsx`: signed-in customer profile, account actions, and sign out
+- `app/addresses/page.tsx`: signed-in customer saved address management
 - `app/orders/page.tsx`: signed-in customer order history, search, and filters
 - `app/orders/[orderNumber]/page.tsx`: signed-in customer order detail view
 - `app/admin/page.tsx`: admin order search, notes, payments, fulfillment, and order timeline
@@ -95,11 +96,18 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 - Requires Cognito session before loading customer data.
 - Loads the current profile with `GET /me`.
 - Updates local profile name and phone with `PATCH /me`.
+- Links to `/orders` and `/addresses`.
+- Owns customer sign out.
+
+`app/addresses/page.tsx` is the signed-in customer address view:
+
+- Requires Cognito session before loading customer address data.
+- Loads the current profile with `GET /me`.
 - Loads saved addresses with `GET /me/addresses`.
 - Creates saved addresses with `POST /me/addresses`.
 - Sets default shipping and billing addresses with `PATCH /me/addresses/:id`.
 - Deletes saved addresses with `DELETE /me/addresses/:id`.
-- Shows saved-address counts, default shipping state, customer since, and basic profile fields.
+- Shows saved-address counts and default shipping/billing state.
 
 `app/orders/page.tsx` is the signed-in customer order history view:
 

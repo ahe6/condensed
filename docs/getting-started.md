@@ -128,9 +128,16 @@ Orders route at `/orders`:
 - Shows signed-in customer order history through `GET /me/orders`.
 - Searches and filters order history locally.
 
-Account and order detail routes:
+Account route at `/account`:
 
-- Shows signed-in customer profile and saved addresses.
+- Shows signed-in customer profile, links to orders and addresses, and contains customer sign out.
+
+Addresses route at `/addresses`:
+
+- Shows and manages signed-in customer saved addresses.
+
+Order detail routes:
+
 - Shows signed-in customer order details through `GET /orders/:orderNumber`.
 - Expires old unpaid orders locally with `npm run orders:expire` or `make orders-expire`.
 - Runs unpaid-order expiry remotely with AWS EventBridge Scheduler when the Terraform jobs stack is enabled.

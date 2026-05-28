@@ -28,7 +28,7 @@ import {
   removeCartItem,
   updateCartItem
 } from "../../src/lib/api";
-import { getSession, isAuthConfigured, signOut, startLogin } from "../../src/lib/auth";
+import { getSession, isAuthConfigured, startLogin } from "../../src/lib/auth";
 import { formatMoney } from "../../src/lib/format";
 
 const cartStorageKey = "tele.cartId";
@@ -379,16 +379,10 @@ export default function CartPage() {
           <Link className="nav-link" href="/account">
             Account
           </Link>
-          {isAuthConfigured() ? (
-            currentUser ? (
-              <button className="secondary" type="button" onClick={signOut}>
-                Sign Out
-              </button>
-            ) : (
-              <button className="secondary" type="button" onClick={() => void startLogin()}>
-                Sign In
-              </button>
-            )
+          {isAuthConfigured() && !currentUser ? (
+            <button className="secondary" type="button" onClick={() => void startLogin()}>
+              Sign In
+            </button>
           ) : null}
           <div className={`status ${status}`}>
             <span aria-hidden="true" />

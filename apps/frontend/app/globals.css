@@ -1263,6 +1263,7 @@ output {
 }
 
 .account-profile,
+.account-actions-panel,
 .account-orders,
 .account-addresses,
 .account-order-list,
@@ -1270,6 +1271,30 @@ output {
 .account-sign-in {
   display: grid;
   gap: 12px;
+}
+
+.account-action-list {
+  display: grid;
+  gap: 10px;
+}
+
+.account-action-link {
+  min-height: 72px;
+  display: grid;
+  justify-content: stretch;
+  justify-items: start;
+  align-content: center;
+  gap: 4px;
+  text-align: left;
+}
+
+.account-action-link strong {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.account-sign-out-button {
+  justify-self: start;
 }
 
 .account-sign-in {
