@@ -169,6 +169,21 @@ button.status-action.active:disabled {
   transform: translateY(-1px);
 }
 
+.customer-brand {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--text);
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-decoration: none;
+}
+
+.customer-brand:hover {
+  color: var(--accent);
+}
+
 .customer-nav {
   display: grid;
   grid-template-columns: repeat(3, max-content);

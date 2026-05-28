@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import { CustomerBrand } from "../../src/components/CustomerBrand";
 import { CustomerNav } from "../../src/components/CustomerNav";
 import { User, getMe, updateMe } from "../../src/lib/api";
 import { getSession, isAuthConfigured, signOut, startLogin } from "../../src/lib/auth";
@@ -82,10 +83,7 @@ export default function AccountPage() {
   return (
     <main className="shell">
       <section className="topbar" aria-label="Account navigation">
-        <div>
-          <p className="eyebrow">Account</p>
-          <h1>Account</h1>
-        </div>
+        <CustomerBrand />
         <div className="nav-actions">
           <CustomerNav />
         </div>

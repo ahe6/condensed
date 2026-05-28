@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { CustomerBrand } from "../../../src/components/CustomerBrand";
 import { CustomerNav } from "../../../src/components/CustomerNav";
 import { Order, getOrder } from "../../../src/lib/api";
 import { getSession, isAuthConfigured, startLogin } from "../../../src/lib/auth";
@@ -76,10 +77,7 @@ export default function OrderDetailPage() {
   return (
     <main className="shell">
       <section className="topbar" aria-label="Order navigation">
-        <div>
-          <p className="eyebrow">Order</p>
-          <h1>{order?.orderNumber ?? orderNumber}</h1>
-        </div>
+        <CustomerBrand />
         <div className="nav-actions">
           <CustomerNav />
           <button

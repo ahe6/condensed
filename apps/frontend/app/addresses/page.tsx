@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import { CustomerBrand } from "../../src/components/CustomerBrand";
 import { CustomerNav } from "../../src/components/CustomerNav";
 import {
   Address,
@@ -171,10 +172,7 @@ export default function AddressesPage() {
   return (
     <main className="shell">
       <section className="topbar" aria-label="Address navigation">
-        <div>
-          <p className="eyebrow">Account</p>
-          <h1>Addresses</h1>
-        </div>
+        <CustomerBrand />
         <div className="nav-actions">
           <CustomerNav />
         </div>

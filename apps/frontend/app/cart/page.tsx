@@ -8,6 +8,7 @@ import {
 import { loadStripe } from "@stripe/stripe-js";
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import { CustomerBrand } from "../../src/components/CustomerBrand";
 import { CustomerNav } from "../../src/components/CustomerNav";
 import {
   Address,
@@ -360,10 +361,7 @@ export default function CartPage() {
   return (
     <main className="shell">
       <section className="topbar" aria-label="Cart navigation">
-        <div>
-          <p className="eyebrow">Tele</p>
-          <h1>Cart</h1>
-        </div>
+        <CustomerBrand />
         <div className="nav-actions">
           <CustomerNav cartItemCount={cartItemCount} />
           {isAuthConfigured() && !currentUser ? (

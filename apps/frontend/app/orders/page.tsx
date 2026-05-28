@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { CustomerBrand } from "../../src/components/CustomerBrand";
 import { CustomerNav } from "../../src/components/CustomerNav";
 import { OrderSummary } from "../../src/components/OrderSummary";
 import { Order, User, getMe, getMyOrders } from "../../src/lib/api";
@@ -128,10 +129,7 @@ export default function OrdersPage() {
   return (
     <main className="shell">
       <section className="topbar" aria-label="Orders navigation">
-        <div>
-          <p className="eyebrow">Account</p>
-          <h1>Orders</h1>
-        </div>
+        <CustomerBrand />
         <div className="nav-actions">
           <CustomerNav />
         </div>

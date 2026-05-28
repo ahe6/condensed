@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { CustomerBrand } from "../src/components/CustomerBrand";
 import { CustomerNav } from "../src/components/CustomerNav";
 import {
   Cart,
@@ -171,10 +172,7 @@ export default function Home() {
   return (
     <main className="shell">
       <section className="topbar" aria-label="Shop navigation">
-        <div>
-          <p className="eyebrow">Tele</p>
-          <h1>Shop</h1>
-        </div>
+        <CustomerBrand />
         <div className="nav-actions">
           <CustomerNav cartItemCount={cartItemCount} />
           {isAuthConfigured() && !currentUser ? (
