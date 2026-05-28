@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import { CustomerNav } from "../../src/components/CustomerNav";
 import {
   Address,
   CreateAddressInput,
@@ -174,18 +175,9 @@ export default function AddressesPage() {
           <p className="eyebrow">Account</p>
           <h1>Addresses</h1>
         </div>
-        <div className="nav-actions">
-          <Link className="nav-link" href="/">
-            Shop
-          </Link>
-          <Link className="nav-link" href="/orders">
-            Orders
-          </Link>
-          <Link className="nav-link" href="/account">
-            Account
-          </Link>
-        </div>
       </section>
+
+      <CustomerNav />
 
       {error ? <p className="error global-error">{error}</p> : null}
 

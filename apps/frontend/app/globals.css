@@ -167,20 +167,35 @@ button.status-action.active:disabled {
   transform: translateY(-1px);
 }
 
-.cart-nav-link {
+.customer-nav {
+  display: grid;
+  grid-template-columns: repeat(3, max-content);
   gap: 8px;
+  margin: -4px 0 20px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-strong);
 }
 
-.cart-nav-link strong {
-  min-width: 22px;
-  min-height: 22px;
-  display: inline-grid;
-  place-items: center;
-  padding: 0 7px;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 12px;
+.customer-nav-link {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.customer-nav-link:hover,
+.customer-nav-link.active {
+  border-color: var(--border);
+  background: #fff;
+  box-shadow: var(--shadow-soft);
 }
 
 .text-link {
@@ -1542,6 +1557,10 @@ output {
   .admin-detail-grid,
   .order-meta.compact {
     grid-template-columns: 1fr;
+  }
+
+  .customer-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .admin-order-search,

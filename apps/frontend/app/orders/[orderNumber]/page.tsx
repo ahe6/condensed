@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { CustomerNav } from "../../../src/components/CustomerNav";
 import { Order, getOrder } from "../../../src/lib/api";
 import { getSession, isAuthConfigured, startLogin } from "../../../src/lib/auth";
 import { formatDateTime, formatMoney, statusClass, trackingUrl } from "../../../src/lib/format";
@@ -81,15 +81,6 @@ export default function OrderDetailPage() {
           <h1>{order?.orderNumber ?? orderNumber}</h1>
         </div>
         <div className="nav-actions">
-          <Link className="nav-link" href="/orders">
-            Orders
-          </Link>
-          <Link className="nav-link" href="/account">
-            Account
-          </Link>
-          <Link className="nav-link" href="/">
-            Shop
-          </Link>
           <button
             className="secondary"
             type="button"
@@ -106,6 +97,8 @@ export default function OrderDetailPage() {
           </button>
         </div>
       </section>
+
+      <CustomerNav />
 
       {error ? <p className="error global-error">{error}</p> : null}
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import { CustomerNav } from "../../src/components/CustomerNav";
 import { User, getMe, updateMe } from "../../src/lib/api";
 import { getSession, isAuthConfigured, signOut, startLogin } from "../../src/lib/auth";
 import { formatDateTime } from "../../src/lib/format";
@@ -85,12 +86,9 @@ export default function AccountPage() {
           <p className="eyebrow">Account</p>
           <h1>Account</h1>
         </div>
-        <div className="nav-actions">
-          <Link className="nav-link" href="/">
-            Shop
-          </Link>
-        </div>
       </section>
+
+      <CustomerNav />
 
       {error ? <p className="error global-error">{error}</p> : null}
 

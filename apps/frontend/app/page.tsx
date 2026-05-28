@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { CustomerNav } from "../src/components/CustomerNav";
 import {
   ApiStatus,
   Cart,
@@ -28,8 +28,6 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const cartItemCount = cart?.totals.itemCount ?? 0;
 
   const activeProducts = useMemo(
     () => products.filter((product) => product.variants.length > 0),
@@ -181,18 +179,6 @@ export default function Home() {
           <h1>Shop</h1>
         </div>
         <div className="nav-actions">
-          <Link className="nav-link cart-nav-link" href="/cart">
-            <span>Cart</span>
-            {cartItemCount > 0 ? <strong>{cartItemCount}</strong> : null}
-          </Link>
-          {currentUser ? (
-            <Link className="nav-link" href="/orders">
-              Orders
-            </Link>
-          ) : null}
-          <Link className="nav-link" href="/account">
-            Account
-          </Link>
           {isAuthConfigured() && !currentUser ? (
             <button className="secondary" type="button" onClick={() => void startLogin()}>
               Sign In
@@ -204,6 +190,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <CustomerNav />
 
       {error ? <p className="error global-error">{error}</p> : null}
 

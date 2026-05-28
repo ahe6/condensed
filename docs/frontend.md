@@ -19,9 +19,10 @@ Important files:
 - `src/lib/api.ts`: typed API client and response shapes
 - `src/lib/auth.ts`: Cognito PKCE login, session storage, sign-out, and confirmation helpers
 - `src/lib/format.ts`: money, date, status, button, and tracking-link formatting
+- `src/components/CustomerNav.tsx`: shared customer navigation for Cart, Orders, and Account
 - `src/components/OrderSummary.tsx`: reusable customer-facing order summary
 
-The app currently keeps shop and admin in one Next app. The public shop does not link to `/admin`; admins open that route directly.
+The app currently keeps shop and admin in one Next app. Customer pages share a compact Cart, Orders, and Account nav. The public shop does not link to `/admin`; admins open that route directly.
 
 ## Environment
 

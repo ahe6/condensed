@@ -8,6 +8,7 @@ import {
 import { loadStripe } from "@stripe/stripe-js";
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import { CustomerNav } from "../../src/components/CustomerNav";
 import {
   Address,
   AddressInput,
@@ -368,17 +369,6 @@ export default function CartPage() {
           <h1>Cart</h1>
         </div>
         <div className="nav-actions">
-          <Link className="nav-link" href="/">
-            Shop
-          </Link>
-          {currentUser ? (
-            <Link className="nav-link" href="/orders">
-              Orders
-            </Link>
-          ) : null}
-          <Link className="nav-link" href="/account">
-            Account
-          </Link>
           {isAuthConfigured() && !currentUser ? (
             <button className="secondary" type="button" onClick={() => void startLogin()}>
               Sign In
@@ -390,6 +380,8 @@ export default function CartPage() {
           </div>
         </div>
       </section>
+
+      <CustomerNav />
 
       <section className="summary-grid" aria-label="Cart summary">
         <div className="metric wide">
