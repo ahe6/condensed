@@ -1129,6 +1129,104 @@ output {
   overflow-wrap: anywhere;
 }
 
+.order-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+  gap: 18px;
+  align-items: start;
+  margin-bottom: 18px;
+}
+
+.order-detail-main,
+.order-detail-side,
+.order-detail-lines,
+.shipment-detail-list,
+.payment-detail-list,
+.address-list {
+  display: grid;
+  gap: 12px;
+}
+
+.order-detail-lines article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.8fr);
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.order-detail-lines article > div:first-child,
+.address-list article,
+.payment-detail-list article {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.order-detail-lines span,
+.order-detail-lines small,
+.address-list span,
+.payment-detail-list span,
+.payment-detail-list small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.order-detail-lines dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.order-detail-lines dl div {
+  display: grid;
+  gap: 3px;
+}
+
+.order-detail-lines dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.order-detail-lines dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.order-detail-totals {
+  margin-top: 0;
+}
+
+.address-list article,
+.payment-detail-list article,
+.shipment-detail-list article {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.address-list strong,
+.payment-detail-list strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.payment-detail-list article {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.payment-detail-list small {
+  grid-column: 1 / -1;
+}
+
 .empty-state {
   padding: 36px 14px;
   color: var(--muted);
@@ -1205,6 +1303,7 @@ output {
   }
 
   .side-stack,
+  .order-detail-layout,
   .form-grid,
   .form-grid.thirds,
   .admin-order-tools,
@@ -1224,6 +1323,11 @@ output {
 
   .quantity-control {
     grid-template-columns: 40px 42px 40px;
+  }
+
+  .order-detail-lines article,
+  .order-detail-lines dl {
+    grid-template-columns: 1fr;
   }
 
   .payment-controls,

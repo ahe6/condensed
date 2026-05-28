@@ -7,6 +7,7 @@ The frontend is a single Next.js app in `apps/frontend`. It serves both the publ
 Important files:
 
 - `app/page.tsx`: public shop, cart, checkout, order lookup, and customer order history
+- `app/orders/[orderNumber]/page.tsx`: customer-facing order detail view
 - `app/admin/page.tsx`: admin order search, notes, payments, fulfillment, and order timeline
 - `app/auth/callback/page.tsx`: Cognito hosted UI callback
 - `app/auth/confirm/page.tsx`: Cognito confirmation helper route
@@ -75,6 +76,8 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 - Confirms checkout in the browser.
 - Shows order lookup by order number.
 - Shows signed-in customer order history with `GET /me/orders`.
+- Links order lookup and order history summaries to `/orders/[orderNumber]`.
+- Shows a full order detail page with items, totals, addresses, payments, shipments, and tracking links.
 
 Payment state should not be trusted from the browser alone. Stripe webhooks or admin sync update the backend payment/order state.
 

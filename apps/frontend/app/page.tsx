@@ -62,7 +62,7 @@ function compactAddress(input: AddressInput): AddressInput {
 }
 
 function stripeReturnUrl(orderNumber: string) {
-  return `${window.location.origin}/?order=${orderNumber}&session_id={CHECKOUT_SESSION_ID}`;
+  return `${window.location.origin}/orders/${encodeURIComponent(orderNumber)}?session_id={CHECKOUT_SESSION_ID}`;
 }
 
 function stripePhoneNumber(order: Order) {

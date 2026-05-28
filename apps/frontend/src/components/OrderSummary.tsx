@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Order } from "../lib/api";
 import { formatDateTime, formatMoney, statusClass, trackingUrl } from "../lib/format";
 
@@ -9,7 +10,12 @@ export function OrderSummary({ order }: { order: Order }) {
           <span>Order</span>
           <strong>{order.orderNumber}</strong>
         </div>
-        <strong>{formatMoney(order.total, order.currency)}</strong>
+        <div>
+          <strong>{formatMoney(order.total, order.currency)}</strong>
+          <Link className="text-link" href={`/orders/${encodeURIComponent(order.orderNumber)}`}>
+            View details
+          </Link>
+        </div>
       </div>
 
       <div className="status-row">
