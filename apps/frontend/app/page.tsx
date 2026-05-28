@@ -125,6 +125,15 @@ export default function Home() {
     () => products.filter((product) => product.variants.length > 0),
     [products]
   );
+  const cartQuantityByVariantId = useMemo(() => {
+    const quantities: Record<string, number> = {};
+
+    for (const item of cart?.items ?? []) {
+      quantities[item.variantId] = item.quantity;
+    }
+
+    return quantities;
+  }, [cart]);
 
   useEffect(() => {
     let isMounted = true;
@@ -297,6 +306,14 @@ export default function Home() {
     const variantId = selectedVariants[product.id] ?? product.variants[0]?.id;
 
     if (!variantId) {
+      return;
+    }
+
+    const variant = product.variants.find((item) => item.id === variantId);
+    const currentQuantity = cartQuantityByVariantId[variantId] ?? 0;
+
+    if (variant && currentQuantity >= variant.inventoryQuantity) {
+      setError(`Only ${variant.inventoryQuantity} in stock for SKU ${variant.sku}`);
       return;
     }
 
@@ -559,17 +576,29 @@ export default function Home() {
                         <div className="product-action">
                           <div>
                             <strong>{formatMoney(selectedVariant.price, selectedVariant.currency)}</strong>
-                            <span>{selectedVariant.inventoryQuantity} in stock</span>
+                            <span>
+                              {(cartQuantityByVariantId[selectedVariant.id] ?? 0) >=
+                              selectedVariant.inventoryQuantity
+                                ? "Max in cart"
+                                : `${selectedVariant.inventoryQuantity} in stock`}
+                            </span>
                           </div>
                           <button
                             type="button"
                             disabled={
                               selectedVariant.inventoryQuantity <= 0 ||
+                              (cartQuantityByVariantId[selectedVariant.id] ?? 0) >=
+                                selectedVariant.inventoryQuantity ||
                               pendingAction === `add-${selectedVariant.id}`
                             }
                             onClick={() => void handleAddToCart(product)}
                           >
-                            {pendingAction === `add-${selectedVariant.id}` ? "Adding" : "Add"}
+                            {pendingAction === `add-${selectedVariant.id}`
+                              ? "Adding"
+                              : (cartQuantityByVariantId[selectedVariant.id] ?? 0) >=
+                                  selectedVariant.inventoryQuantity
+                                ? "In Cart"
+                                : "Add"}
                           </button>
                         </div>
                       ) : null}
@@ -605,6 +634,11 @@ export default function Home() {
                       <strong>{item.variant.product.name}</strong>
                       <span>{item.variant.title}</span>
                       <span>{formatMoney(item.variant.price, item.variant.currency)}</span>
+                      <span>
+                        {item.quantity >= item.variant.inventoryQuantity
+                          ? "Max stock in cart"
+                          : `${item.variant.inventoryQuantity - item.quantity} more available`}
+                      </span>
                     </div>
                     <div className="quantity-control">
                       <button
@@ -620,7 +654,10 @@ export default function Home() {
                       <button
                         className="icon-button"
                         type="button"
-                        disabled={pendingAction === `quantity-${item.id}`}
+                        disabled={
+                          item.quantity >= item.variant.inventoryQuantity ||
+                          pendingAction === `quantity-${item.id}`
+                        }
                         onClick={() => void handleQuantity(item.id, item.quantity + 1)}
                         aria-label={`Increase ${item.variant.product.name}`}
                       >

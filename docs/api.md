@@ -345,7 +345,7 @@ Adding the same variant again increments the existing cart item quantity.
 }
 ```
 
-Quantity must be positive. Use `DELETE /carts/:id/items/:itemId` to remove an item.
+Quantity must be positive and cannot exceed current variant inventory. Adding or updating cart items also rejects inactive products. Use `DELETE /carts/:id/items/:itemId` to remove an item.
 
 `DELETE /carts/:id/items` clears all items from the cart.
 

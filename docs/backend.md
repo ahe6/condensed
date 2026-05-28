@@ -120,6 +120,7 @@ Current responsibilities:
 - Add variants to a cart
 - Increment existing cart item quantities
 - Update cart item quantities
+- Reject inactive products and cart quantities above current variant inventory
 - Remove cart items
 - Clear a cart
 

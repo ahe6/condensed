@@ -71,6 +71,7 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 - Stores the active cart ID in browser local storage under `tele.cartId`.
 - Uses `POST /me/cart` when signed in to load the account cart and adopt or merge the browser-local cart.
 - Creates, resumes, updates, clears, and removes cart items through cart API routes.
+- Disables add/increase controls when the cart already has the current available stock.
 - Collects checkout email, shipping address, and billing address.
 - Lets signed-in customers select saved shipping and billing addresses, while still allowing custom address entry.
 - Requires sign-in before checkout.

@@ -32,6 +32,7 @@ client creates or resumes cart
 signed-in client loads /me/cart and may pass browser-local cartId for adoption or merge
 client adds variant
 client updates quantities
+backend rejects inactive variants or quantities above current inventory
 backend recalculates totals from current variant prices
 ```
 

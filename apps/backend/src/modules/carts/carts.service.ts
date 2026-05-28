@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, ProductStatus } from "@prisma/client";
 import { prisma } from "../../prisma.js";
 import type {
   AddCartItemInput,
@@ -109,14 +109,35 @@ export async function addCartItem(
 ): Promise<CartWithTotals> {
   await getCartOrThrow(cartId, actorUserId);
 
-  await prisma.productVariant.findUniqueOrThrow({
+  const variant = await prisma.productVariant.findUniqueOrThrow({
     where: {
       id: input.variantId
     },
     select: {
-      id: true
+      id: true,
+      inventoryQuantity: true,
+      product: {
+        select: {
+          slug: true,
+          status: true
+        }
+      },
+      sku: true
     }
   });
+  const existingItem = await prisma.cartItem.findUnique({
+    where: {
+      cartId_variantId: {
+        cartId,
+        variantId: input.variantId
+      }
+    },
+    select: {
+      quantity: true
+    }
+  });
+
+  assertVariantCanBeInCart(variant, (existingItem?.quantity ?? 0) + input.quantity);
 
   await prisma.cartItem.upsert({
     where: {
@@ -148,15 +169,28 @@ export async function updateCartItemQuantity(
 ): Promise<CartWithTotals> {
   await getCartOrThrow(cartId, actorUserId);
 
-  await prisma.cartItem.findFirstOrThrow({
+  const cartItem = await prisma.cartItem.findFirstOrThrow({
     where: {
       id: cartItemId,
       cartId
     },
     select: {
-      id: true
+      id: true,
+      variant: {
+        select: {
+          inventoryQuantity: true,
+          product: {
+            select: {
+              slug: true,
+              status: true
+            }
+          },
+          sku: true
+        }
+      }
     }
   });
+  assertVariantCanBeInCart(cartItem.variant, input.quantity);
 
   await prisma.cartItem.update({
     where: {
@@ -236,8 +270,13 @@ async function adoptCartForUser(userId: string, cartId: string): Promise<CartWit
       updatedAt: "desc"
     }
   });
+  const sourceVariantsById = await getCartItemVariantsById(sourceCart.items.map((item) => item.variantId));
 
   if (!existingCart) {
+    for (const item of sourceCart.items) {
+      assertVariantCanBeInCart(getCartItemVariant(sourceVariantsById, item.variantId), item.quantity);
+    }
+
     const adoptedCart = await prisma.cart.update({
       where: {
         id: sourceCart.id
@@ -252,6 +291,17 @@ async function adoptCartForUser(userId: string, cartId: string): Promise<CartWit
   }
 
   if (sourceCart.items.length > 0) {
+    const existingItemsByVariantId = new Map(
+      existingCart.items.map((item) => [item.variantId, item.quantity])
+    );
+
+    for (const item of sourceCart.items) {
+      assertVariantCanBeInCart(
+        getCartItemVariant(sourceVariantsById, item.variantId),
+        (existingItemsByVariantId.get(item.variantId) ?? 0) + item.quantity
+      );
+    }
+
     await prisma.$transaction(
       sourceCart.items.map((item) =>
         prisma.cartItem.upsert({
@@ -301,6 +351,62 @@ async function getCartOrThrow(cartId: string, actorUserId?: string): Promise<Car
 function assertCartAccess(cart: { userId: string | null }, actorUserId?: string) {
   if (cart.userId && cart.userId !== actorUserId) {
     throw new CartError("Cart access denied", 403);
+  }
+}
+
+async function getCartItemVariantsById(variantIds: string[]) {
+  const variants = await prisma.productVariant.findMany({
+    where: {
+      id: {
+        in: variantIds
+      }
+    },
+    select: {
+      id: true,
+      inventoryQuantity: true,
+      product: {
+        select: {
+          slug: true,
+          status: true
+        }
+      },
+      sku: true
+    }
+  });
+
+  return new Map(variants.map((variant) => [variant.id, variant]));
+}
+
+function getCartItemVariant(
+  variantsById: Awaited<ReturnType<typeof getCartItemVariantsById>>,
+  variantId: string
+) {
+  const variant = variantsById.get(variantId);
+
+  if (!variant) {
+    throw new CartError("Cart contains an invalid variant");
+  }
+
+  return variant;
+}
+
+function assertVariantCanBeInCart(
+  variant: {
+    inventoryQuantity: number;
+    product: {
+      slug: string;
+      status: ProductStatus;
+    };
+    sku: string;
+  },
+  requestedQuantity: number
+) {
+  if (variant.product.status !== ProductStatus.ACTIVE) {
+    throw new CartError(`Product is not active: ${variant.product.slug}`);
+  }
+
+  if (requestedQuantity > variant.inventoryQuantity) {
+    throw new CartError(`Only ${variant.inventoryQuantity} in stock for SKU ${variant.sku}`);
   }
 }
 
