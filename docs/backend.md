@@ -150,6 +150,7 @@ Current responsibilities:
 - Deduct variant inventory
 - Clear the cart after order creation
 - Create a Stripe Checkout Session with the order in one customer checkout call
+- Expire unpaid orders after a configurable age and release inventory once
 
 Current routes:
 
@@ -157,6 +158,8 @@ Current routes:
 - `POST /checkout/stripe`
 
 Inventory changes and order creation happen in a Prisma transaction.
+
+Unpaid expiry is run by `npm run orders:expire` or `make orders-expire`. By default it cancels `PLACED`/`PENDING`, `UNPAID`/`FAILED`, unfulfilled orders older than 15 minutes, expires open Stripe Checkout Sessions, sets `inventoryReleasedAt`, and increments variant inventory for each order item. Configure with `ORDER_EXPIRY_MINUTES` and `ORDER_EXPIRY_BATCH_SIZE`.
 
 ### Orders
 

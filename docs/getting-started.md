@@ -108,6 +108,7 @@ Shop route at `/`:
 - Requires sign-in for checkout and links checkout orders to the signed-in Cognito user.
 - Shows signed-in customer order history through `GET /me/orders`.
 - Shows signed-in customer order details through `GET /orders/:orderNumber`.
+- Expires old unpaid orders locally with `npm run orders:expire` or `make orders-expire`.
 
 Admin route at `/admin`:
 

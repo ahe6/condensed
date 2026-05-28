@@ -9,6 +9,7 @@ import { CartError } from "./modules/carts/carts.service.js";
 import { catalogRoutes } from "./modules/catalog/catalog.routes.js";
 import { CheckoutError } from "./modules/checkout/checkout.service.js";
 import { checkoutRoutes } from "./modules/checkout/checkout.routes.js";
+import { OrderError } from "./modules/orders/orders.service.js";
 import { ordersRoutes } from "./modules/orders/orders.routes.js";
 import { paymentsRoutes } from "./modules/payments/payments.routes.js";
 import { PaymentError } from "./modules/payments/payments.service.js";
@@ -71,6 +72,12 @@ export function buildServer() {
     }
 
     if (error instanceof PaymentError) {
+      return reply.code(error.statusCode).send({
+        error: error.message
+      });
+    }
+
+    if (error instanceof OrderError) {
       return reply.code(error.statusCode).send({
         error: error.message
       });

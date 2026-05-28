@@ -58,6 +58,16 @@ client submits cart, email, and addresses
 
 Order creation is the boundary where mutable cart data becomes durable purchase data. Inventory changes and order creation happen in a Prisma transaction.
 
+Unpaid order expiry:
+
+```text
+scheduled/manual job scans old unpaid, unfulfilled orders
+  -> expire open Stripe Checkout Sessions
+  -> mark eligible orders cancelled
+  -> restore order item quantities to variants
+  -> set inventoryReleasedAt so release is not repeated
+```
+
 ## Order Lookup
 
 ```text
@@ -122,5 +132,5 @@ Local database records are disposable during early development unless we add see
 
 Recommended sequence:
 
-1. Improve checkout so payment is collected before the cart is cleared.
+1. Schedule unpaid-order expiry in AWS.
 2. Add carrier label purchase or live carrier status sync when fulfillment leaves manual operations.

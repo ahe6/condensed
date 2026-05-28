@@ -1,4 +1,6 @@
 import { FulfillmentStatus, OrderStatus, PaymentStatus, Prisma } from "@prisma/client";
+import Stripe from "stripe";
+import { config } from "../../config.js";
 import { prisma } from "../../prisma.js";
 import type { AdminOrderQuery, CreateOrderNoteInput } from "./orders.schemas.js";
 
@@ -69,6 +71,28 @@ export function getOrderByNumberForUser(orderNumber: string, userId: string) {
 type OrderWithRelations = Prisma.OrderGetPayload<{
   include: typeof adminOrderInclude;
 }>;
+
+type ExpireUnpaidOrdersOptions = {
+  batchSize?: number;
+  olderThanMinutes?: number;
+  now?: Date;
+};
+type StripePaymentForExpiry = {
+  provider: string;
+  providerPaymentId: string | null;
+  status: PaymentStatus;
+};
+
+let stripe: Stripe | null = null;
+
+export class OrderError extends Error {
+  constructor(
+    message: string,
+    public readonly statusCode = 400
+  ) {
+    super(message);
+  }
+}
 
 export async function listOrders(query: AdminOrderQuery) {
   const whereClause = adminOrderWhereClause(query);
@@ -141,15 +165,63 @@ export async function createOrderNote(
   });
 }
 
-export function cancelOrder(orderId: string) {
-  return prisma.order.update({
+export async function cancelOrder(orderId: string) {
+  const orderForStripe = await prisma.order.findUniqueOrThrow({
     where: {
       id: orderId
     },
-    data: {
-      status: OrderStatus.CANCELLED
-    },
-    include: orderInclude
+    include: {
+      payments: true
+    }
+  });
+
+  await expireStripeCheckoutSessionsForCancellation(orderForStripe.payments, {
+    throwWhenPaid: true
+  });
+
+  return prisma.$transaction(async (tx) => {
+    const order = await tx.order.findUniqueOrThrow({
+      where: {
+        id: orderId
+      },
+      include: {
+        items: true
+      }
+    });
+    const shouldReleaseInventory =
+      order.inventoryReleasedAt === null &&
+      order.fulfillmentStatus === FulfillmentStatus.UNFULFILLED &&
+      (order.paymentStatus === PaymentStatus.UNPAID || order.paymentStatus === PaymentStatus.FAILED);
+
+    if (shouldReleaseInventory) {
+      for (const item of order.items) {
+        if (!item.variantId) {
+          continue;
+        }
+
+        await tx.productVariant.update({
+          where: {
+            id: item.variantId
+          },
+          data: {
+            inventoryQuantity: {
+              increment: item.quantity
+            }
+          }
+        });
+      }
+    }
+
+    return tx.order.update({
+      where: {
+        id: order.id
+      },
+      data: {
+        inventoryReleasedAt: shouldReleaseInventory ? new Date() : order.inventoryReleasedAt,
+        status: OrderStatus.CANCELLED
+      },
+      include: orderInclude
+    });
   });
 }
 
@@ -188,6 +260,183 @@ export function updateFulfillmentStatus(orderId: string, fulfillmentStatus: Fulf
     },
     include: orderInclude
   });
+}
+
+export async function expireUnpaidOrders(options: ExpireUnpaidOrdersOptions = {}) {
+  const now = options.now ?? new Date();
+  const olderThanMinutes = options.olderThanMinutes ?? 15;
+  const batchSize = options.batchSize ?? 50;
+  const expiresBefore = new Date(now.getTime() - olderThanMinutes * 60_000);
+  const candidates = await prisma.order.findMany({
+    where: unpaidExpiryWhere(expiresBefore),
+    select: {
+      id: true,
+      payments: {
+        select: {
+          provider: true,
+          providerPaymentId: true,
+          status: true
+        }
+      }
+    },
+    orderBy: {
+      createdAt: "asc"
+    },
+    take: batchSize
+  });
+  const expiredOrderIds: string[] = [];
+
+  for (const candidate of candidates) {
+    const canCancel = await expireStripeCheckoutSessionsForCancellation(candidate.payments, {
+      throwWhenPaid: false
+    });
+
+    if (!canCancel) {
+      continue;
+    }
+
+    const expired = await cancelOrderAndReleaseInventory(candidate.id, expiresBefore, now);
+
+    if (expired) {
+      expiredOrderIds.push(expired.id);
+    }
+  }
+
+  return {
+    batchSize,
+    expiredCount: expiredOrderIds.length,
+    expiredOrderIds,
+    expiresBefore: expiresBefore.toISOString()
+  };
+}
+
+async function cancelOrderAndReleaseInventory(
+  orderId: string,
+  expiresBefore: Date,
+  releasedAt = new Date()
+) {
+  return prisma.$transaction(async (tx) => {
+    const order = await tx.order.findFirst({
+      where: {
+        id: orderId,
+        ...unpaidExpiryWhere(expiresBefore)
+      },
+      include: {
+        items: true
+      }
+    });
+
+    if (!order) {
+      return null;
+    }
+
+    const updateResult = await tx.order.updateMany({
+      where: {
+        id: order.id,
+        inventoryReleasedAt: null
+      },
+      data: {
+        inventoryReleasedAt: releasedAt,
+        status: OrderStatus.CANCELLED
+      }
+    });
+
+    if (updateResult.count !== 1) {
+      return null;
+    }
+
+    for (const item of order.items) {
+      if (!item.variantId) {
+        continue;
+      }
+
+      await tx.productVariant.update({
+        where: {
+          id: item.variantId
+        },
+        data: {
+          inventoryQuantity: {
+            increment: item.quantity
+          }
+        }
+      });
+    }
+
+    return tx.order.findUniqueOrThrow({
+      where: {
+        id: order.id
+      },
+      include: orderInclude
+    });
+  });
+}
+
+function unpaidExpiryWhere(expiresBefore: Date) {
+  return {
+    createdAt: {
+      lte: expiresBefore
+    },
+    fulfillmentStatus: FulfillmentStatus.UNFULFILLED,
+    inventoryReleasedAt: null,
+    paymentStatus: {
+      in: [PaymentStatus.UNPAID, PaymentStatus.FAILED]
+    },
+    status: {
+      in: [OrderStatus.PENDING, OrderStatus.PLACED]
+    }
+  } satisfies Prisma.OrderWhereInput;
+}
+
+async function expireStripeCheckoutSessionsForCancellation(
+  payments: StripePaymentForExpiry[],
+  options: { throwWhenPaid: boolean }
+) {
+  const checkoutSessionIds = payments
+    .filter(
+      (payment) =>
+        payment.provider === "stripe" &&
+        payment.providerPaymentId?.startsWith("cs_") &&
+        payment.status !== PaymentStatus.PAID &&
+        payment.status !== PaymentStatus.REFUNDED
+    )
+    .map((payment) => payment.providerPaymentId)
+    .filter((id): id is string => Boolean(id));
+
+  if (checkoutSessionIds.length === 0) {
+    return true;
+  }
+
+  const stripeClient = getStripe();
+
+  for (const checkoutSessionId of checkoutSessionIds) {
+    const checkoutSession = await stripeClient.checkout.sessions.retrieve(checkoutSessionId);
+
+    if (checkoutSession.payment_status === "paid" || checkoutSession.status === "complete") {
+      if (options.throwWhenPaid) {
+        throw new OrderError("Cannot cancel an order with a completed Stripe Checkout Session", 409);
+      }
+
+      return false;
+    }
+
+    if (checkoutSession.status === "open") {
+      await stripeClient.checkout.sessions.expire(checkoutSession.id);
+    }
+  }
+
+  return true;
+}
+
+function getStripe() {
+  if (!config.STRIPE_API_KEY) {
+    throw new OrderError("Stripe is not configured", 503);
+  }
+
+  if (!stripe) {
+    stripe = new Stripe(config.STRIPE_API_KEY);
+  }
+
+  return stripe;
 }
 
 function adminOrderWhereClause(query: AdminOrderQuery) {

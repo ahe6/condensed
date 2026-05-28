@@ -219,6 +219,7 @@ model Order {
   taxTotal               Decimal                 @default(0) @db.Decimal(12, 2)
   total                  Decimal                 @default(0) @db.Decimal(12, 2)
   placedAt               DateTime?
+  inventoryReleasedAt    DateTime?
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
   user                   User?                   @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -234,6 +235,7 @@ model Order {
   @@index([userId])
   @@index([status])
   @@index([createdAt])
+  @@index([inventoryReleasedAt])
   @@map("orders")
 }
 

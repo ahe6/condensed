@@ -58,6 +58,27 @@ This opens the local shop in installed Chrome, creates a dev mug order, fills St
 
 The command restocks `dev-mug` to 25 units before running so repeated smoke tests do not fail from local inventory depletion.
 
+## Expire Unpaid Orders
+
+Run the local unpaid-order expiry job:
+
+```sh
+npm run orders:expire
+```
+
+or:
+
+```sh
+make orders-expire
+```
+
+Defaults:
+
+- `ORDER_EXPIRY_MINUTES=15`
+- `ORDER_EXPIRY_BATCH_SIZE=50`
+
+The job expires open Stripe Checkout Sessions, cancels old unpaid unfulfilled orders, and releases inventory once by setting `orders.inventoryReleasedAt`.
+
 ## Reset Local Database
 
 This removes local Postgres data.

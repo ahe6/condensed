@@ -290,6 +290,7 @@ export type Order = {
   shippingTotal: string;
   taxTotal: string;
   total: string;
+  inventoryReleasedAt: string | null;
   placedAt: string | null;
   createdAt: string;
   updatedAt: string;

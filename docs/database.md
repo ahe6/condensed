@@ -120,8 +120,11 @@ Important fields:
 - `fulfillmentStatus`: `UNFULFILLED`, `PARTIAL`, `FULFILLED`, or `RETURNED`
 - `subtotal`, `discountTotal`, `shippingTotal`, `taxTotal`, `total`
 - `placedAt`
+- `inventoryReleasedAt`: set when cancelled unpaid-order inventory has been restored
 
 Orders can keep `userId` nullable so historical orders survive user deletion.
+
+Unpaid expiry and manual cancellation use `inventoryReleasedAt` to make inventory release idempotent. Once it is set, rerunning the expiry job or cancelling again will not add item quantities back a second time.
 
 ### `order_addresses`
 
