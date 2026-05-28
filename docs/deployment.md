@@ -38,7 +38,8 @@ To deploy to AWS dev again:
 2. Recreate Terraform dev resources with the default app stack enabled.
 3. Build and push the backend image to ECR.
 4. Run AWS database migrations through the one-off ECS migration task.
-5. Optionally enable the public backend service.
+5. Optionally enable scheduled jobs.
+6. Optionally enable the public backend service.
 
 ## Authenticate
 
@@ -127,6 +128,55 @@ npm run db:deploy
 ```
 
 The deploy script is `apps/backend/scripts/prisma-deploy.mjs`. It builds a concrete `DATABASE_URL` from the AWS-injected `DB_SECRET_JSON`, `DB_HOST`, `DB_PORT`, and `DB_NAME`.
+
+## Enable Scheduled Jobs
+
+Scheduled jobs run as short-lived ECS Fargate tasks. They are separate from the public backend service, but they still require the AWS dev app/data layer because the tasks connect to private RDS.
+
+Preview the jobs layer:
+
+```sh
+make dev-jobs-plan
+```
+
+Apply it:
+
+```sh
+make dev-jobs-apply
+```
+
+This keeps `backend_service_enabled=false` and enables:
+
+- ECS task definition for unpaid-order expiry
+- EventBridge Scheduler schedule
+- IAM role allowing Scheduler to run the ECS task
+
+The schedule runs:
+
+```sh
+npm run orders:expire
+```
+
+Run the AWS job manually:
+
+```sh
+make orders-expire-aws
+```
+
+Useful outputs:
+
+```sh
+terraform -chdir=infra/envs/dev output orders_expiry_task_definition_arn
+terraform -chdir=infra/envs/dev output orders_expiry_schedule_name
+```
+
+The default schedule is `rate(15 minutes)`. To disable the remote schedule while keeping the resources, set:
+
+```hcl
+orders_expiry_enabled = false
+```
+
+If the AWS dev database contains unpaid Stripe Checkout orders, configure `stripe_api_key_secret_arn` with a Secrets Manager secret ARN containing the Stripe secret key. The job needs that key to expire open Stripe Checkout Sessions before canceling local orders.
 
 ## Stripe
 

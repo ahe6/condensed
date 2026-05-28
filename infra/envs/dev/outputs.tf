@@ -48,6 +48,16 @@ output "backend_migration_task_definition_arn" {
   value       = local.deploy_app_stack ? aws_ecs_task_definition.backend_migration[0].arn : null
 }
 
+output "orders_expiry_task_definition_arn" {
+  description = "Task definition ARN for the unpaid-order expiry job."
+  value       = local.deploy_jobs_stack ? aws_ecs_task_definition.orders_expiry[0].arn : null
+}
+
+output "orders_expiry_schedule_name" {
+  description = "EventBridge Scheduler schedule name for unpaid-order expiry."
+  value       = local.deploy_jobs_stack ? aws_scheduler_schedule.orders_expiry[0].name : null
+}
+
 output "backend_load_balancer_dns_name" {
   description = "Public DNS name for the backend load balancer when the backend service is enabled."
   value       = local.deploy_app_stack && var.backend_service_enabled ? aws_lb.backend[0].dns_name : null

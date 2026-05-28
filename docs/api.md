@@ -614,7 +614,9 @@ Shipment status routes update the shipment and the parent order `fulfillmentStat
 
 The `ship` and `deliver` actions require payment status `PAID` or `AUTHORIZED`. Returned shipment status can still be set for existing shipments so admin can clean up already-shipped orders.
 
-Shipment responses include `items`, `statusEvents`, an ordered audit trail of shipment status changes, and `trackingEvents`, an ordered audit trail of carrier/tracking changes.
+The `deliver` action also creates or updates a pending `SHIPMENT_DELIVERED` notification event for the shipment. Notification events are idempotent per shipment/type and are included on admin order responses.
+
+Shipment responses include `items`, `statusEvents`, an ordered audit trail of shipment status changes, and `trackingEvents`, an ordered audit trail of carrier/tracking changes. The nested admin order response includes `notificationEvents`.
 
 See [Fulfillment](fulfillment.md) for operator workflow, tracking links, and current limitations.
 

@@ -109,6 +109,7 @@ Shop route at `/`:
 - Shows signed-in customer order history through `GET /me/orders`.
 - Shows signed-in customer order details through `GET /orders/:orderNumber`.
 - Expires old unpaid orders locally with `npm run orders:expire` or `make orders-expire`.
+- Runs unpaid-order expiry remotely with AWS EventBridge Scheduler when the Terraform jobs stack is enabled.
 
 Admin route at `/admin`:
 

@@ -1,6 +1,6 @@
 # Fulfillment
 
-This doc covers order shipment handling, tracking updates, and fulfillment history. Route details live in [API](api.md), table details live in [Database](database.md), and end-to-end process context lives in [Flows](flows.md).
+This doc covers order shipment handling, tracking updates, and fulfillment history. Route details live in [API](api.md), notification behavior lives in [Notifications](notifications.md), table details live in [Database](database.md), and end-to-end process context lives in [Flows](flows.md).
 
 ## Current Model
 
@@ -24,6 +24,7 @@ admin saves carrier and tracking number when a label exists
 admin marks the shipment shipped, delivered, or returned
 backend recalculates order fulfillment status
 backend records status and tracking events
+backend queues a delivered notification event when a shipment is delivered
 frontend shows the activity in the order timeline
 ```
 
@@ -36,6 +37,7 @@ The admin UI lets operators:
 - Open public carrier tracking links.
 - Mark shipments shipped, delivered, or returned.
 - Review folded shipment status and tracking history.
+- Review queued notification events.
 
 Tracking values can be overwritten because bad label entry is common during manual operations. The current `shipments` row stays simple, and old values remain auditable through `shipment_tracking_events`.
 
@@ -58,6 +60,8 @@ Status actions update the shipment and parent order in one transaction:
 - `ship`: shipment becomes `SHIPPED`, `shippedAt` is set, and order fulfillment is recalculated.
 - `deliver`: shipment becomes `DELIVERED`, `deliveredAt` is set, and order fulfillment is recalculated.
 - `return`: shipment becomes `RETURNED`, and order fulfillment is recalculated.
+
+When `deliver` runs, the backend also creates a `SHIPMENT_DELIVERED` notification event for the order email. The event is idempotent per shipment, so repeated delivered actions do not create duplicate notification records.
 
 ## Fulfillment Math
 
@@ -101,9 +105,12 @@ Expanded admin orders show fulfillment activity in the combined order timeline:
 
 Detailed shipment status and tracking events remain available behind folded `History` controls on each shipment row.
 
+Delivered notification records appear in the expanded admin notification section and the combined timeline.
+
 ## Known Limits
 
 - No carrier API integration yet.
 - No label purchase flow yet.
+- No SES email sending yet; delivered notifications are recorded as pending events only.
 - No webhook or polling integration for live carrier delivery updates yet.
 - Return handling is still shipment-level, not a full return merchandise authorization flow.

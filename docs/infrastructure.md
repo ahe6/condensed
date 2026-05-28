@@ -46,7 +46,7 @@ infra/bootstrap
 
 infra/envs/dev
   Cognito auth plus optional VPC, subnets, RDS, ECR, ECS cluster,
-  migration task, and public backend service
+  migration task, scheduled jobs, and public backend service
 ```
 
 Common commands:
@@ -60,6 +60,7 @@ make bootstrap-apply
 make dev-init
 make dev-plan
 make dev-auth-plan
+make dev-jobs-plan
 ```
 
 Apply Cognito only:
@@ -129,6 +130,7 @@ When dev is recreated, Terraform creates:
 - CloudWatch log group: `/ecs/tele-dev-backend`
 - IAM roles for backend task execution and task runtime
 - One-off ECS task definition for backend migrations
+- Optional ECS task definition and EventBridge Scheduler schedule for unpaid-order expiry
 
 The ECR repository URL is:
 
@@ -137,6 +139,40 @@ The ECR repository URL is:
 ```
 
 Backend AWS resources are skipped when `deploy_app_stack=false`.
+
+## Scheduled Jobs
+
+Scheduled jobs are controlled separately from the public backend service:
+
+```hcl
+deploy_jobs_stack       = false
+orders_expiry_enabled   = true
+backend_service_enabled = false
+```
+
+The jobs layer still requires `deploy_app_stack=true`, because the scheduled task runs in ECS and connects to private RDS from the dev VPC. It does not require the public backend ALB or long-running backend ECS service.
+
+When enabled, Terraform creates:
+
+- ECS Fargate task definition: `tele-dev-orders-expiry`
+- IAM role that lets EventBridge Scheduler run that task
+- EventBridge Scheduler schedule: `tele-dev-orders-expiry`
+
+The scheduled task runs:
+
+```sh
+npm run orders:expire
+```
+
+Default schedule:
+
+```hcl
+orders_expiry_schedule_expression = "rate(15 minutes)"
+orders_expiry_minutes             = 15
+orders_expiry_batch_size          = 50
+```
+
+If unpaid orders use Stripe Checkout Sessions, set `stripe_api_key_secret_arn` to a Secrets Manager secret that contains the backend Stripe secret key. Without it, the expiry task cannot expire open Stripe sessions.
 
 ## Cognito
 

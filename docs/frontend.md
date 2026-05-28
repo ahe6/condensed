@@ -118,6 +118,7 @@ Main admin capabilities:
 - Create manual payments and mark payments authorized, paid, failed, or refunded.
 - Sync Stripe payment status for Stripe payments.
 - Create shipments with remaining line item quantities prefilled, save carrier/tracking edits, and mark shipments shipped, delivered, or returned.
+- Show pending delivered-notification records in the expanded order notification section and combined timeline.
 - Open public carrier tracking links for UPS, USPS, FedEx, and DHL.
 - Search/filter admin products.
 - Create products and categories.
@@ -133,7 +134,8 @@ The expanded order row is the main work surface. It includes:
 - Notes composer and note list
 - Payments and payment actions
 - Fulfillment line item allocation and shipment actions
-- Chronological timeline built from order events, notes, payment events, shipment events, and tracking changes
+- Notification records created by delivered shipment events
+- Chronological timeline built from order events, notes, payment events, shipment events, tracking changes, and notification events
 
 Detailed payment and shipment audit history is folded behind per-record `History` buttons so the current operational controls stay visible.
 Notes stay visible on expanded orders. The activity and actions accordion starts collapsed per order so admins can scan orders first, then open the operational workspace when needed.

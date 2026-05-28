@@ -276,6 +276,25 @@ export type Shipment = {
   trackingEvents: ShipmentTrackingEvent[];
 };
 
+export type NotificationType = "SHIPMENT_DELIVERED";
+export type NotificationStatus = "PENDING" | "SENT" | "FAILED" | "SKIPPED";
+
+export type NotificationEvent = {
+  id: string;
+  orderId: string;
+  shipmentId: string | null;
+  type: NotificationType;
+  recipientEmail: string;
+  status: NotificationStatus;
+  provider: string | null;
+  providerMessageId: string | null;
+  errorMessage: string | null;
+  sentAt: string | null;
+  metadata: unknown | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Order = {
   id: string;
   userId: string | null;
@@ -311,6 +330,7 @@ export type Order = {
   payments: Payment[];
   notes?: OrderNote[];
   shipments: Shipment[];
+  notificationEvents?: NotificationEvent[];
 };
 
 export type OrderNote = {

@@ -40,9 +40,14 @@ export const orderInclude = {
   }
 };
 
-const adminOrderInclude = {
+export const adminOrderInclude = {
   ...orderInclude,
   notes: {
+    orderBy: {
+      createdAt: "desc" as const
+    }
+  },
+  notificationEvents: {
     orderBy: {
       createdAt: "desc" as const
     }

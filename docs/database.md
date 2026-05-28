@@ -278,6 +278,31 @@ Important fields:
 
 Existing shipments with carrier or tracking values were backfilled with one `SYSTEM` event that records their current tracking details at migration time. New shipment creation with tracking details and later tracking edits write admin manual events.
 
+## Notifications
+
+### `notification_events`
+
+Email/notification intent records created from business events.
+
+Important fields:
+
+- `orderId`
+- `shipmentId`
+- `type`: currently `SHIPMENT_DELIVERED`
+- `recipientEmail`
+- `status`: `PENDING`, `SENT`, `FAILED`, or `SKIPPED`
+- `provider`
+- `providerMessageId`
+- `errorMessage`
+- `sentAt`
+- `metadata`
+- `createdAt`
+- `updatedAt`
+
+Marking a shipment delivered creates or updates one `SHIPMENT_DELIVERED` notification event for that shipment. The unique key on `shipmentId + type` prevents duplicate delivered email records when an admin clicks delivered more than once.
+
+Current notification events are records only. SES sending and retry scripts are deferred. See [Notifications](notifications.md).
+
 ## Design Decisions
 
 Products and variants are separate because product pages and purchasable SKUs are different concepts.

@@ -53,6 +53,17 @@ enum FulfillmentStatus {
   RETURNED
 }
 
+enum NotificationType {
+  SHIPMENT_DELIVERED
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
 enum AddressType {
   SHIPPING
   BILLING
@@ -231,6 +242,7 @@ model Order {
   shipmentTrackingEvents ShipmentTrackingEvent[]
   notes                  OrderNote[]
   shipments              Shipment[]
+  notificationEvents     NotificationEvent[]
 
   @@index([userId])
   @@index([status])
@@ -349,6 +361,7 @@ model Shipment {
   items          ShipmentItem[]
   statusEvents   ShipmentStatusEvent[]
   trackingEvents ShipmentTrackingEvent[]
+  notifications  NotificationEvent[]
 
   @@index([orderId])
   @@index([trackingNumber])
@@ -406,4 +419,28 @@ model ShipmentTrackingEvent {
   @@index([shipmentId, createdAt])
   @@index([orderId, createdAt])
   @@map("shipment_tracking_events")
+}
+
+model NotificationEvent {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId           String             @db.Uuid
+  shipmentId        String?            @db.Uuid
+  type              NotificationType
+  recipientEmail    String
+  status            NotificationStatus @default(PENDING)
+  provider          String?
+  providerMessageId String?
+  errorMessage      String?
+  sentAt            DateTime?
+  metadata          Json?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  order             Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  shipment          Shipment?          @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  @@unique([shipmentId, type])
+  @@index([orderId, createdAt])
+  @@index([shipmentId, createdAt])
+  @@index([status, createdAt])
+  @@map("notification_events")
 }

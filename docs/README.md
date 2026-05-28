@@ -11,6 +11,7 @@ This directory holds the working documentation for `tele`.
 - [Auth](auth.md): Cognito login, local auth setup, user linking, and admin group access.
 - [Payments](payments.md): Stripe checkout, webhooks, admin sync, disputes, refunds, and test cards.
 - [Fulfillment](fulfillment.md): shipment creation, tracking updates, fulfillment guardrails, and tracking links.
+- [Notifications](notifications.md): customer notification records and planned SES email sending.
 - [Flows](flows.md): catalog, cart, checkout, order, payment, and shipment business flows.
 - [Database](database.md): Prisma models, relationships, and migration notes.
 

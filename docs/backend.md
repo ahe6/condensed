@@ -1,6 +1,6 @@
 # Backend
 
-This doc describes how backend code should be organized. Endpoint details live in [API](api.md), ecommerce process details live in [Flows](flows.md), fulfillment details live in [Fulfillment](fulfillment.md), and database table details live in [Database](database.md).
+This doc describes how backend code should be organized. Endpoint details live in [API](api.md), ecommerce process details live in [Flows](flows.md), fulfillment details live in [Fulfillment](fulfillment.md), notification behavior lives in [Notifications](notifications.md), and database table details live in [Database](database.md).
 
 ## Request Flow
 
@@ -161,6 +161,8 @@ Inventory changes and order creation happen in a Prisma transaction.
 
 Unpaid expiry is run by `npm run orders:expire` or `make orders-expire`. By default it cancels `PLACED`/`PENDING`, `UNPAID`/`FAILED`, unfulfilled orders older than 15 minutes, expires open Stripe Checkout Sessions, sets `inventoryReleasedAt`, and increments variant inventory for each order item. Configure with `ORDER_EXPIRY_MINUTES` and `ORDER_EXPIRY_BATCH_SIZE`.
 
+AWS dev can run the same command from EventBridge Scheduler through an ECS Fargate one-shot task. Terraform controls that with `deploy_jobs_stack`, `orders_expiry_enabled`, and `orders_expiry_schedule_expression`; it does not require the public backend service.
+
 ### Orders
 
 Current responsibilities:
@@ -182,7 +184,7 @@ The admin order list accepts search, payment/fulfillment filters, event date ran
 
 Admin notes are internal order records. They are included only in admin order responses and store the signed-in admin email when Cognito provides it.
 
-The admin frontend builds a combined order timeline from the admin order response. Timeline rows include order creation/placement, notes, payment status events, shipment status events, and tracking changes. Detailed payment and shipment histories remain available behind folded per-record history controls.
+The admin frontend builds a combined order timeline from the admin order response. Timeline rows include order creation/placement, notes, payment status events, shipment status events, tracking changes, and notification events. Detailed payment, shipment, and notification histories remain available behind folded per-record sections.
 
 Admin order status changes should be explicit service functions, not arbitrary patch objects, so state transitions stay controlled.
 
@@ -233,6 +235,7 @@ Current responsibilities:
 - Mark shipments delivered
 - Mark shipments returned
 - Recalculate the parent order `fulfillmentStatus` when shipment state changes
+- Queue a pending delivered notification event when a shipment is delivered
 
 Current routes:
 
@@ -257,5 +260,7 @@ Shipment creation plus shipped/delivered transitions are guarded by payment stat
 Shipment creation and status changes write `shipment_status_events` rows for admin history.
 
 Tracking creation and edits write `shipment_tracking_events` rows when carrier or tracking number values are present and actually change.
+
+Delivered shipment changes also create or update one pending `SHIPMENT_DELIVERED` `notification_events` row for the shipment. This is the local audit/retry foundation for future SES email sending. See [Notifications](notifications.md).
 
 See [Fulfillment](fulfillment.md) for the full shipment workflow and tracking-link behavior.

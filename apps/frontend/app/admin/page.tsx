@@ -200,7 +200,7 @@ function trackingChangeLabel(
 type AdminTimelineItem = {
   id: string;
   createdAt: string;
-  type: "Order" | "Note" | "Payment" | "Fulfillment" | "Tracking";
+  type: "Order" | "Note" | "Payment" | "Fulfillment" | "Tracking" | "Notification";
   title: string;
   detail?: string;
 };
@@ -289,6 +289,18 @@ function orderTimeline(order: Order): AdminTimelineItem[] {
         }`
       });
     }
+  }
+
+  for (const notification of order.notificationEvents ?? []) {
+    items.push({
+      id: `notification-${notification.id}`,
+      createdAt: notification.createdAt,
+      type: "Notification",
+      title: `${notification.type} ${notification.status.toLowerCase()}`,
+      detail: `${notification.recipientEmail}${
+        notification.provider ? ` - ${notification.provider}` : ""
+      }${notification.errorMessage ? `: ${notification.errorMessage}` : ""}`
+    });
   }
 
   return items.sort((first, second) => Date.parse(first.createdAt) - Date.parse(second.createdAt));
@@ -391,6 +403,40 @@ function AdminOrderTimeline({ order }: { order: Order }) {
           </li>
         ))}
       </ol>
+    </section>
+  );
+}
+
+function AdminNotificationSection({ order }: { order: Order }) {
+  const notifications = order.notificationEvents ?? [];
+
+  return (
+    <section className="admin-work-section" aria-label="Notifications">
+      <div className="panel-heading">
+        <div>
+          <h3>Notifications</h3>
+          <small>{notifications.length} events</small>
+        </div>
+      </div>
+
+      {notifications.length === 0 ? (
+        <div className="empty-state compact">No notifications queued</div>
+      ) : (
+        <ol className="status-event-list" aria-label="Notification events">
+          {notifications.map((notification) => (
+            <li key={notification.id}>
+              <span>{formatDateTime(notification.createdAt)}</span>
+              <strong>
+                {notification.type} - {notification.status}
+              </strong>
+              <small>{notification.recipientEmail}</small>
+              {notification.provider ? <small>Provider: {notification.provider}</small> : null}
+              {notification.sentAt ? <small>Sent: {formatDateTime(notification.sentAt)}</small> : null}
+              {notification.errorMessage ? <small>{notification.errorMessage}</small> : null}
+            </li>
+          ))}
+        </ol>
+      )}
     </section>
   );
 }
@@ -2510,12 +2556,16 @@ export default function AdminPage() {
                             <span>{pluralizeItems(itemCount)}</span>
                           </div>
                           <div className="status-row">
+                            <span className={`pill ${statusClass(order.status)}`}>{order.status}</span>
                             <span className={`pill ${statusClass(order.paymentStatus)}`}>
                               {order.paymentStatus}
                             </span>
                             <span className={`pill ${statusClass(order.fulfillmentStatus)}`}>
                               {order.fulfillmentStatus}
                             </span>
+                            {order.inventoryReleasedAt ? (
+                              <span className="pill inventory-released">Inventory released</span>
+                            ) : null}
                           </div>
                         </button>
 
@@ -2528,7 +2578,7 @@ export default function AdminPage() {
                                   <h3>Activity & Actions</h3>
                                   <small>
                                     {orderTimeline(order).length} events, {order.payments.length} payments,{" "}
-                                    {order.shipments.length} shipments
+                                    {order.shipments.length} shipments, {order.notificationEvents?.length ?? 0} notifications
                                   </small>
                                 </div>
                                 <button
@@ -2545,6 +2595,7 @@ export default function AdminPage() {
                                 <div className="activity-stack">
                                   {renderPaymentSection(order)}
                                   {renderFulfillmentSection(order)}
+                                  <AdminNotificationSection order={order} />
                                   <AdminOrderTimeline order={order} />
                                 </div>
                               ) : null}

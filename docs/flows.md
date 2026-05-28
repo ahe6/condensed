@@ -102,6 +102,7 @@ admin assigns order item quantities
 admin adds tracking
 admin marks shipment shipped or delivered
 backend recalculates order fulfillment status
+backend queues notification event when delivered
 ```
 
 Shipments contain `shipment_items`, so one order can be split across multiple packages. Marking shipments shipped or delivered recalculates the parent order as `UNFULFILLED`, `PARTIAL`, or `FULFILLED` based on shipped quantity. Returned shipments are excluded from shipped quantity and can mark the order `RETURNED` when returned quantity covers the full order.
@@ -110,9 +111,11 @@ Fulfillment actions are blocked unless payment is `PAID` or `AUTHORIZED`. Orders
 
 Shipment creation and status changes are recorded in `shipment_status_events` so admin can see the fulfillment timeline. Carrier and tracking number changes are recorded in `shipment_tracking_events` so corrected labels remain auditable.
 
+When a shipment is marked delivered, the backend records one pending `SHIPMENT_DELIVERED` notification event for the order email. The unique shipment/type constraint prevents duplicate delivered notification records.
+
 When a shipment has a supported carrier and tracking number, the frontend builds a public tracking link. Supported carrier names currently include UPS, USPS, FedEx, and DHL. This is a link-out only; the app does not call carrier APIs for live tracking updates.
 
-See [Fulfillment](fulfillment.md) for the full shipment and tracking behavior.
+See [Fulfillment](fulfillment.md) for the full shipment and tracking behavior. See [Notifications](notifications.md) for delivered email records and the planned SES sender.
 
 ## Design Rules
 
@@ -132,5 +135,7 @@ Local database records are disposable during early development unless we add see
 
 Recommended sequence:
 
-1. Schedule unpaid-order expiry in AWS.
-2. Add carrier label purchase or live carrier status sync when fulfillment leaves manual operations.
+1. Add SES sending for pending notification events.
+2. Add retry handling for failed notification events.
+3. Schedule unpaid-order expiry in AWS.
+4. Add carrier label purchase or live carrier status sync when fulfillment leaves manual operations.

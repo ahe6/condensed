@@ -1084,6 +1084,12 @@ output {
   color: var(--warn);
 }
 
+.pill.inventory-released {
+  border-color: #bfd3f5;
+  background: #eff6ff;
+  color: var(--blue);
+}
+
 .order-lines,
 .shipment-summary-list {
   display: grid;

@@ -7,7 +7,7 @@ FRONTEND_TAG ?= latest
 BOOTSTRAP_DIR := infra/bootstrap
 DEV_DIR := infra/envs/dev
 
-.PHONY: aws-login aws-whoami fmt validate bootstrap-init bootstrap-plan bootstrap-apply dev-init dev-plan dev-auth-plan dev-auth-apply dev-auth-env dev-test-env dev-auth-add-admin dev-auth-delete-user backend-docker-build frontend-docker-build backend-ecr-login backend-ecr-push backend-migrate-aws orders-expire
+.PHONY: aws-login aws-whoami fmt validate bootstrap-init bootstrap-plan bootstrap-apply dev-init dev-plan dev-auth-plan dev-auth-apply dev-jobs-plan dev-jobs-apply dev-auth-env dev-test-env dev-auth-add-admin dev-auth-delete-user backend-docker-build frontend-docker-build backend-ecr-login backend-ecr-push backend-migrate-aws orders-expire orders-expire-aws
 
 aws-login:
 	aws sso login --profile $(AWS_PROFILE)
@@ -43,6 +43,12 @@ dev-auth-plan:
 dev-auth-apply:
 	terraform -chdir=$(DEV_DIR) apply -var deploy_app_stack=false
 
+dev-jobs-plan:
+	terraform -chdir=$(DEV_DIR) plan -var deploy_app_stack=true -var deploy_jobs_stack=true -var backend_service_enabled=false
+
+dev-jobs-apply:
+	terraform -chdir=$(DEV_DIR) apply -var deploy_app_stack=true -var deploy_jobs_stack=true -var backend_service_enabled=false
+
 dev-auth-env:
 	TERRAFORM_DIR=$(DEV_DIR) scripts/write-local-auth-env.sh
 
@@ -75,3 +81,6 @@ backend-migrate-aws:
 
 orders-expire:
 	npm run orders:expire
+
+orders-expire-aws:
+	AWS_PROFILE=$(AWS_PROFILE) AWS_REGION=$(AWS_REGION) TERRAFORM_DIR=$(DEV_DIR) scripts/run-aws-orders-expire.sh

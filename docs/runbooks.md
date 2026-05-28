@@ -79,6 +79,21 @@ Defaults:
 
 The job expires open Stripe Checkout Sessions, cancels old unpaid unfulfilled orders, and releases inventory once by setting `orders.inventoryReleasedAt`.
 
+For AWS dev, enable the scheduled ECS task with:
+
+```sh
+make dev-jobs-plan
+make dev-jobs-apply
+```
+
+Run the AWS job once without waiting for the schedule:
+
+```sh
+make orders-expire-aws
+```
+
+The AWS schedule is controlled by `deploy_jobs_stack`, `orders_expiry_enabled`, and `orders_expiry_schedule_expression` in Terraform. The scheduled job is separate from the public backend service, but it requires the AWS app/data layer so the task can reach private RDS.
+
 ## Reset Local Database
 
 This removes local Postgres data.

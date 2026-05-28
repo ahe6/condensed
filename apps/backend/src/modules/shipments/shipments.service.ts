@@ -1,12 +1,13 @@
 import {
   FulfillmentStatus,
+  NotificationType,
   Prisma,
   ShipmentStatus,
   ShipmentStatusEventSource,
   ShipmentTrackingEventSource
 } from "@prisma/client";
 import { prisma } from "../../prisma.js";
-import { orderInclude } from "../orders/orders.service.js";
+import { adminOrderInclude } from "../orders/orders.service.js";
 import type { CreateShipmentInput, UpdateShipmentTrackingInput } from "./shipments.schemas.js";
 
 const shipmentInclude = {
@@ -29,7 +30,7 @@ const shipmentInclude = {
     }
   },
   order: {
-    include: orderInclude
+    include: adminOrderInclude
   }
 };
 
@@ -166,6 +167,8 @@ function updateShipmentAndOrder(
       include: {
         order: {
           select: {
+            email: true,
+            orderNumber: true,
             paymentStatus: true
           }
         }
@@ -202,6 +205,16 @@ function updateShipmentAndOrder(
       reason: `Shipment marked ${status.toLowerCase()}`,
       metadata: timestamps
     });
+
+    if (status === ShipmentStatus.DELIVERED) {
+      await createShipmentDeliveredNotificationEvent(tx, {
+        deliveredAt: timestamps.deliveredAt ?? null,
+        orderEmail: existingShipment.order.email,
+        orderId: shipment.orderId,
+        orderNumber: existingShipment.order.orderNumber,
+        shipmentId: shipment.id
+      });
+    }
 
     return tx.shipment.findUniqueOrThrow({
       where: {
@@ -362,6 +375,46 @@ type ShipmentTrackingRecord = {
   carrier: string | null;
   trackingNumber: string | null;
 };
+
+type ShipmentDeliveredNotificationInput = {
+  deliveredAt: Date | null;
+  orderEmail: string;
+  orderId: string;
+  orderNumber: string;
+  shipmentId: string;
+};
+
+async function createShipmentDeliveredNotificationEvent(
+  tx: Prisma.TransactionClient,
+  input: ShipmentDeliveredNotificationInput
+) {
+  await tx.notificationEvent.upsert({
+    where: {
+      shipmentId_type: {
+        shipmentId: input.shipmentId,
+        type: NotificationType.SHIPMENT_DELIVERED
+      }
+    },
+    create: {
+      orderId: input.orderId,
+      shipmentId: input.shipmentId,
+      type: NotificationType.SHIPMENT_DELIVERED,
+      recipientEmail: input.orderEmail,
+      metadata: compactJsonObject({
+        deliveredAt: input.deliveredAt?.toISOString(),
+        orderNumber: input.orderNumber
+      })
+    },
+    update: {
+      orderId: input.orderId,
+      recipientEmail: input.orderEmail,
+      metadata: compactJsonObject({
+        deliveredAt: input.deliveredAt?.toISOString(),
+        orderNumber: input.orderNumber
+      })
+    }
+  });
+}
 
 async function createShipmentStatusEvent(
   tx: Prisma.TransactionClient,

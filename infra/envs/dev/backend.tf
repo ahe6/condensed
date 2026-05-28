@@ -174,7 +174,11 @@ resource "aws_iam_role_policy" "backend_task_execution_secrets" {
         Action = [
           "secretsmanager:GetSecretValue"
         ]
-        Resource = aws_db_instance.postgres[0].master_user_secret[0].secret_arn
+        Resource = compact([
+          aws_db_instance.postgres[0].master_user_secret[0].secret_arn,
+          var.stripe_api_key_secret_arn,
+          var.stripe_webhook_secret_arn
+        ])
       }
     ]
   })
@@ -261,12 +265,26 @@ resource "aws_ecs_task_definition" "backend" {
           value = aws_cognito_user_pool_client.frontend.id
         }
       ]
-      secrets = [
-        {
-          name      = "DB_SECRET_JSON"
-          valueFrom = aws_db_instance.postgres[0].master_user_secret[0].secret_arn
-        }
-      ]
+      secrets = concat(
+        [
+          {
+            name      = "DB_SECRET_JSON"
+            valueFrom = aws_db_instance.postgres[0].master_user_secret[0].secret_arn
+          }
+        ],
+        var.stripe_api_key_secret_arn == "" ? [] : [
+          {
+            name      = "STRIPE_API_KEY"
+            valueFrom = var.stripe_api_key_secret_arn
+          }
+        ],
+        var.stripe_webhook_secret_arn == "" ? [] : [
+          {
+            name      = "STRIPE_WEBHOOK_SECRET"
+            valueFrom = var.stripe_webhook_secret_arn
+          }
+        ]
+      )
       logConfiguration = {
         logDriver = "awslogs"
         options = {

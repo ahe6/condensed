@@ -104,6 +104,36 @@ variable "backend_service_enabled" {
   default     = false
 }
 
+variable "deploy_jobs_stack" {
+  description = "Whether to deploy scheduled backend jobs. Requires deploy_app_stack because jobs run in ECS against private RDS."
+  type        = bool
+  default     = false
+}
+
+variable "orders_expiry_enabled" {
+  description = "Whether the unpaid-order expiry schedule is enabled."
+  type        = bool
+  default     = true
+}
+
+variable "orders_expiry_schedule_expression" {
+  description = "EventBridge Scheduler expression for unpaid-order expiry."
+  type        = string
+  default     = "rate(15 minutes)"
+}
+
+variable "orders_expiry_minutes" {
+  description = "Age in minutes before unpaid orders are eligible for expiry."
+  type        = number
+  default     = 15
+}
+
+variable "orders_expiry_batch_size" {
+  description = "Maximum number of unpaid orders to expire per scheduled run."
+  type        = number
+  default     = 50
+}
+
 variable "backend_image_tag" {
   description = "Docker image tag to deploy for the backend ECS service."
   type        = string
@@ -132,6 +162,18 @@ variable "backend_memory" {
   description = "Backend ECS task memory in MiB."
   type        = number
   default     = 512
+}
+
+variable "stripe_api_key_secret_arn" {
+  description = "Optional Secrets Manager ARN containing STRIPE_API_KEY for deployed backend tasks."
+  type        = string
+  default     = ""
+}
+
+variable "stripe_webhook_secret_arn" {
+  description = "Optional Secrets Manager ARN containing STRIPE_WEBHOOK_SECRET for deployed backend service tasks."
+  type        = string
+  default     = ""
 }
 
 variable "auth_callback_urls" {

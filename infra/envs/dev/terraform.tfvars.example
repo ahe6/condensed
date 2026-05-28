@@ -16,9 +16,17 @@ postgres_backup_retention_days    = 7
 
 allowed_postgres_cidr_blocks = []
 
+deploy_app_stack       = true
 backend_service_enabled = false
+deploy_jobs_stack      = false
+orders_expiry_enabled  = true
+orders_expiry_schedule_expression = "rate(15 minutes)"
+orders_expiry_minutes = 15
+orders_expiry_batch_size = 50
 backend_image_tag       = "latest"
 backend_container_port  = 3000
 backend_desired_count   = 1
 backend_cpu             = 256
 backend_memory          = 512
+stripe_api_key_secret_arn     = ""
+stripe_webhook_secret_arn     = ""
