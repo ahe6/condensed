@@ -31,6 +31,7 @@ export default function Home() {
     () => products.filter((product) => product.variants.length > 0),
     [products]
   );
+  const cartItemCount = cart?.totals.itemCount ?? 0;
   const cartQuantityByVariantId = useMemo(() => {
     const quantities: Record<string, number> = {};
 
@@ -175,7 +176,7 @@ export default function Home() {
           <h1>Shop</h1>
         </div>
         <div className="nav-actions">
-          <CustomerNav />
+          <CustomerNav cartItemCount={cartItemCount} />
           {isAuthConfigured() && !currentUser ? (
             <button className="secondary" type="button" onClick={() => void startLogin()}>
               Sign In

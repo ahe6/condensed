@@ -365,7 +365,7 @@ export default function CartPage() {
           <h1>Cart</h1>
         </div>
         <div className="nav-actions">
-          <CustomerNav />
+          <CustomerNav cartItemCount={cartItemCount} />
           {isAuthConfigured() && !currentUser ? (
             <button className="secondary" type="button" onClick={() => void startLogin()}>
               Sign In
