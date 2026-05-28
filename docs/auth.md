@@ -80,6 +80,7 @@ Authorization: Bearer <id-token>
 Current routes:
 
 - `GET /me`
+- `PATCH /me`
 - `GET /me/addresses`
 - `POST /me/addresses`
 - `PATCH /me/addresses/:id`
@@ -90,7 +91,7 @@ Current routes:
 - `GET /orders/:orderNumber`
 - `POST /checkout`
 
-Account addresses, account cart, checkout, and customer order detail require a valid bearer token. Checkout links the created order to the authenticated local user, and order detail only returns orders owned by that local user.
+Account profile, account addresses, account cart, checkout, and customer order detail require a valid bearer token. Checkout links the created order to the authenticated local user, and order detail only returns orders owned by that local user. Email stays controlled by Cognito; local profile editing only updates name and phone.
 
 ## Admin Access
 

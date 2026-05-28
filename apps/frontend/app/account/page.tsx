@@ -13,6 +13,7 @@ import {
   getMe,
   getMyAddresses,
   getMyOrders,
+  updateMe,
   updateMyAddress
 } from "../../src/lib/api";
 import { getSession, isAuthConfigured, signOut, startLogin } from "../../src/lib/auth";
@@ -49,6 +50,10 @@ function compactAddressForm(input: CreateAddressInput): CreateAddressInput {
 
 export default function AccountPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [profileForm, setProfileForm] = useState({
+    name: "",
+    phone: ""
+  });
   const [orders, setOrders] = useState<Order[]>([]);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [addressForm, setAddressForm] = useState<CreateAddressInput>(emptyAddressForm);
@@ -106,8 +111,17 @@ export default function AccountPage() {
       ]);
 
       setCurrentUser(user);
+      setProfileForm({
+        name: user.name ?? "",
+        phone: user.phone ?? ""
+      });
       setOrders(nextOrders);
       setAddresses(nextAddresses);
+      setAddressForm((current) => ({
+        ...current,
+        recipientName: current.recipientName || user.name || "",
+        phone: current.phone || user.phone || ""
+      }));
     } catch (caught) {
       setCurrentUser(null);
       setOrders([]);
@@ -115,6 +129,33 @@ export default function AccountPage() {
       setError(caught instanceof Error ? caught.message : "Could not load account");
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleProfileSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPendingAction("profile");
+    setError(null);
+
+    try {
+      const user = await updateMe({
+        name: profileForm.name.trim() || null,
+        phone: profileForm.phone.trim() || null
+      });
+      setCurrentUser(user);
+      setProfileForm({
+        name: user.name ?? "",
+        phone: user.phone ?? ""
+      });
+      setAddressForm((current) => ({
+        ...current,
+        recipientName: current.recipientName || user.name || "",
+        phone: current.phone || user.phone || ""
+      }));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not update profile");
+    } finally {
+      setPendingAction(null);
     }
   }
 
@@ -286,6 +327,37 @@ export default function AccountPage() {
                   <dd>{formatDateTime(currentUser.createdAt)}</dd>
                 </div>
               </dl>
+              <form className="checkout-form" onSubmit={handleProfileSubmit}>
+                <label>
+                  <span>Name</span>
+                  <input
+                    value={profileForm.name}
+                    onChange={(event) =>
+                      setProfileForm((current) => ({
+                        ...current,
+                        name: event.target.value
+                      }))
+                    }
+                    placeholder="Customer name"
+                  />
+                </label>
+                <label>
+                  <span>Phone</span>
+                  <input
+                    value={profileForm.phone}
+                    onChange={(event) =>
+                      setProfileForm((current) => ({
+                        ...current,
+                        phone: event.target.value
+                      }))
+                    }
+                    placeholder="555-0100"
+                  />
+                </label>
+                <button type="submit" disabled={pendingAction === "profile"}>
+                  {pendingAction === "profile" ? "Saving" : "Save Profile"}
+                </button>
+              </form>
             </section>
 
             <section className="panel account-addresses" aria-label="Saved addresses">

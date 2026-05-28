@@ -12,6 +12,11 @@ export type User = {
   updatedAt: string;
 };
 
+export type UpdateProfileInput = Partial<{
+  name: string | null;
+  phone: string | null;
+}>;
+
 export type ProductVariant = {
   id: string;
   productId: string;
@@ -394,6 +399,13 @@ export async function getReadiness() {
 
 export async function getMe() {
   return request<User>("/me");
+}
+
+export async function updateMe(input: UpdateProfileInput) {
+  return request<User>("/me", {
+    method: "PATCH",
+    body: JSON.stringify(input)
+  });
 }
 
 export async function getMyOrders() {

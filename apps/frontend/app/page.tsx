@@ -184,6 +184,24 @@ export default function Home() {
   }, [currentUser, email]);
 
   useEffect(() => {
+    if (!currentUser) {
+      return;
+    }
+
+    setShippingAddress((current) => ({
+      ...current,
+      recipientName: current.recipientName || currentUser.name || "",
+      phone: current.phone || currentUser.phone || ""
+    }));
+
+    setBillingAddress((current) => ({
+      ...current,
+      recipientName: current.recipientName || currentUser.name || "",
+      phone: current.phone || currentUser.phone || ""
+    }));
+  }, [currentUser]);
+
+  useEffect(() => {
     if (selectedShippingAddressId || shippingAddress.line1 || savedAddresses.length === 0) {
       return;
     }

@@ -53,12 +53,14 @@ Current responsibilities:
 - Upsert or link local users by Cognito subject and email
 - Require Cognito `admin` group membership for backend admin routes
 - Return the current account profile
+- Update local profile name and phone
 - Return and manage the current user's saved addresses
 - Return the current user's order history
 
 Current routes:
 
 - `GET /me`
+- `PATCH /me`
 - `GET /me/addresses`
 - `POST /me/addresses`
 - `PATCH /me/addresses/:id`

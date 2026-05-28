@@ -50,8 +50,7 @@ export async function getCurrentUser(authorization: string | undefined) {
         id: existingByExternalAuthId.id
       },
       data: {
-        email,
-        name
+        email
       }
     });
   }
@@ -73,7 +72,7 @@ export async function getCurrentUser(authorization: string | undefined) {
       },
       data: {
         externalAuthId,
-        name
+        name: existingByEmail.name ?? name
       }
     });
   }

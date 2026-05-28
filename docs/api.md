@@ -87,6 +87,7 @@ Only `email` is required.
 
 ```text
 GET /me
+PATCH /me
 GET /me/addresses
 POST /me/addresses
 PATCH /me/addresses/:id
@@ -95,6 +96,17 @@ GET /me/orders
 ```
 
 `GET /me` verifies the Cognito ID token, upserts a local `users` row keyed by `externalAuthId`, and returns the local user.
+
+`PATCH /me` updates local profile fields:
+
+```json
+{
+  "name": "Test User",
+  "phone": "555-0100"
+}
+```
+
+Send `null` for `name` or `phone` to clear it. Email is controlled by Cognito and is refreshed from the ID token.
 
 `GET /me/addresses` returns saved addresses owned by the current user. `POST /me/addresses` creates a saved address:
 

@@ -85,6 +85,7 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 
 - Requires Cognito session before loading customer data.
 - Loads the current profile with `GET /me`.
+- Updates local profile name and phone with `PATCH /me`.
 - Loads saved addresses with `GET /me/addresses`.
 - Creates saved addresses with `POST /me/addresses`.
 - Sets default shipping and billing addresses with `PATCH /me/addresses/:id`.

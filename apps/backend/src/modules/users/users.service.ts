@@ -1,5 +1,10 @@
 import { prisma } from "../../prisma.js";
-import type { CreateAddressInput, CreateUserInput, UpdateAddressInput } from "./users.schemas.js";
+import type {
+  CreateAddressInput,
+  CreateUserInput,
+  UpdateAddressInput,
+  UpdateCurrentUserInput
+} from "./users.schemas.js";
 
 export function listUsers() {
   return prisma.user.findMany({
@@ -11,6 +16,15 @@ export function listUsers() {
 
 export function createUser(input: CreateUserInput) {
   return prisma.user.create({
+    data: input
+  });
+}
+
+export function updateUserProfile(userId: string, input: UpdateCurrentUserInput) {
+  return prisma.user.update({
+    where: {
+      id: userId
+    },
     data: input
   });
 }

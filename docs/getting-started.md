@@ -134,7 +134,7 @@ See [Fulfillment](fulfillment.md) for shipment guardrails, tracking links, and f
 
 - `GET /health`: process health
 - `GET /ready`: database connectivity check
-- `GET /me`, `GET /me/orders`, `GET /me/addresses`, `POST /me/addresses`, `GET /me/cart`, `POST /me/cart`: authenticated account, order history, addresses, and account cart
+- `GET /me`, `PATCH /me`, `GET /me/orders`, `GET /me/addresses`, `POST /me/addresses`, `GET /me/cart`, `POST /me/cart`: authenticated account, order history, addresses, and account cart
 - `GET /products`, `GET /products/:slug`, `GET /categories`: public catalog
 - `POST /carts`, `GET /carts/:id`, `POST /carts/:id/items`: cart flow
 - `POST /checkout`: convert a cart into an order for the signed-in customer
