@@ -8,7 +8,6 @@ import {
   Product,
   User,
   addCartItem,
-  apiBaseUrl,
   createCart,
   getCart,
   getMe,
@@ -30,8 +29,6 @@ export default function Home() {
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const cartCurrency = cart?.items[0]?.variant.currency ?? "USD";
-  const productCount = products.length;
   const cartItemCount = cart?.totals.itemCount ?? 0;
 
   const activeProducts = useMemo(
@@ -148,21 +145,6 @@ export default function Home() {
     return nextCart;
   }
 
-  async function refreshProducts() {
-    setPendingAction("products");
-    setError(null);
-
-    try {
-      setProducts(await listProducts());
-      setStatus("online");
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not refresh products");
-      setStatus("offline");
-    } finally {
-      setPendingAction(null);
-    }
-  }
-
   async function handleAddToCart(product: Product) {
     const variantId = selectedVariants[product.id] ?? product.variants[0]?.id;
 
@@ -223,25 +205,6 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="summary-grid shop-summary-grid" aria-label="Shop summary">
-        <div className="metric wide">
-          <span>API</span>
-          <strong>{apiBaseUrl}</strong>
-        </div>
-        <div className="metric">
-          <span>Products</span>
-          <strong>{productCount}</strong>
-        </div>
-        <Link className="metric metric-link" href="/cart">
-          <span>Cart</span>
-          <strong>{cartItemCount}</strong>
-        </Link>
-        <Link className="metric metric-link" href="/cart">
-          <span>Total</span>
-          <strong>{formatMoney(cart?.totals.total ?? "0", cartCurrency)}</strong>
-        </Link>
-      </section>
-
       {error ? <p className="error global-error">{error}</p> : null}
 
       <section className="workspace">
@@ -251,9 +214,6 @@ export default function Home() {
               <p className="eyebrow">Catalog</p>
               <h2>Products</h2>
             </div>
-            <button className="secondary" type="button" onClick={() => void refreshProducts()}>
-              {pendingAction === "products" ? "Refreshing" : "Refresh"}
-            </button>
           </div>
 
           <div className="product-grid">
