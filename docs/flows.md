@@ -41,6 +41,7 @@ Anonymous carts are browser-local by cart ID. Signed-in carts are attached to th
 
 ```text
 client submits cart, email, and addresses
+  -> optionally select saved account addresses or enter custom address fields
   -> validate cart has items
   -> validate every variant still exists
   -> validate requested quantities are available

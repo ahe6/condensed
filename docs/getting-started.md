@@ -103,6 +103,7 @@ Shop route at `/`:
 - Creates and resumes browser-local carts before sign-in.
 - Loads, reuses, and adopts signed-in account carts through `POST /me/cart`.
 - Adds, updates, removes, and clears cart items.
+- Saves account addresses and uses them as checkout shipping or billing addresses.
 - Submits checkout through `POST /checkout`.
 - Requires sign-in for checkout and links checkout orders to the signed-in Cognito user.
 - Shows signed-in customer order history through `GET /me/orders`.
@@ -133,7 +134,7 @@ See [Fulfillment](fulfillment.md) for shipment guardrails, tracking links, and f
 
 - `GET /health`: process health
 - `GET /ready`: database connectivity check
-- `GET /me`, `GET /me/orders`, `GET /me/cart`, `POST /me/cart`: authenticated account, order history, and account cart
+- `GET /me`, `GET /me/orders`, `GET /me/addresses`, `POST /me/addresses`, `GET /me/cart`, `POST /me/cart`: authenticated account, order history, addresses, and account cart
 - `GET /products`, `GET /products/:slug`, `GET /categories`: public catalog
 - `POST /carts`, `GET /carts/:id`, `POST /carts/:id/items`: cart flow
 - `POST /checkout`: convert a cart into an order for the signed-in customer

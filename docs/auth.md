@@ -80,13 +80,17 @@ Authorization: Bearer <id-token>
 Current routes:
 
 - `GET /me`
+- `GET /me/addresses`
+- `POST /me/addresses`
+- `PATCH /me/addresses/:id`
+- `DELETE /me/addresses/:id`
 - `GET /me/cart`
 - `POST /me/cart`
 - `GET /me/orders`
 - `GET /orders/:orderNumber`
 - `POST /checkout`
 
-Account cart, checkout, and customer order detail require a valid bearer token. Checkout links the created order to the authenticated local user, and order detail only returns orders owned by that local user.
+Account addresses, account cart, checkout, and customer order detail require a valid bearer token. Checkout links the created order to the authenticated local user, and order detail only returns orders owned by that local user.
 
 ## Admin Access
 

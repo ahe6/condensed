@@ -87,10 +87,33 @@ Only `email` is required.
 
 ```text
 GET /me
+GET /me/addresses
+POST /me/addresses
+PATCH /me/addresses/:id
+DELETE /me/addresses/:id
 GET /me/orders
 ```
 
 `GET /me` verifies the Cognito ID token, upserts a local `users` row keyed by `externalAuthId`, and returns the local user.
+
+`GET /me/addresses` returns saved addresses owned by the current user. `POST /me/addresses` creates a saved address:
+
+```json
+{
+  "label": "Home",
+  "recipientName": "Test User",
+  "line1": "1 Main St",
+  "city": "Austin",
+  "state": "TX",
+  "postalCode": "78701",
+  "country": "US",
+  "phone": "555-0100",
+  "isDefaultShipping": true,
+  "isDefaultBilling": true
+}
+```
+
+`PATCH /me/addresses/:id` updates address fields or default flags. Setting `isDefaultShipping` or `isDefaultBilling` to `true` clears that default flag from the user's other addresses. `DELETE /me/addresses/:id` removes a saved address. Order addresses are snapshots, so deleting a saved address does not change historical orders.
 
 `GET /me/orders` returns orders linked to the current local user.
 

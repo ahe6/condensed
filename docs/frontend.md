@@ -72,6 +72,7 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 - Uses `POST /me/cart` when signed in to load the account cart and adopt or merge the browser-local cart.
 - Creates, resumes, updates, clears, and removes cart items through cart API routes.
 - Collects checkout email, shipping address, and billing address.
+- Lets signed-in customers select saved shipping and billing addresses, while still allowing custom address entry.
 - Requires sign-in before checkout.
 - Creates a local order with `POST /checkout`.
 - Creates a Stripe Checkout Session with `POST /orders/:id/stripe-checkout-session`.
@@ -84,6 +85,10 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 
 - Requires Cognito session before loading customer data.
 - Loads the current profile with `GET /me`.
+- Loads saved addresses with `GET /me/addresses`.
+- Creates saved addresses with `POST /me/addresses`.
+- Sets default shipping and billing addresses with `PATCH /me/addresses/:id`.
+- Deletes saved addresses with `DELETE /me/addresses/:id`.
 - Shows order counts, open order count, paid total, and basic profile fields.
 - Shows signed-in customer order history with `GET /me/orders`.
 - Links order history summaries to `/orders/[orderNumber]`.

@@ -9,6 +9,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
+  Address,
   AddressInput,
   ApiStatus,
   Cart,
@@ -23,6 +24,7 @@ import {
   createStripeCheckoutSession,
   getCart,
   getMe,
+  getMyAddresses,
   getMyCart,
   getOrder,
   getReadiness,
@@ -46,6 +48,19 @@ const emptyAddress: AddressInput = {
   country: "US",
   phone: ""
 };
+
+function addressInputFromAddress(address: Address): AddressInput {
+  return {
+    recipientName: address.recipientName,
+    line1: address.line1,
+    line2: address.line2 ?? undefined,
+    city: address.city,
+    state: address.state ?? undefined,
+    postalCode: address.postalCode,
+    country: address.country,
+    phone: address.phone ?? undefined
+  };
+}
 
 function compactAddress(input: AddressInput): AddressInput {
   return {
@@ -93,6 +108,9 @@ export default function Home() {
   const [shippingAddress, setShippingAddress] = useState<AddressInput>(emptyAddress);
   const [billingAddress, setBillingAddress] = useState<AddressInput>(emptyAddress);
   const [billingSame, setBillingSame] = useState(true);
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
+  const [selectedShippingAddressId, setSelectedShippingAddressId] = useState("");
+  const [selectedBillingAddressId, setSelectedBillingAddressId] = useState("");
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
   const [checkoutClientSecret, setCheckoutClientSecret] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -126,7 +144,8 @@ export default function Home() {
 
         setProducts(nextProducts);
         setCart(savedCart);
-        setCurrentUser(authState);
+        setCurrentUser(authState?.user ?? null);
+        setSavedAddresses(authState?.addresses ?? []);
         setStatus("online");
         setError(null);
       } catch (caught) {
@@ -164,6 +183,24 @@ export default function Home() {
     }
   }, [currentUser, email]);
 
+  useEffect(() => {
+    if (selectedShippingAddressId || shippingAddress.line1 || savedAddresses.length === 0) {
+      return;
+    }
+
+    const defaultShipping = savedAddresses.find((address) => address.isDefaultShipping) ?? savedAddresses[0];
+    selectShippingAddress(defaultShipping.id);
+  }, [savedAddresses, selectedShippingAddressId, shippingAddress.line1]);
+
+  useEffect(() => {
+    if (billingSame || selectedBillingAddressId || billingAddress.line1 || savedAddresses.length === 0) {
+      return;
+    }
+
+    const defaultBilling = savedAddresses.find((address) => address.isDefaultBilling) ?? savedAddresses[0];
+    selectBillingAddress(defaultBilling.id);
+  }, [billingAddress.line1, billingSame, savedAddresses, selectedBillingAddressId]);
+
   async function loadSavedCart() {
     const savedCartId = window.localStorage.getItem(cartStorageKey);
 
@@ -200,7 +237,12 @@ export default function Home() {
     }
 
     try {
-      return getMe();
+      const [user, addresses] = await Promise.all([getMe(), getMyAddresses()]);
+
+      return {
+        addresses,
+        user
+      };
     } catch {
       return null;
     }
@@ -350,6 +392,7 @@ export default function Home() {
   }
 
   function updateShippingAddress(field: keyof AddressInput, value: string) {
+    setSelectedShippingAddressId("");
     setShippingAddress((current) => ({
       ...current,
       [field]: value
@@ -357,10 +400,29 @@ export default function Home() {
   }
 
   function updateBillingAddress(field: keyof AddressInput, value: string) {
+    setSelectedBillingAddressId("");
     setBillingAddress((current) => ({
       ...current,
       [field]: value
     }));
+  }
+
+  function selectShippingAddress(addressId: string) {
+    setSelectedShippingAddressId(addressId);
+    const address = savedAddresses.find((item) => item.id === addressId);
+
+    if (address) {
+      setShippingAddress(addressInputFromAddress(address));
+    }
+  }
+
+  function selectBillingAddress(addressId: string) {
+    setSelectedBillingAddressId(addressId);
+    const address = savedAddresses.find((item) => item.id === addressId);
+
+    if (address) {
+      setBillingAddress(addressInputFromAddress(address));
+    }
   }
 
   return (
@@ -589,6 +651,23 @@ export default function Home() {
                 />
               </label>
 
+              {savedAddresses.length > 0 ? (
+                <label>
+                  <span>Shipping address</span>
+                  <select
+                    value={selectedShippingAddressId}
+                    onChange={(event) => selectShippingAddress(event.target.value)}
+                  >
+                    <option value="">Custom address</option>
+                    {savedAddresses.map((address) => (
+                      <option key={address.id} value={address.id}>
+                        {address.label ?? address.recipientName} - {address.line1}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
               <div className="form-grid">
                 <label>
                   <span>Name</span>
@@ -663,6 +742,22 @@ export default function Home() {
 
               {!billingSame ? (
                 <div className="billing-fields">
+                  {savedAddresses.length > 0 ? (
+                    <label>
+                      <span>Billing address</span>
+                      <select
+                        value={selectedBillingAddressId}
+                        onChange={(event) => selectBillingAddress(event.target.value)}
+                      >
+                        <option value="">Custom address</option>
+                        {savedAddresses.map((address) => (
+                          <option key={address.id} value={address.id}>
+                            {address.label ?? address.recipientName} - {address.line1}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
                   <label>
                     <span>Billing name</span>
                     <input

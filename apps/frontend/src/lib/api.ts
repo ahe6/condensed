@@ -147,6 +147,32 @@ export type AddressInput = {
   phone?: string;
 };
 
+export type Address = {
+  id: string;
+  userId: string;
+  label: string | null;
+  recipientName: string;
+  line1: string;
+  line2: string | null;
+  city: string;
+  state: string | null;
+  postalCode: string;
+  country: string;
+  phone: string | null;
+  isDefaultShipping: boolean;
+  isDefaultBilling: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateAddressInput = AddressInput & {
+  label?: string;
+  isDefaultShipping?: boolean;
+  isDefaultBilling?: boolean;
+};
+
+export type UpdateAddressInput = Partial<CreateAddressInput>;
+
 export type CheckoutInput = {
   cartId: string;
   email: string;
@@ -372,6 +398,30 @@ export async function getMe() {
 
 export async function getMyOrders() {
   return request<Order[]>("/me/orders");
+}
+
+export async function getMyAddresses() {
+  return request<Address[]>("/me/addresses");
+}
+
+export async function createMyAddress(input: CreateAddressInput) {
+  return request<Address>("/me/addresses", {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
+}
+
+export async function updateMyAddress(addressId: string, input: UpdateAddressInput) {
+  return request<Address>(`/me/addresses/${addressId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input)
+  });
+}
+
+export async function deleteMyAddress(addressId: string) {
+  return request<{ ok: true }>(`/me/addresses/${addressId}`, {
+    method: "DELETE"
+  });
 }
 
 export async function listProducts() {

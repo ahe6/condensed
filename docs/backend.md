@@ -53,11 +53,16 @@ Current responsibilities:
 - Upsert or link local users by Cognito subject and email
 - Require Cognito `admin` group membership for backend admin routes
 - Return the current account profile
+- Return and manage the current user's saved addresses
 - Return the current user's order history
 
 Current routes:
 
 - `GET /me`
+- `GET /me/addresses`
+- `POST /me/addresses`
+- `PATCH /me/addresses/:id`
+- `DELETE /me/addresses/:id`
 - `GET /me/orders`
 
 Checkout requires the same bearer token and links the created order to the authenticated user.
@@ -70,18 +75,20 @@ Current responsibilities:
 
 - List users
 - Create users
+- List current user's saved addresses
+- Create current user's saved addresses
+- Update current user's saved addresses
+- Delete current user's saved addresses
+- Set default shipping and billing addresses
 
 Current routes:
 
 - `GET /users`
 - `POST /users`
-
-Likely next user responsibilities:
-
-- Get one user
-- Update user profile fields
-- Add/list/update addresses
-- Set default shipping and billing addresses
+- `GET /me/addresses`
+- `POST /me/addresses`
+- `PATCH /me/addresses/:id`
+- `DELETE /me/addresses/:id`
 
 ### Catalog
 
