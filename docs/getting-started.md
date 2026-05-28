@@ -38,7 +38,7 @@ Start the full local stack:
 make local-dev
 ```
 
-This starts Docker Postgres, installs npm dependencies if `node_modules` is missing, applies Prisma migrations with `npm run db:deploy`, runs the backend, runs the frontend, and starts the Stripe CLI webhook listener when the Stripe CLI is available.
+This starts Docker Postgres, installs npm dependencies if `node_modules` is missing, applies Prisma migrations with `npm run db:deploy`, runs the backend, runs the frontend, and starts the Stripe CLI webhook listener when the Stripe CLI is available. The command stays attached; press `Ctrl+C` to stop the backend, frontend, and Stripe listener.
 
 Restart local backend, frontend, and Stripe listener processes after env changes:
 

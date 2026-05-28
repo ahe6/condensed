@@ -14,6 +14,7 @@ stripe_log="${STRIPE_LOG:-$log_dir/tele-stripe-listen.log}"
 start_stripe="${START_STRIPE:-auto}"
 apply_migrations=1
 restart=0
+service_pids=()
 
 usage() {
   cat <<'EOF'
@@ -69,6 +70,18 @@ log() {
 warn() {
   printf '[local-dev] warning: %s\n' "$*" >&2
 }
+
+cleanup_services() {
+  if [ "${#service_pids[@]}" -eq 0 ]; then
+    return 0
+  fi
+
+  log "Stopping local dev processes"
+  kill "${service_pids[@]}" >/dev/null 2>&1 || true
+}
+
+trap 'cleanup_services; exit 130' INT
+trap 'cleanup_services; exit 143' TERM
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -150,8 +163,10 @@ start_background_service() {
   mkdir -p "$(dirname "$log_file")"
   : > "$log_file"
   log "Starting $name; logs: $log_file"
-  nohup "$@" > "$log_file" 2>&1 &
-  log "$name pid $!"
+  "$@" > "$log_file" 2>&1 &
+  local pid="$!"
+  service_pids+=("$pid")
+  log "$name pid $pid"
 }
 
 sync_stripe_secret() {
@@ -214,8 +229,10 @@ start_stripe_listener() {
   mkdir -p "$(dirname "$stripe_log")"
   : > "$stripe_log"
   log "Starting Stripe listener; logs: $stripe_log"
-  nohup stripe listen --forward-to "$stripe_webhook_url" > "$stripe_log" 2>&1 &
-  log "Stripe listener pid $!"
+  stripe listen --forward-to "$stripe_webhook_url" > "$stripe_log" 2>&1 &
+  local pid="$!"
+  service_pids+=("$pid")
+  log "Stripe listener pid $pid"
   sleep 3
 
   if ! pgrep -f "stripe listen --forward-to ${stripe_webhook_url}" >/dev/null 2>&1; then
@@ -287,3 +304,8 @@ Stop app processes:
 Stop Postgres:
   docker compose stop postgres
 EOF
+
+if [ "${#service_pids[@]}" -gt 0 ]; then
+  log "Local dev command is attached. Press Ctrl+C to stop backend, frontend, and Stripe listener."
+  wait "${service_pids[@]}"
+fi

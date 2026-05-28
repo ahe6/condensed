@@ -14,6 +14,8 @@ Restart local app processes after env changes:
 make local-dev-restart
 ```
 
+The local dev command stays attached. Press `Ctrl+C` to stop the backend, frontend, and Stripe listener.
+
 Open:
 
 - Backend: `http://127.0.0.1:3000/health`
