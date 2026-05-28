@@ -7,7 +7,7 @@ FRONTEND_TAG ?= latest
 BOOTSTRAP_DIR := infra/bootstrap
 DEV_DIR := infra/envs/dev
 
-.PHONY: aws-login aws-whoami fmt validate bootstrap-init bootstrap-plan bootstrap-apply dev-init dev-plan dev-auth-plan dev-auth-apply dev-jobs-plan dev-jobs-apply dev-auth-env dev-test-env dev-auth-add-admin dev-auth-delete-user backend-docker-build frontend-docker-build backend-ecr-login backend-ecr-push backend-migrate-aws orders-expire orders-expire-aws
+.PHONY: aws-login aws-whoami fmt validate bootstrap-init bootstrap-plan bootstrap-apply dev-init dev-plan dev-auth-plan dev-auth-apply dev-jobs-plan dev-jobs-apply dev-auth-env dev-test-env dev-auth-add-admin dev-auth-delete-user backend-docker-build frontend-docker-build backend-ecr-login backend-ecr-push backend-migrate-aws orders-expire orders-expire-aws notifications-retry
 
 aws-login:
 	aws sso login --profile $(AWS_PROFILE)
@@ -84,3 +84,6 @@ orders-expire:
 
 orders-expire-aws:
 	AWS_PROFILE=$(AWS_PROFILE) AWS_REGION=$(AWS_REGION) TERRAFORM_DIR=$(DEV_DIR) scripts/run-aws-orders-expire.sh
+
+notifications-retry:
+	npm run notifications:retry

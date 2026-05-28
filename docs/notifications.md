@@ -1,6 +1,6 @@
 # Notifications
 
-This doc covers customer notification records and the planned email-sending path. Fulfillment behavior lives in [Fulfillment](fulfillment.md), table details live in [Database](database.md), and AWS deployment details live in [Deployment](deployment.md).
+This doc covers customer notification records and email sending. Fulfillment behavior lives in [Fulfillment](fulfillment.md), table details live in [Database](database.md), and AWS deployment details live in [Deployment](deployment.md).
 
 ## Current Model
 
@@ -37,6 +37,7 @@ admin marks shipment delivered
 backend updates shipment status and deliveredAt
 backend recalculates order fulfillment status
 backend creates or updates notification_events row
+backend sends through SES when email is configured
 admin UI shows the notification event
 ```
 
@@ -57,25 +58,27 @@ The admin frontend shows notification records in:
 - The expanded order notification section
 - The combined order timeline
 
-## Email Sending Plan
+## Email Sending
 
-The next step is to send pending notifications through Amazon SES.
+Pending notifications can be sent through Amazon SES.
 
-Expected backend behavior:
+Backend behavior:
 
 ```text
 create notification event
-send email through SES
+if EMAIL_PROVIDER=ses, send email through SES
 mark event SENT with providerMessageId
 or mark event FAILED with errorMessage
+if EMAIL_PROVIDER=none, keep event PENDING
 ```
 
-Expected config:
+Config:
 
 ```text
 EMAIL_PROVIDER=ses
 EMAIL_FROM=no-reply@example.com
 AWS_REGION=us-east-2
+APP_BASE_URL=http://localhost:3001
 ```
 
 SES setup requirements:
@@ -84,15 +87,29 @@ SES setup requirements:
 - In SES sandbox, verify recipient emails too.
 - Request SES production access before sending to arbitrary customers.
 
-## Retry Plan
+`APP_BASE_URL` is used to build authenticated order links in customer emails.
 
-Later, add a retry command:
+## Retry
+
+Retry pending or failed notification events with:
 
 ```sh
 npm run notifications:retry
 ```
 
-It should find retryable `FAILED` or stale `PENDING` notification events, send them, and update their status. This can run manually in local dev or through a scheduled AWS job later.
+or:
+
+```sh
+make notifications-retry
+```
+
+The command finds `FAILED` and `PENDING` notification events, sends them when email is configured, and updates their status. Configure batch size with:
+
+```text
+NOTIFICATION_RETRY_BATCH_SIZE=50
+```
+
+This can run manually in local dev or through a scheduled AWS job later.
 
 ## Email Content Rules
 

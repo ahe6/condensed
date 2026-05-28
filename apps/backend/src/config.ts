@@ -28,6 +28,10 @@ const envSchema = z.object({
   COGNITO_CLIENT_ID: z.string().optional(),
   STRIPE_API_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  AWS_REGION: z.string().default("us-east-2"),
+  EMAIL_PROVIDER: z.enum(["none", "ses"]).default("none"),
+  EMAIL_FROM: z.preprocess((value) => (value === "" ? undefined : value), z.string().email().optional()),
+  APP_BASE_URL: z.string().url().default("http://localhost:3001"),
   HOST: z.string().default("0.0.0.0"),
   PORT: z.coerce.number().int().positive().default(3000),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info")

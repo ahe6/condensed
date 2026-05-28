@@ -301,7 +301,7 @@ Important fields:
 
 Marking a shipment delivered creates or updates one `SHIPMENT_DELIVERED` notification event for that shipment. The unique key on `shipmentId + type` prevents duplicate delivered email records when an admin clicks delivered more than once.
 
-Current notification events are records only. SES sending and retry scripts are deferred. See [Notifications](notifications.md).
+Notification events can be sent through SES when email is configured, and failed or pending events can be retried with `npm run notifications:retry`. See [Notifications](notifications.md).
 
 ## Design Decisions
 

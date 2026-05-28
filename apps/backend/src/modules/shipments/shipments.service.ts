@@ -7,6 +7,7 @@ import {
   ShipmentTrackingEventSource
 } from "@prisma/client";
 import { prisma } from "../../prisma.js";
+import { sendPendingNotificationEvent } from "../notifications/notifications.service.js";
 import { adminOrderInclude } from "../orders/orders.service.js";
 import type { CreateShipmentInput, UpdateShipmentTrackingInput } from "./shipments.schemas.js";
 
@@ -206,22 +207,41 @@ function updateShipmentAndOrder(
       metadata: timestamps
     });
 
-    if (status === ShipmentStatus.DELIVERED) {
-      await createShipmentDeliveredNotificationEvent(tx, {
-        deliveredAt: timestamps.deliveredAt ?? null,
-        orderEmail: existingShipment.order.email,
-        orderId: shipment.orderId,
-        orderNumber: existingShipment.order.orderNumber,
-        shipmentId: shipment.id
-      });
-    }
+    const notificationEvent =
+      status === ShipmentStatus.DELIVERED
+        ? await createShipmentDeliveredNotificationEvent(tx, {
+            deliveredAt: timestamps.deliveredAt ?? null,
+            orderEmail: existingShipment.order.email,
+            orderId: shipment.orderId,
+            orderNumber: existingShipment.order.orderNumber,
+            shipmentId: shipment.id
+          })
+        : null;
 
-    return tx.shipment.findUniqueOrThrow({
+    const shipmentWithOrder = await tx.shipment.findUniqueOrThrow({
       where: {
         id: shipment.id
       },
       include: shipmentInclude
     });
+
+    return {
+      notificationEventId: notificationEvent?.id ?? null,
+      shipment: shipmentWithOrder
+    };
+  }).then(async (result) => {
+    if (result.notificationEventId) {
+      await sendPendingNotificationEvent(result.notificationEventId);
+
+      return prisma.shipment.findUniqueOrThrow({
+        where: {
+          id: result.shipment.id
+        },
+        include: shipmentInclude
+      });
+    }
+
+    return result.shipment;
   });
 }
 
@@ -388,7 +408,7 @@ async function createShipmentDeliveredNotificationEvent(
   tx: Prisma.TransactionClient,
   input: ShipmentDeliveredNotificationInput
 ) {
-  await tx.notificationEvent.upsert({
+  return tx.notificationEvent.upsert({
     where: {
       shipmentId_type: {
         shipmentId: input.shipmentId,

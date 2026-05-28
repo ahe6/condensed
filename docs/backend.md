@@ -261,6 +261,6 @@ Shipment creation and status changes write `shipment_status_events` rows for adm
 
 Tracking creation and edits write `shipment_tracking_events` rows when carrier or tracking number values are present and actually change.
 
-Delivered shipment changes also create or update one pending `SHIPMENT_DELIVERED` `notification_events` row for the shipment. This is the local audit/retry foundation for future SES email sending. See [Notifications](notifications.md).
+Delivered shipment changes also create or update one pending `SHIPMENT_DELIVERED` `notification_events` row for the shipment. If `EMAIL_PROVIDER=ses` is configured, the backend sends the email through SES and marks the event `SENT` or `FAILED`. See [Notifications](notifications.md).
 
 See [Fulfillment](fulfillment.md) for the full shipment workflow and tracking-link behavior.

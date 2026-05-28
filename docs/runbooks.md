@@ -94,6 +94,28 @@ make orders-expire-aws
 
 The AWS schedule is controlled by `deploy_jobs_stack`, `orders_expiry_enabled`, and `orders_expiry_schedule_expression` in Terraform. The scheduled job is separate from the public backend service, but it requires the AWS app/data layer so the task can reach private RDS.
 
+## Retry Notifications
+
+Retry pending or failed notification events:
+
+```sh
+npm run notifications:retry
+```
+
+or:
+
+```sh
+make notifications-retry
+```
+
+By default this checks 50 events. Override with:
+
+```sh
+NOTIFICATION_RETRY_BATCH_SIZE=100 npm run notifications:retry
+```
+
+If `EMAIL_PROVIDER=none`, retry leaves events pending. Set `EMAIL_PROVIDER=ses` and `EMAIL_FROM` to send through SES.
+
 ## Reset Local Database
 
 This removes local Postgres data.

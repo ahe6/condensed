@@ -30,3 +30,7 @@ backend_cpu             = 256
 backend_memory          = 512
 stripe_api_key_secret_arn     = ""
 stripe_webhook_secret_arn     = ""
+email_provider                = "none"
+email_from                    = ""
+app_base_url                  = "http://localhost:3001"
+ses_identity_arn              = ""

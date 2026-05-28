@@ -215,6 +215,41 @@ http://127.0.0.1:3000/webhooks/stripe
 
 Use the webhook signing secret printed by the CLI as `STRIPE_WEBHOOK_SECRET`.
 
+## Email
+
+Delivered-shipment emails use notification records plus Amazon SES.
+
+Local/default behavior records notification events without sending:
+
+```text
+EMAIL_PROVIDER=none
+```
+
+To send through SES:
+
+```text
+EMAIL_PROVIDER=ses
+EMAIL_FROM=no-reply@example.com
+AWS_REGION=us-east-2
+APP_BASE_URL=http://localhost:3001
+```
+
+For deployed ECS backend tasks, Terraform passes `email_provider`, `email_from`, and `app_base_url` into the backend task. When `email_provider = "ses"`, Terraform also grants the backend task SES send permissions. Set `ses_identity_arn` to restrict sending to a specific SES identity, or leave it empty in dev.
+
+SES setup requirements:
+
+- Verify the sender email or domain.
+- In SES sandbox, verify recipient emails too.
+- Request SES production access before sending to arbitrary customers.
+
+Retry pending or failed notifications with:
+
+```sh
+npm run notifications:retry
+```
+
+See [Notifications](notifications.md) for notification event behavior and email content rules.
+
 ## Enable The Public Backend Service
 
 The public backend service is disabled by default:

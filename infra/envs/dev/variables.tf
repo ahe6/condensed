@@ -176,6 +176,35 @@ variable "stripe_webhook_secret_arn" {
   default     = ""
 }
 
+variable "email_provider" {
+  description = "Backend email provider. Use none to record notification events without sending email."
+  type        = string
+  default     = "none"
+
+  validation {
+    condition     = contains(["none", "ses"], var.email_provider)
+    error_message = "email_provider must be none or ses."
+  }
+}
+
+variable "email_from" {
+  description = "Sender email address for deployed backend email notifications."
+  type        = string
+  default     = ""
+}
+
+variable "app_base_url" {
+  description = "Public frontend base URL used in customer notification links."
+  type        = string
+  default     = "http://localhost:3001"
+}
+
+variable "ses_identity_arn" {
+  description = "Optional SES identity ARN allowed for sending email. Leave empty to allow SES send actions on all identities in dev."
+  type        = string
+  default     = ""
+}
+
 variable "auth_callback_urls" {
   description = "Allowed Cognito Hosted UI callback URLs."
   type        = list(string)

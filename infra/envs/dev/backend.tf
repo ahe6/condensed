@@ -203,6 +203,27 @@ resource "aws_iam_role" "backend_task" {
   })
 }
 
+resource "aws_iam_role_policy" "backend_task_ses" {
+  count = local.deploy_app_stack && var.email_provider == "ses" ? 1 : 0
+
+  name = "${local.name_prefix}-backend-ses"
+  role = aws_iam_role.backend_task[0].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ses:SendEmail",
+          "ses:SendRawEmail"
+        ]
+        Resource = var.ses_identity_arn == "" ? "*" : var.ses_identity_arn
+      }
+    ]
+  })
+}
+
 resource "aws_ecs_task_definition" "backend" {
   count = local.deploy_app_stack && var.backend_service_enabled ? 1 : 0
 
@@ -263,6 +284,22 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name  = "COGNITO_CLIENT_ID"
           value = aws_cognito_user_pool_client.frontend.id
+        },
+        {
+          name  = "AWS_REGION"
+          value = var.aws_region
+        },
+        {
+          name  = "EMAIL_PROVIDER"
+          value = var.email_provider
+        },
+        {
+          name  = "EMAIL_FROM"
+          value = var.email_from
+        },
+        {
+          name  = "APP_BASE_URL"
+          value = var.app_base_url
         }
       ]
       secrets = concat(

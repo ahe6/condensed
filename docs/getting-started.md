@@ -92,6 +92,15 @@ make dev-test-env
 
 The backend API key should start with `sk_test_`. The webhook secret should start with `whsec_`. The publishable browser key should start with `pk_test_` and use `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
 
+Local notification emails are record-only by default:
+
+```text
+EMAIL_PROVIDER=none
+APP_BASE_URL=http://localhost:3001
+```
+
+Set `EMAIL_PROVIDER=ses` and `EMAIL_FROM` only after SES is configured.
+
 Local Stripe checkout uses Checkout Sessions with Checkout Elements. The frontend requests `POST /checkout/stripe` to create the local order and Stripe Checkout Session together, then confirms the session in the browser. Webhooks are still the normal source of truth for marking the order paid. See [Payments](payments.md) for the full Stripe checkout, webhook, sync, dispute, and refund behavior.
 
 Current frontend scope:
