@@ -7,6 +7,7 @@ The frontend is a single Next.js app in `apps/frontend`. It serves both the publ
 Important files:
 
 - `app/page.tsx`: public product catalog and add-to-cart flow
+- `app/products/[slug]/page.tsx`: public product detail page with variant selection and add-to-cart
 - `app/cart/page.tsx`: cart review, signed-in checkout, and Stripe Checkout Elements
 - `app/account/page.tsx`: signed-in customer profile, account actions, and sign out
 - `app/addresses/page.tsx`: signed-in customer saved address management
@@ -73,10 +74,18 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 
 - Checks backend readiness with `GET /ready`.
 - Lists active products from `GET /products`.
+- Links product cards to `/products/[slug]`.
 - Stores the active cart ID in browser local storage under `tele.cartId`.
 - Uses `POST /me/cart` when signed in to load the account cart and adopt or merge the browser-local cart.
 - Creates or resumes carts and adds variants to the cart.
 - Disables add controls when the cart already has the current available stock.
+
+`app/products/[slug]/page.tsx` owns the public product detail flow:
+
+- Loads one active product from `GET /products/:slug`.
+- Shows the product image, description, categories, variants, price, and stock.
+- Uses the same browser-local or signed-in account cart behavior as the catalog page.
+- Adds the selected variant to the active cart and updates the shared cart-count badge.
 
 `app/cart/page.tsx` owns cart review and checkout:
 

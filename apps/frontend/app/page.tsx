@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { CustomerBrand } from "../src/components/CustomerBrand";
 import { CustomerNav } from "../src/components/CustomerNav";
@@ -203,10 +204,11 @@ export default function Home() {
                   product.variants.find((variant) => variant.id === selectedVariants[product.id]) ??
                   product.variants[0];
                 const image = product.images[0];
+                const productHref = `/products/${product.slug}`;
 
                 return (
                   <article className="product-card" key={product.id}>
-                    <div className="product-media">
+                    <Link className="product-media product-media-link" href={productHref}>
                       {image ? (
                         <>
                           <img
@@ -221,12 +223,12 @@ export default function Home() {
                       ) : (
                         <span>{product.name.slice(0, 2).toUpperCase()}</span>
                       )}
-                    </div>
+                    </Link>
                     <div className="product-body">
-                      <div>
+                      <Link className="product-title-link" href={productHref}>
                         <h3>{product.name}</h3>
                         {product.description ? <p>{product.description}</p> : null}
-                      </div>
+                      </Link>
 
                       <div className="category-row">
                         {product.categories.slice(0, 3).map((category) => (

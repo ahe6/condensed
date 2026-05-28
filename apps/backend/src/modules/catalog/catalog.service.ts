@@ -51,9 +51,10 @@ export function listAdminProducts() {
 }
 
 export function getProductBySlug(slug: string) {
-  return prisma.product.findUnique({
+  return prisma.product.findFirst({
     where: {
-      slug
+      slug,
+      status: ProductStatus.ACTIVE
     },
     include: productInclude
   });

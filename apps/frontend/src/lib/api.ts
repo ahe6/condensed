@@ -477,6 +477,10 @@ export async function listProducts() {
   return request<Product[]>("/products");
 }
 
+export async function getProduct(slug: string) {
+  return request<Product>(`/products/${encodeURIComponent(slug)}`);
+}
+
 export async function listCategories() {
   return request<Category[]>("/categories");
 }

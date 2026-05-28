@@ -151,7 +151,7 @@ Product responses include:
 - `images`
 - `categories` with nested `category`
 
-`GET /products/:slug` can return any product by slug so a direct product detail URL works during development.
+`GET /products/:slug` returns one active product by slug for public product detail pages.
 
 `GET /categories` returns categories ordered by name.
 

@@ -111,9 +111,15 @@ Shop route at `/`:
 
 - Checks backend readiness through `GET /ready`.
 - Lists active products through `GET /products`.
+- Links product cards to detail pages at `/products/[slug]`.
 - Creates and resumes browser-local carts before sign-in.
 - Loads, reuses, and adopts signed-in account carts through `POST /me/cart`.
 - Adds variants to the active cart.
+
+Product detail routes at `/products/[slug]`:
+
+- Load one active product through `GET /products/:slug`.
+- Let customers choose a variant and add it to the active cart.
 
 Cart route at `/cart`:
 
