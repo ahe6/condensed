@@ -203,6 +203,11 @@ export default function Home() {
             <span>Cart</span>
             {cartItemCount > 0 ? <strong>{cartItemCount}</strong> : null}
           </Link>
+          {currentUser ? (
+            <Link className="nav-link" href="/orders">
+              Orders
+            </Link>
+          ) : null}
           <Link className="nav-link" href="/account">
             Account
           </Link>

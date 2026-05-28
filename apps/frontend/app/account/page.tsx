@@ -1,23 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { OrderSummary } from "../../src/components/OrderSummary";
+import { FormEvent, useEffect, useState } from "react";
 import {
   Address,
   CreateAddressInput,
-  Order,
   User,
   createMyAddress,
   deleteMyAddress,
   getMe,
   getMyAddresses,
-  getMyOrders,
   updateMe,
   updateMyAddress
 } from "../../src/lib/api";
 import { getSession, isAuthConfigured, signOut, startLogin } from "../../src/lib/auth";
-import { formatDateTime, formatMoney } from "../../src/lib/format";
+import { formatDateTime } from "../../src/lib/format";
 
 const emptyAddressForm: CreateAddressInput = {
   label: "",
@@ -54,27 +51,12 @@ export default function AccountPage() {
     name: "",
     phone: ""
   });
-  const [orders, setOrders] = useState<Order[]>([]);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [addressForm, setAddressForm] = useState<CreateAddressInput>(emptyAddressForm);
   const [needsSignIn, setNeedsSignIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const accountStats = useMemo(() => {
-    const paidOrders = orders.filter((order) => order.paymentStatus === "PAID");
-    const openOrders = orders.filter(
-      (order) => order.fulfillmentStatus !== "FULFILLED" && order.status !== "CANCELLED"
-    );
-    const totalSpent = paidOrders.reduce((sum, order) => sum + Number(order.total), 0);
-
-    return {
-      openOrderCount: openOrders.length,
-      orderCount: orders.length,
-      totalSpent: totalSpent.toFixed(2)
-    };
-  }, [orders]);
 
   useEffect(() => {
     void loadAccount();
@@ -87,7 +69,6 @@ export default function AccountPage() {
 
     if (!isAuthConfigured()) {
       setCurrentUser(null);
-      setOrders([]);
       setAddresses([]);
       setError("Auth is not configured");
       setIsLoading(false);
@@ -96,7 +77,6 @@ export default function AccountPage() {
 
     if (!getSession()) {
       setCurrentUser(null);
-      setOrders([]);
       setAddresses([]);
       setNeedsSignIn(true);
       setIsLoading(false);
@@ -104,18 +84,13 @@ export default function AccountPage() {
     }
 
     try {
-      const [user, nextOrders, nextAddresses] = await Promise.all([
-        getMe(),
-        getMyOrders(),
-        getMyAddresses()
-      ]);
+      const [user, nextAddresses] = await Promise.all([getMe(), getMyAddresses()]);
 
       setCurrentUser(user);
       setProfileForm({
         name: user.name ?? "",
         phone: user.phone ?? ""
       });
-      setOrders(nextOrders);
       setAddresses(nextAddresses);
       setAddressForm((current) => ({
         ...current,
@@ -124,7 +99,6 @@ export default function AccountPage() {
       }));
     } catch (caught) {
       setCurrentUser(null);
-      setOrders([]);
       setAddresses([]);
       setError(caught instanceof Error ? caught.message : "Could not load account");
     } finally {
@@ -226,29 +200,19 @@ export default function AccountPage() {
     }));
   }
 
-  async function refreshOrders() {
-    setPendingAction("orders");
-    setError(null);
-
-    try {
-      setOrders(await getMyOrders());
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not refresh orders");
-    } finally {
-      setPendingAction(null);
-    }
-  }
-
   return (
     <main className="shell">
       <section className="topbar" aria-label="Account navigation">
         <div>
           <p className="eyebrow">Account</p>
-          <h1>Orders</h1>
+          <h1>Account</h1>
         </div>
         <div className="nav-actions">
           <Link className="nav-link" href="/">
             Shop
+          </Link>
+          <Link className="nav-link" href="/orders">
+            Orders
           </Link>
           {currentUser ? (
             <button className="secondary" type="button" onClick={signOut}>
@@ -264,7 +228,7 @@ export default function AccountPage() {
         <section className="panel account-sign-in" aria-label="Sign in">
           <div>
             <p className="eyebrow">Sign in required</p>
-            <h2>View your orders</h2>
+            <h2>Manage your account</h2>
           </div>
           <div className="auth-actions">
             <button type="button" onClick={() => void startLogin()}>
@@ -291,16 +255,16 @@ export default function AccountPage() {
               <strong>{currentUser.email}</strong>
             </div>
             <div className="metric">
-              <span>Orders</span>
-              <strong>{accountStats.orderCount}</strong>
+              <span>Addresses</span>
+              <strong>{addresses.length}</strong>
             </div>
             <div className="metric">
-              <span>Open</span>
-              <strong>{accountStats.openOrderCount}</strong>
+              <span>Shipping</span>
+              <strong>{addresses.some((address) => address.isDefaultShipping) ? "Set" : "Not Set"}</strong>
             </div>
             <div className="metric">
-              <span>Paid Total</span>
-              <strong>{formatMoney(accountStats.totalSpent, "USD")}</strong>
+              <span>Customer Since</span>
+              <strong>{formatDateTime(currentUser.createdAt)}</strong>
             </div>
           </section>
 
@@ -520,29 +484,6 @@ export default function AccountPage() {
               </form>
             </section>
 
-            <section className="panel account-orders" aria-label="Order history">
-              <div className="panel-heading">
-                <h2>Order History</h2>
-                <button
-                  className="secondary"
-                  type="button"
-                  disabled={pendingAction === "orders"}
-                  onClick={() => void refreshOrders()}
-                >
-                  {pendingAction === "orders" ? "Refreshing" : "Refresh"}
-                </button>
-              </div>
-
-              {orders.length === 0 ? (
-                <div className="empty-state compact">No order history</div>
-              ) : (
-                <div className="account-order-list">
-                  {orders.map((order) => (
-                    <OrderSummary key={order.id} order={order} />
-                  ))}
-                </div>
-              )}
-            </section>
           </section>
         </>
       ) : null}

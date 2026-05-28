@@ -123,9 +123,14 @@ Cart route at `/cart`:
 - Submits Stripe checkout through `POST /checkout/stripe`.
 - Requires sign-in for checkout and links checkout orders to the signed-in Cognito user.
 
-Account and order routes:
+Orders route at `/orders`:
 
 - Shows signed-in customer order history through `GET /me/orders`.
+- Searches and filters order history locally.
+
+Account and order detail routes:
+
+- Shows signed-in customer profile and saved addresses.
 - Shows signed-in customer order details through `GET /orders/:orderNumber`.
 - Expires old unpaid orders locally with `npm run orders:expire` or `make orders-expire`.
 - Runs unpaid-order expiry remotely with AWS EventBridge Scheduler when the Terraform jobs stack is enabled.

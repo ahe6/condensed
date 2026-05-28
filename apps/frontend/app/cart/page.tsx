@@ -371,6 +371,11 @@ export default function CartPage() {
           <Link className="nav-link" href="/">
             Shop
           </Link>
+          {currentUser ? (
+            <Link className="nav-link" href="/orders">
+              Orders
+            </Link>
+          ) : null}
           <Link className="nav-link" href="/account">
             Account
           </Link>
