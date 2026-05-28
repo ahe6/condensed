@@ -138,6 +138,8 @@ button.status-action.active:disabled {
 .nav-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -171,7 +173,9 @@ button.status-action.active:disabled {
   display: grid;
   grid-template-columns: repeat(3, max-content);
   gap: 8px;
-  margin: -4px 0 20px;
+  width: max-content;
+  max-width: 100%;
+  margin: 0;
   padding: 4px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -1560,6 +1564,7 @@ output {
   }
 
   .customer-nav {
+    width: 100%;
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 

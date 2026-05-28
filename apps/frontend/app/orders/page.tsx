@@ -132,9 +132,10 @@ export default function OrdersPage() {
           <p className="eyebrow">Account</p>
           <h1>Orders</h1>
         </div>
+        <div className="nav-actions">
+          <CustomerNav />
+        </div>
       </section>
-
-      <CustomerNav />
 
       {error ? <p className="error global-error">{error}</p> : null}
 

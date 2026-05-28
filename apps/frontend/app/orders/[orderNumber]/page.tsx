@@ -81,6 +81,7 @@ export default function OrderDetailPage() {
           <h1>{order?.orderNumber ?? orderNumber}</h1>
         </div>
         <div className="nav-actions">
+          <CustomerNav />
           <button
             className="secondary"
             type="button"
@@ -97,8 +98,6 @@ export default function OrderDetailPage() {
           </button>
         </div>
       </section>
-
-      <CustomerNav />
 
       {error ? <p className="error global-error">{error}</p> : null}
 

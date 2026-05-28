@@ -12,7 +12,6 @@ import { CustomerNav } from "../../src/components/CustomerNav";
 import {
   Address,
   AddressInput,
-  ApiStatus,
   Cart,
   Order,
   User,
@@ -93,7 +92,6 @@ function stripePhoneNumber(order: Order) {
 }
 
 export default function CartPage() {
-  const [status, setStatus] = useState<ApiStatus>("checking");
   const [cart, setCart] = useState<Cart | null>(null);
   const [email, setEmail] = useState("");
   const [shippingAddress, setShippingAddress] = useState<AddressInput>(emptyAddress);
@@ -127,11 +125,9 @@ export default function CartPage() {
         setCart(savedCart);
         setCurrentUser(authState?.user ?? null);
         setSavedAddresses(authState?.addresses ?? []);
-        setStatus("online");
         setError(null);
       } catch (caught) {
         if (isMounted) {
-          setStatus("offline");
           setError(caught instanceof Error ? caught.message : "API unavailable");
         }
       }
@@ -363,25 +359,20 @@ export default function CartPage() {
 
   return (
     <main className="shell">
-      <section className="topbar" aria-label="Workspace status">
+      <section className="topbar" aria-label="Cart navigation">
         <div>
           <p className="eyebrow">Tele</p>
           <h1>Cart</h1>
         </div>
         <div className="nav-actions">
+          <CustomerNav />
           {isAuthConfigured() && !currentUser ? (
             <button className="secondary" type="button" onClick={() => void startLogin()}>
               Sign In
             </button>
           ) : null}
-          <div className={`status ${status}`}>
-            <span aria-hidden="true" />
-            {status}
-          </div>
         </div>
       </section>
-
-      <CustomerNav />
 
       <section className="summary-grid" aria-label="Cart summary">
         <div className="metric wide">

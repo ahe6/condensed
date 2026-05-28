@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { CustomerNav } from "../src/components/CustomerNav";
 import {
-  ApiStatus,
   Cart,
   Product,
   User,
@@ -21,7 +20,6 @@ import { formatMoney } from "../src/lib/format";
 const cartStorageKey = "tele.cartId";
 
 export default function Home() {
-  const [status, setStatus] = useState<ApiStatus>("checking");
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const [cart, setCart] = useState<Cart | null>(null);
@@ -62,11 +60,9 @@ export default function Home() {
         setProducts(nextProducts);
         setCart(savedCart);
         setCurrentUser(user);
-        setStatus("online");
         setError(null);
       } catch (caught) {
         if (isMounted) {
-          setStatus("offline");
           setError(caught instanceof Error ? caught.message : "API unavailable");
         }
       }
@@ -173,25 +169,20 @@ export default function Home() {
 
   return (
     <main className="shell">
-      <section className="topbar" aria-label="Workspace status">
+      <section className="topbar" aria-label="Shop navigation">
         <div>
           <p className="eyebrow">Tele</p>
           <h1>Shop</h1>
         </div>
         <div className="nav-actions">
+          <CustomerNav />
           {isAuthConfigured() && !currentUser ? (
             <button className="secondary" type="button" onClick={() => void startLogin()}>
               Sign In
             </button>
           ) : null}
-          <div className={`status ${status}`}>
-            <span aria-hidden="true" />
-            {status}
-          </div>
         </div>
       </section>
-
-      <CustomerNav />
 
       {error ? <p className="error global-error">{error}</p> : null}
 
