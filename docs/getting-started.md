@@ -92,7 +92,7 @@ make dev-test-env
 
 The backend API key should start with `sk_test_`. The webhook secret should start with `whsec_`. The publishable browser key should start with `pk_test_` and use `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
 
-Local Stripe checkout uses Checkout Sessions with Checkout Elements. The frontend creates a local order first, then requests `POST /orders/:id/stripe-checkout-session` and confirms the session in the browser. Webhooks are still the normal source of truth for marking the order paid. See [Payments](payments.md) for the full Stripe checkout, webhook, sync, dispute, and refund behavior.
+Local Stripe checkout uses Checkout Sessions with Checkout Elements. The frontend requests `POST /checkout/stripe` to create the local order and Stripe Checkout Session together, then confirms the session in the browser. Webhooks are still the normal source of truth for marking the order paid. See [Payments](payments.md) for the full Stripe checkout, webhook, sync, dispute, and refund behavior.
 
 Current frontend scope:
 
@@ -104,7 +104,7 @@ Shop route at `/`:
 - Loads, reuses, and adopts signed-in account carts through `POST /me/cart`.
 - Adds, updates, removes, and clears cart items.
 - Saves account addresses and uses them as checkout shipping or billing addresses.
-- Submits checkout through `POST /checkout`.
+- Submits Stripe checkout through `POST /checkout/stripe`.
 - Requires sign-in for checkout and links checkout orders to the signed-in Cognito user.
 - Shows signed-in customer order history through `GET /me/orders`.
 - Shows signed-in customer order details through `GET /orders/:orderNumber`.

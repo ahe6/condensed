@@ -21,7 +21,6 @@ import {
   checkoutCart,
   clearCart,
   createCart,
-  createStripeCheckoutSession,
   getCart,
   getMe,
   getMyAddresses,
@@ -30,6 +29,7 @@ import {
   getReadiness,
   listProducts,
   removeCartItem,
+  checkoutCartWithStripe,
   updateCartItem
 } from "../src/lib/api";
 import { getSession, isAuthConfigured, signOut, startLogin } from "../src/lib/auth";
@@ -73,10 +73,6 @@ function compactAddress(input: AddressInput): AddressInput {
     country: input.country.trim().toUpperCase(),
     phone: input.phone?.trim() || undefined
   };
-}
-
-function stripeReturnUrl(orderNumber: string) {
-  return `${window.location.origin}/orders/${encodeURIComponent(orderNumber)}?session_id={CHECKOUT_SESSION_ID}`;
 }
 
 function stripePhoneNumber(order: Order) {
@@ -398,24 +394,26 @@ export default function Home() {
     setError(null);
 
     try {
-      const order = await checkoutCart({
+      const checkoutInput = {
         cartId: cart.id,
         email,
         shippingAddress: compactAddress(shippingAddress),
         billingAddress: billingSame ? compactAddress(shippingAddress) : compactAddress(billingAddress)
-      });
+      };
 
       if (stripePromise) {
-        const checkoutSession = await createStripeCheckoutSession(
-          order.id,
-          stripeReturnUrl(order.orderNumber)
-        );
-        setCheckoutClientSecret(checkoutSession.clientSecret);
+        const result = await checkoutCartWithStripe({
+          ...checkoutInput,
+          returnBaseUrl: window.location.origin
+        });
+        setCheckoutClientSecret(result.checkoutSession.clientSecret);
+        setLastOrder(result.order);
       } else {
+        const order = await checkoutCart(checkoutInput);
         setCheckoutClientSecret(null);
+        setLastOrder(order);
       }
 
-      setLastOrder(order);
       setCart(null);
       window.localStorage.removeItem(cartStorageKey);
       setEmail("");

@@ -44,12 +44,14 @@ The customer checkout path uses Stripe Checkout Sessions with Checkout Elements.
 
 Flow:
 
-1. The frontend creates a local order through `POST /checkout`.
-2. The frontend asks the backend for `POST /orders/:id/stripe-checkout-session`.
-3. The backend creates or reuses a card-only Stripe Checkout Session with `ui_mode: "elements"`.
+1. The frontend asks the backend for `POST /checkout/stripe`.
+2. The backend creates the local order and a card-only Stripe Checkout Session with `ui_mode: "elements"`.
+3. The backend returns the order plus Checkout Session client secret.
 4. The frontend confirms the session in the browser.
 5. Stripe sends webhook events to the backend.
 6. The backend updates the local payment and parent order.
+
+`POST /orders/:id/stripe-checkout-session` still exists for payment recovery on an existing unpaid order.
 
 The backend sets the order email on the Stripe session and enables phone collection. The frontend passes the shipping phone number when confirming the Checkout Session.
 

@@ -149,10 +149,12 @@ Current responsibilities:
 - Snapshot shipping and billing addresses
 - Deduct variant inventory
 - Clear the cart after order creation
+- Create a Stripe Checkout Session with the order in one customer checkout call
 
 Current routes:
 
 - `POST /checkout`
+- `POST /checkout/stripe`
 
 Inventory changes and order creation happen in a Prisma transaction.
 

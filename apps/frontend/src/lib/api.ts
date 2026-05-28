@@ -185,6 +185,10 @@ export type CheckoutInput = {
   billingAddress: AddressInput;
 };
 
+export type CheckoutWithStripeInput = CheckoutInput & {
+  returnBaseUrl: string;
+};
+
 export type PaymentStatus = "UNPAID" | "AUTHORIZED" | "PAID" | "FAILED" | "REFUNDED" | "DISPUTED";
 export type PaymentStatusEventSource = "SYSTEM" | "ADMIN_MANUAL" | "ADMIN_SYNC" | "STRIPE_WEBHOOK";
 
@@ -363,6 +367,11 @@ export type StripeCheckoutSession = {
   clientSecret: string;
   checkoutSessionId: string;
   payment: PaymentWithOrder;
+};
+
+export type CheckoutWithStripeResult = {
+  order: Order;
+  checkoutSession: StripeCheckoutSession;
 };
 
 export const apiBaseUrl =
@@ -582,6 +591,13 @@ export async function clearCart(cartId: string) {
 
 export async function checkoutCart(input: CheckoutInput) {
   return request<Order>("/checkout", {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
+}
+
+export async function checkoutCartWithStripe(input: CheckoutWithStripeInput) {
+  return request<CheckoutWithStripeResult>("/checkout/stripe", {
     method: "POST",
     body: JSON.stringify(input)
   });

@@ -75,8 +75,8 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 - Collects checkout email, shipping address, and billing address.
 - Lets signed-in customers select saved shipping and billing addresses, while still allowing custom address entry.
 - Requires sign-in before checkout.
-- Creates a local order with `POST /checkout`.
-- Creates a Stripe Checkout Session with `POST /orders/:id/stripe-checkout-session`.
+- Creates a local order and Stripe Checkout Session together with `POST /checkout/stripe` when Stripe is configured.
+- Falls back to order-only checkout with `POST /checkout` when Stripe is not configured.
 - Renders Stripe Checkout Elements through `CheckoutElementsProvider` and `PaymentElement`.
 - Confirms checkout in the browser.
 

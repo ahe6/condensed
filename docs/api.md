@@ -353,6 +353,7 @@ Quantity must be positive and cannot exceed current variant inventory. Adding or
 
 ```text
 POST /checkout
+POST /checkout/stripe
 ```
 
 `POST /checkout` converts a cart into an order in a database transaction. It requires a Cognito ID token and links the order to the current local user.
@@ -401,6 +402,45 @@ Request body:
 ```
 
 Checkout returns the created order with addresses, items, payments, and shipments.
+
+`POST /checkout/stripe` accepts the same fields plus `returnBaseUrl`:
+
+```json
+{
+  "cartId": "00000000-0000-0000-0000-000000000000",
+  "email": "buyer@example.com",
+  "shippingAddress": {
+    "recipientName": "Buyer Example",
+    "line1": "123 Market St",
+    "city": "San Francisco",
+    "state": "CA",
+    "postalCode": "94105",
+    "country": "US"
+  },
+  "billingAddress": {
+    "recipientName": "Buyer Example",
+    "line1": "123 Market St",
+    "city": "San Francisco",
+    "state": "CA",
+    "postalCode": "94105",
+    "country": "US"
+  },
+  "returnBaseUrl": "http://localhost:3001"
+}
+```
+
+It creates the order, builds the order-detail Stripe return URL on the backend, creates a Stripe Checkout Session, and returns:
+
+```json
+{
+  "order": {},
+  "checkoutSession": {
+    "clientSecret": "cs_test_...",
+    "checkoutSessionId": "cs_test_...",
+    "payment": {}
+  }
+}
+```
 
 ## Orders
 

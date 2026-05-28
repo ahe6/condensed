@@ -52,6 +52,7 @@ client submits cart, email, and addresses
   -> copy address details into order_addresses
   -> decrement inventory
   -> clear cart
+  -> create Stripe Checkout Session when using Stripe checkout
   -> return order number
 ```
 

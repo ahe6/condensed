@@ -22,4 +22,9 @@ export const checkoutCartSchema = z.object({
   billingAddress: addressSchema
 });
 
+export const checkoutCartWithStripeSchema = checkoutCartSchema.extend({
+  returnBaseUrl: z.string().trim().url()
+});
+
 export type CheckoutCartInput = z.infer<typeof checkoutCartSchema>;
+export type CheckoutCartWithStripeInput = z.infer<typeof checkoutCartWithStripeSchema>;
