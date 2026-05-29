@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  --bg: #f4f6f8;
+  --bg: #f5f7f8;
   --panel: #ffffff;
   --surface: #f9fafb;
   --surface-strong: #eef2f6;
@@ -11,6 +11,8 @@
   --accent: #0f766e;
   --accent-strong: #0b5f59;
   --accent-soft: #e4f4f1;
+  --warm: #b85c38;
+  --warm-soft: #fff0e8;
   --blue: #315fbd;
   --ok: #12805c;
   --warn: #9a5b05;
@@ -167,6 +169,17 @@ button.status-action.active:disabled {
   background: var(--accent-soft);
   box-shadow: var(--shadow-soft);
   transform: translateY(-1px);
+}
+
+.primary-link {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.primary-link:hover {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
 }
 
 .customer-brand {
@@ -359,6 +372,107 @@ h3 {
   align-items: start;
 }
 
+.shop-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+  gap: 28px;
+  align-items: stretch;
+  margin-bottom: 26px;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+}
+
+.shop-hero-copy {
+  display: grid;
+  align-content: center;
+  gap: 16px;
+  max-width: 720px;
+}
+
+.shop-hero-copy h1 {
+  max-width: 620px;
+  font-size: 3.4rem;
+  line-height: 0.98;
+}
+
+.shop-hero-copy p:not(.eyebrow) {
+  max-width: 560px;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.shop-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.shop-hero-feature {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: minmax(220px, 1fr) auto;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.shop-hero-feature:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
+}
+
+.shop-hero-feature > div:last-child {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  background: #fff;
+}
+
+.shop-hero-feature span,
+.shop-hero-feature small,
+.section-count {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.shop-hero-feature strong {
+  overflow-wrap: anywhere;
+  font-size: 1.1rem;
+}
+
+.shop-hero-media {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--surface-strong);
+  color: #536173;
+  font-size: 42px;
+  font-weight: 900;
+}
+
+.shop-hero-media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shop-hero-media span {
+  position: relative;
+}
+
 .shop-workspace {
   grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
   gap: 20px;
@@ -387,8 +501,8 @@ h3 {
 
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 18px;
 }
 
 .product-card {
@@ -407,14 +521,14 @@ h3 {
 
 .product-media {
   position: relative;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 5 / 4;
   display: grid;
   place-items: center;
   border-bottom: 1px solid var(--border);
-  background: var(--surface-strong);
+  background: #edf2f5;
   color: #536173;
-  font-size: 34px;
-  font-weight: 800;
+  font-size: 38px;
+  font-weight: 900;
 }
 
 .product-media img {
@@ -447,7 +561,7 @@ h3 {
 .product-body {
   display: grid;
   gap: 14px;
-  padding: 16px;
+  padding: 18px;
 }
 
 .product-title-link {
@@ -457,6 +571,10 @@ h3 {
 
 .product-title-link:hover h3 {
   color: var(--accent);
+}
+
+.product-title-link h3 {
+  font-size: 1.2rem;
 }
 
 .product-body p {
@@ -492,11 +610,12 @@ h3 {
   grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
   gap: 20px;
   align-items: start;
+  margin-top: 4px;
 }
 
 .product-detail-media {
   position: relative;
-  min-height: 460px;
+  min-height: 520px;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -524,7 +643,7 @@ h3 {
 .product-detail-panel {
   display: grid;
   gap: 22px;
-  padding: 22px;
+  padding: 28px;
 }
 
 .product-detail-copy {
@@ -541,6 +660,27 @@ h3 {
   margin-top: 8px;
   color: var(--muted);
   line-height: 1.6;
+}
+
+.product-detail-highlights {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.product-detail-highlights span {
+  min-height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .product-detail-actions {
@@ -618,6 +758,50 @@ textarea:focus {
   grid-template-columns: minmax(0, 1fr) minmax(360px, 520px);
   gap: 18px;
   align-items: start;
+}
+
+.cart-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 0.9fr);
+  gap: 18px;
+  align-items: end;
+  margin-bottom: 20px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+}
+
+.cart-overview h1 {
+  font-size: 2.6rem;
+}
+
+.cart-overview-stats {
+  display: grid;
+  grid-template-columns: 0.7fr 1fr minmax(140px, 1.4fr);
+  gap: 10px;
+}
+
+.cart-overview-stats div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.cart-overview-stats span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.cart-overview-stats strong {
+  overflow-wrap: anywhere;
 }
 
 .panel {
@@ -1631,11 +1815,17 @@ output {
 }
 
 @media (max-width: 1040px) {
+  .cart-overview,
   .cart-page-layout,
   .product-detail,
+  .shop-hero,
   .workspace,
   .summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .shop-hero-copy h1 {
+    font-size: 2.8rem;
   }
 
   .side-stack {
@@ -1666,6 +1856,8 @@ output {
   }
 
   .side-stack,
+  .cart-overview,
+  .cart-overview-stats,
   .cart-page-layout,
   .account-layout,
   .order-detail-layout,
@@ -1687,12 +1879,25 @@ output {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .shop-hero {
+    padding: 20px;
+  }
+
+  .shop-hero-copy h1,
+  .cart-overview h1 {
+    font-size: 2.2rem;
+  }
+
   .product-detail-media {
     min-height: 320px;
   }
 
   .product-detail-copy h1 {
     font-size: 2.25rem;
+  }
+
+  .product-detail-highlights {
+    grid-template-columns: 1fr;
   }
 
   .admin-order-search,

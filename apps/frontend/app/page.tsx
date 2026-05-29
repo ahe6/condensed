@@ -33,6 +33,9 @@ export default function Home() {
     () => products.filter((product) => product.variants.length > 0),
     [products]
   );
+  const featuredProduct = activeProducts[0] ?? null;
+  const featuredVariant = featuredProduct?.variants[0] ?? null;
+  const featuredImage = featuredProduct?.images[0] ?? null;
   const cartItemCount = cart?.totals.itemCount ?? 0;
   const cartQuantityByVariantId = useMemo(() => {
     const quantities: Record<string, number> = {};
@@ -186,13 +189,59 @@ export default function Home() {
 
       {error ? <p className="error global-error">{error}</p> : null}
 
+      <section className="shop-hero" aria-label="Storefront">
+        <div className="shop-hero-copy">
+          <p className="eyebrow">Small-batch essentials</p>
+          <h1>Useful goods for the daily stack.</h1>
+          <p>
+            Browse current products, choose a variant, and keep checkout moving from one cart.
+          </p>
+          <div className="shop-hero-actions">
+            <a className="nav-link primary-link" href="#products">
+              Shop Products
+            </a>
+            <Link className="nav-link" href="/cart">
+              View Cart
+            </Link>
+          </div>
+        </div>
+        {featuredProduct ? (
+          <Link className="shop-hero-feature" href={`/products/${featuredProduct.slug}`}>
+            <div className="shop-hero-media">
+              {featuredImage ? (
+                <>
+                  <img
+                    src={featuredImage.url}
+                    alt={featuredImage.altText ?? featuredProduct.name}
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                    }}
+                  />
+                  <span>{featuredProduct.name.slice(0, 2).toUpperCase()}</span>
+                </>
+              ) : (
+                <span>{featuredProduct.name.slice(0, 2).toUpperCase()}</span>
+              )}
+            </div>
+            <div>
+              <span>Featured</span>
+              <strong>{featuredProduct.name}</strong>
+              {featuredVariant ? (
+                <small>{formatMoney(featuredVariant.price, featuredVariant.currency)}</small>
+              ) : null}
+            </div>
+          </Link>
+        ) : null}
+      </section>
+
       <section className="workspace">
-        <section className="catalog" aria-label="Products">
+        <section className="catalog" id="products" aria-label="Products">
           <div className="section-heading">
             <div>
               <p className="eyebrow">Catalog</p>
               <h2>Products</h2>
             </div>
+            <span className="section-count">{activeProducts.length} available</span>
           </div>
 
           <div className="product-grid">

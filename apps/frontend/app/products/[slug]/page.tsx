@@ -222,6 +222,11 @@ export default function ProductDetailPage() {
                   <span key={category.categoryId}>{category.category.name}</span>
                 ))}
               </div>
+              <div className="product-detail-highlights" aria-label="Product highlights">
+                <span>Secure checkout</span>
+                <span>Tracked delivery</span>
+                <span>Inventory checked live</span>
+              </div>
             </div>
 
             <div className="product-detail-actions">

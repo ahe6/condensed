@@ -16,7 +16,6 @@ import {
   Cart,
   Order,
   User,
-  apiBaseUrl,
   checkoutCart,
   checkoutCartWithStripe,
   clearCart,
@@ -372,22 +371,24 @@ export default function CartPage() {
         </div>
       </section>
 
-      <section className="summary-grid" aria-label="Cart summary">
-        <div className="metric wide">
-          <span>API</span>
-          <strong>{apiBaseUrl}</strong>
+      <section className="cart-overview" aria-label="Cart summary">
+        <div>
+          <p className="eyebrow">Checkout</p>
+          <h1>Review your cart</h1>
         </div>
-        <div className="metric">
-          <span>Items</span>
-          <strong>{cartItemCount}</strong>
-        </div>
-        <div className="metric">
-          <span>Total</span>
-          <strong>{formatMoney(cart?.totals.total ?? "0", cartCurrency)}</strong>
-        </div>
-        <div className="metric">
-          <span>Account</span>
-          <strong>{currentUser?.email ?? "Signed out"}</strong>
+        <div className="cart-overview-stats" aria-label="Cart totals">
+          <div>
+            <span>Items</span>
+            <strong>{cartItemCount}</strong>
+          </div>
+          <div>
+            <span>Total</span>
+            <strong>{formatMoney(cart?.totals.total ?? "0", cartCurrency)}</strong>
+          </div>
+          <div>
+            <span>Account</span>
+            <strong>{currentUser?.email ?? "Signed out"}</strong>
+          </div>
         </div>
       </section>
 
