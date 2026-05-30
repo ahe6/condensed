@@ -39,11 +39,6 @@ export default function StyleLabPage() {
     <main className="style-lab-shell">
       <section className="style-lab-topbar" aria-label="Style lab navigation">
         <strong>tele</strong>
-        <nav aria-label="Mock navigation">
-          <a href="#products">products</a>
-          <a href="#detail">details</a>
-          <a href="#cart">cart</a>
-        </nav>
       </section>
 
       <section className="style-lab-hero" aria-label="Storefront concept">
