@@ -38,28 +38,28 @@ export default function StyleLabPage() {
   return (
     <main className="style-lab-shell">
       <section className="style-lab-topbar" aria-label="Style lab navigation">
-        <strong>TELE</strong>
+        <strong>tele</strong>
         <nav aria-label="Mock navigation">
-          <a href="#products">Products</a>
-          <a href="#detail">Details</a>
-          <a href="#cart">Cart</a>
+          <a href="#products">products</a>
+          <a href="#detail">details</a>
+          <a href="#cart">cart</a>
         </nav>
       </section>
 
       <section className="style-lab-hero" aria-label="Storefront concept">
         <div className="style-lab-hero-copy">
-          <p className="style-lab-eyebrow">Storefront direction A</p>
-          <h1>Everyday goods, edited down to what earns a place.</h1>
+          <p className="style-lab-eyebrow">storefront direction a</p>
+          <h1>everyday goods, edited down to what earns a place.</h1>
           <p>
-            A softer direct-to-consumer storefront direction with confident type, quiet surfaces,
+            a softer direct-to-consumer storefront direction with confident type, quiet surfaces,
             and product-first cards.
           </p>
           <div className="style-lab-actions">
             <a className="style-lab-button primary" href="#products">
-              Start Shopping
+              start shopping
             </a>
             <a className="style-lab-button" href="#detail">
-              View Product
+              view product
             </a>
           </div>
         </div>
@@ -68,8 +68,8 @@ export default function StyleLabPage() {
             <img src="/style-lab/daily-mug.png" alt="Daily Mug mock product" />
           </div>
           <div>
-            <span>Featured</span>
-            <strong>Daily Mug</strong>
+            <span>featured</span>
+            <strong>daily mug</strong>
             <small>$21.50</small>
           </div>
         </div>
@@ -78,16 +78,16 @@ export default function StyleLabPage() {
       <section className="style-lab-categories" aria-label="Category tiles">
         {categories.map((category) => (
           <article className={`style-lab-category-${category.tone}`} key={category.name}>
-            <span>{category.name}</span>
-            <strong>Shop {category.name.toLowerCase()}</strong>
+            <span>{category.name.toLowerCase()}</span>
+            <strong>shop {category.name.toLowerCase()}</strong>
           </article>
         ))}
       </section>
 
       <section className="style-lab-palette" aria-label="Color palette concept">
         <div>
-          <p className="style-lab-eyebrow">Color story</p>
-          <h2>Warm neutrals with sage, clay, and ink accents.</h2>
+          <p className="style-lab-eyebrow">color story</p>
+          <h2>warm neutrals with sage, clay, and ink accents.</h2>
         </div>
         <div className="style-lab-swatches" aria-label="Palette swatches">
           {swatches.map((swatch) => (
@@ -98,8 +98,8 @@ export default function StyleLabPage() {
 
       <section className="style-lab-section" id="products" aria-label="Product card concepts">
         <div className="style-lab-section-heading">
-          <p className="style-lab-eyebrow">Product grid</p>
-          <h2>Clean cards with strong product targets.</h2>
+          <p className="style-lab-eyebrow">product grid</p>
+          <h2>clean cards with strong product targets.</h2>
         </div>
         <div className="style-lab-product-grid">
           {products.map((product) => (
@@ -127,18 +127,18 @@ export default function StyleLabPage() {
           <img src="/style-lab/daily-mug.png" alt="Daily Mug mock product detail" />
         </div>
         <article>
-          <p className="style-lab-eyebrow">Product detail</p>
-          <h2>Daily Mug</h2>
+          <p className="style-lab-eyebrow">product detail</p>
+          <h2>daily mug</h2>
           <p>
-            A focused product page layout with the buying controls held in one calm purchase panel.
+            a focused product page layout with the buying controls held in one calm purchase panel.
           </p>
           <div className="style-lab-pills">
-            <span>Live stock</span>
-            <span>Tracked delivery</span>
-            <span>Secure checkout</span>
+            <span>live stock</span>
+            <span>tracked delivery</span>
+            <span>secure checkout</span>
           </div>
           <label>
-            <span>Variant</span>
+            <span>variant</span>
             <select defaultValue="default">
               <option value="default">Default Variant - $21.50</option>
               <option value="gift">Gift Set - $36.00</option>
@@ -149,26 +149,26 @@ export default function StyleLabPage() {
               <strong>$21.50</strong>
               <span>98 in stock</span>
             </div>
-            <button type="button">Add to Cart</button>
+            <button type="button">add to cart</button>
           </div>
         </article>
       </section>
 
       <section className="style-lab-cart" id="cart" aria-label="Cart concept">
         <div>
-          <p className="style-lab-eyebrow">Cart</p>
-          <h2>Checkout summary</h2>
+          <p className="style-lab-eyebrow">cart</p>
+          <h2>checkout summary</h2>
         </div>
         <div className="style-lab-cart-summary">
           <article>
-            <span>Items</span>
+            <span>items</span>
             <strong>2</strong>
           </article>
           <article>
-            <span>Total</span>
+            <span>total</span>
             <strong>$39.50</strong>
           </article>
-          <button type="button">Continue</button>
+          <button type="button">continue</button>
         </div>
       </section>
     </main>

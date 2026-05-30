@@ -1819,6 +1819,11 @@ output {
   margin: 0 auto;
   padding: 24px 0 48px;
   color: #191714;
+  font-family:
+    "Sofia Pro", "Inter", "Helvetica Neue", Arial, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, sans-serif;
+  font-size: 17px;
+  line-height: 1.42;
 }
 
 .style-lab-topbar {
@@ -1831,7 +1836,8 @@ output {
 }
 
 .style-lab-topbar strong {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
+  font-weight: 800;
   letter-spacing: 0;
 }
 
@@ -1852,6 +1858,7 @@ output {
   border-radius: 999px;
   background: #fffaf1;
   color: #191714;
+  font-size: 0.95rem;
   font-weight: 800;
   text-decoration: none;
 }
@@ -1883,23 +1890,26 @@ output {
 
 .style-lab-eyebrow {
   color: #716452;
-  font-size: 12px;
-  font-weight: 900;
+  font-size: 0.9rem;
+  font-weight: 800;
   letter-spacing: 0;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .style-lab-hero h1 {
   max-width: 760px;
-  font-size: 4.8rem;
-  line-height: 0.94;
+  font-size: 5rem;
+  font-weight: 800;
+  line-height: 0.92;
+  letter-spacing: 0;
 }
 
 .style-lab-hero-copy > p:not(.style-lab-eyebrow) {
   max-width: 580px;
   color: #5f5647;
-  font-size: 1.16rem;
-  line-height: 1.58;
+  font-size: 1.22rem;
+  font-weight: 500;
+  line-height: 1.48;
 }
 
 .style-lab-actions {
@@ -1940,13 +1950,15 @@ output {
 .style-lab-detail-buy span,
 .style-lab-cart-summary span {
   color: #756956;
-  font-size: 13px;
-  font-weight: 800;
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .style-lab-hero-card strong,
 .style-lab-product-card h3 {
-  font-size: 1.18rem;
+  font-size: 1.28rem;
+  font-weight: 800;
+  line-height: 1.05;
 }
 
 .style-lab-product-art,
@@ -2032,14 +2044,17 @@ output {
   z-index: 1;
   color: currentColor;
   opacity: 0.72;
-  font-size: 12px;
-  font-weight: 900;
-  text-transform: uppercase;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-transform: none;
 }
 
 .style-lab-categories strong {
   position: relative;
   z-index: 1;
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1.05;
 }
 
 .style-lab-palette {
@@ -2053,8 +2068,9 @@ output {
 
 .style-lab-palette h2 {
   max-width: 620px;
-  font-size: 2rem;
-  line-height: 1.05;
+  font-size: 2.35rem;
+  font-weight: 800;
+  line-height: 0.98;
 }
 
 .style-lab-swatches {
@@ -2084,8 +2100,10 @@ output {
 .style-lab-section-heading h2,
 .style-lab-detail h2,
 .style-lab-cart h2 {
-  font-size: 2.4rem;
-  line-height: 1;
+  font-size: 2.8rem;
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: 0;
 }
 
 .style-lab-product-grid {
@@ -2168,10 +2186,10 @@ output {
   border: 1px solid #ddd6c8;
   border-radius: 999px;
   color: #5f5647;
-  font-size: 12px;
-  font-weight: 900;
+  font-size: 0.85rem;
+  font-weight: 800;
   text-align: center;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .style-lab-detail label {
@@ -2181,9 +2199,9 @@ output {
 
 .style-lab-detail label > span {
   color: #756956;
-  font-size: 12px;
-  font-weight: 900;
-  text-transform: uppercase;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-transform: none;
 }
 
 .style-lab-detail select {
