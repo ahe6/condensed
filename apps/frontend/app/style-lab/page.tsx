@@ -63,16 +63,26 @@ export default function StyleLabPage() {
             </a>
           </div>
         </div>
-        <div className="style-lab-hero-card" aria-label="Featured product mockup">
-          <div className="style-lab-product-art">
-            <img src="/style-lab/daily-mug.png" alt="Daily Mug mock product" />
-          </div>
-          <div>
-            <span>featured</span>
-            <strong>daily mug</strong>
-            <small>$21.50</small>
-          </div>
+        <div className="style-lab-hero-proof" aria-label="Storefront promises">
+          <span>edited essentials</span>
+          <span>live stock</span>
+          <span>tracked delivery</span>
         </div>
+      </section>
+
+      <section className="style-lab-proof-strip" aria-label="Storefront reassurance">
+        <article>
+          <span>01</span>
+          <strong>small catalog, easier decisions</strong>
+        </article>
+        <article>
+          <span>02</span>
+          <strong>checkout designed for repeat buying</strong>
+        </article>
+        <article>
+          <span>03</span>
+          <strong>product pages centered on the useful details</strong>
+        </article>
       </section>
 
       <section className="style-lab-categories" aria-label="Category tiles">
