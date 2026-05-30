@@ -13,6 +13,7 @@ Important files:
 - `app/addresses/page.tsx`: signed-in customer saved address management
 - `app/orders/page.tsx`: signed-in customer order history, search, and filters
 - `app/orders/[orderNumber]/page.tsx`: signed-in customer order detail view
+- `app/style-lab/page.tsx`: isolated static storefront design prototype route
 - `app/admin/page.tsx`: admin order search, notes, payments, fulfillment, and order timeline
 - `app/auth/callback/page.tsx`: Cognito hosted UI callback
 - `app/auth/confirm/page.tsx`: Cognito confirmation helper route
@@ -25,6 +26,8 @@ Important files:
 - `src/components/OrderSummary.tsx`: reusable customer-facing order summary
 
 The app currently keeps shop and admin in one Next app. Customer pages use a placeholder TELE brand link to `/` plus a compact Cart, Orders, and Account nav with a Cart item-count badge. The public shop does not link to `/admin`; admins open that route directly.
+
+`/style-lab` is an unlinked design sandbox for frontend-only iteration. It uses static mock data and scoped `style-lab-*` classes, so experiments should not change cart, auth, checkout, admin, backend, or database behavior. Remove or gate this route before production if it is no longer useful.
 
 ## Environment
 
