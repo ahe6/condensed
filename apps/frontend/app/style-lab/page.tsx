@@ -3,23 +3,36 @@ const products = [
     initials: "DM",
     name: "Daily Mug",
     detail: "Ceramic desk companion",
-    price: "$21.50"
+    price: "$21.50",
+    image: "/style-lab/daily-mug.png",
+    color: "sage"
   },
   {
     initials: "NB",
     name: "Notebook Set",
     detail: "Three-pack, dot grid",
-    price: "$18.00"
+    price: "$18.00",
+    image: "/style-lab/notebook-set.png",
+    color: "clay"
   },
   {
     initials: "TC",
     name: "Cable Kit",
     detail: "Compact travel organizer",
-    price: "$32.00"
+    price: "$32.00",
+    image: "/style-lab/cable-kit.png",
+    color: "ink"
   }
 ];
 
-const categories = ["Workspace", "Carry", "Home", "Gifts"];
+const categories = [
+  { name: "Workspace", tone: "sage" },
+  { name: "Carry", tone: "ink" },
+  { name: "Home", tone: "cream" },
+  { name: "Gifts", tone: "clay" }
+];
+
+const swatches = ["#17130f", "#6f7f60", "#c86f48", "#f3dfb3", "#f8f0df"];
 
 export default function StyleLabPage() {
   return (
@@ -51,7 +64,9 @@ export default function StyleLabPage() {
           </div>
         </div>
         <div className="style-lab-hero-card" aria-label="Featured product mockup">
-          <div className="style-lab-product-art">DM</div>
+          <div className="style-lab-product-art">
+            <img src="/style-lab/daily-mug.png" alt="Daily Mug mock product" />
+          </div>
           <div>
             <span>Featured</span>
             <strong>Daily Mug</strong>
@@ -62,11 +77,23 @@ export default function StyleLabPage() {
 
       <section className="style-lab-categories" aria-label="Category tiles">
         {categories.map((category) => (
-          <article key={category}>
-            <span>{category}</span>
-            <strong>Shop {category.toLowerCase()}</strong>
+          <article className={`style-lab-category-${category.tone}`} key={category.name}>
+            <span>{category.name}</span>
+            <strong>Shop {category.name.toLowerCase()}</strong>
           </article>
         ))}
+      </section>
+
+      <section className="style-lab-palette" aria-label="Color palette concept">
+        <div>
+          <p className="style-lab-eyebrow">Color story</p>
+          <h2>Warm neutrals with sage, clay, and ink accents.</h2>
+        </div>
+        <div className="style-lab-swatches" aria-label="Palette swatches">
+          {swatches.map((swatch) => (
+            <span key={swatch} style={{ background: swatch }} />
+          ))}
+        </div>
       </section>
 
       <section className="style-lab-section" id="products" aria-label="Product card concepts">
@@ -77,7 +104,9 @@ export default function StyleLabPage() {
         <div className="style-lab-product-grid">
           {products.map((product) => (
             <article className="style-lab-product-card" key={product.name}>
-              <div className="style-lab-product-art">{product.initials}</div>
+              <div className={`style-lab-product-art style-lab-product-${product.color}`}>
+                <img src={product.image} alt={`${product.name} mock product`} />
+              </div>
               <div className="style-lab-product-card-body">
                 <div>
                   <h3>{product.name}</h3>
@@ -94,7 +123,9 @@ export default function StyleLabPage() {
       </section>
 
       <section className="style-lab-detail" id="detail" aria-label="Product detail concept">
-        <div className="style-lab-detail-art">DM</div>
+        <div className="style-lab-detail-art">
+          <img src="/style-lab/daily-mug.png" alt="Daily Mug mock product detail" />
+        </div>
         <article>
           <p className="style-lab-eyebrow">Product detail</p>
           <h2>Daily Mug</h2>

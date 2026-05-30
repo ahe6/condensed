@@ -1913,6 +1913,7 @@ output {
 .style-lab-product-card,
 .style-lab-detail,
 .style-lab-cart,
+.style-lab-palette,
 .style-lab-categories article {
   border: 1px solid #ddd6c8;
   border-radius: 16px;
@@ -1950,19 +1951,41 @@ output {
 
 .style-lab-product-art,
 .style-lab-detail-art {
+  position: relative;
   display: grid;
   place-items: center;
+  overflow: hidden;
   background: #dfe7df;
   color: #3f4f3d;
   font-size: 3rem;
   font-weight: 950;
 }
 
+.style-lab-product-art img,
+.style-lab-detail-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.style-lab-product-sage {
+  background: #dfe7df;
+}
+
+.style-lab-product-clay {
+  background: #f0d6c2;
+}
+
+.style-lab-product-ink {
+  background: #d9ded8;
+}
+
 .style-lab-categories {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
-  margin-bottom: 32px;
+  margin-bottom: 18px;
 }
 
 .style-lab-categories article {
@@ -1971,13 +1994,81 @@ output {
   align-content: end;
   gap: 6px;
   padding: 16px;
+  overflow: hidden;
+  position: relative;
+}
+
+.style-lab-categories article::before {
+  content: "";
+  width: 88px;
+  height: 88px;
+  position: absolute;
+  top: -26px;
+  right: -20px;
+  border-radius: 999px;
+  background: rgba(255, 250, 241, 0.35);
+}
+
+.style-lab-categories article.style-lab-category-sage {
+  background: #dfe7df;
+}
+
+.style-lab-categories article.style-lab-category-ink {
+  background: #1e2520;
+  color: #fffaf1;
+}
+
+.style-lab-categories article.style-lab-category-cream {
+  background: #f3dfb3;
+}
+
+.style-lab-categories article.style-lab-category-clay {
+  background: #d88862;
+  color: #fffaf1;
 }
 
 .style-lab-categories span {
-  color: #756956;
+  position: relative;
+  z-index: 1;
+  color: currentColor;
+  opacity: 0.72;
   font-size: 12px;
   font-weight: 900;
   text-transform: uppercase;
+}
+
+.style-lab-categories strong {
+  position: relative;
+  z-index: 1;
+}
+
+.style-lab-palette {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 34px;
+  padding: 18px;
+}
+
+.style-lab-palette h2 {
+  max-width: 620px;
+  font-size: 2rem;
+  line-height: 1.05;
+}
+
+.style-lab-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.style-lab-swatches span {
+  width: 54px;
+  height: 54px;
+  display: block;
+  border: 1px solid #d7d2c7;
+  border-radius: 50%;
 }
 
 .style-lab-section {
@@ -2010,6 +2101,16 @@ output {
 .style-lab-product-card .style-lab-product-art {
   aspect-ratio: 4 / 3;
   font-size: 2.4rem;
+}
+
+.style-lab-product-card:hover .style-lab-product-art img,
+.style-lab-hero-card:hover .style-lab-product-art img {
+  transform: scale(1.03);
+}
+
+.style-lab-product-card .style-lab-product-art img,
+.style-lab-hero-card .style-lab-product-art img {
+  transition: transform 180ms ease;
 }
 
 .style-lab-product-buy {
@@ -2156,6 +2257,10 @@ output {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .style-lab-palette {
+    grid-template-columns: 1fr;
+  }
+
   .side-stack {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
@@ -2235,6 +2340,7 @@ output {
   .style-lab-categories,
   .style-lab-product-grid,
   .style-lab-pills,
+  .style-lab-palette,
   .style-lab-cart-summary {
     grid-template-columns: 1fr;
   }
