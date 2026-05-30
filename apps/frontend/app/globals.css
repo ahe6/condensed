@@ -1815,6 +1815,8 @@ output {
 }
 
 .style-lab-shell {
+  position: relative;
+  isolation: isolate;
   width: min(1280px, calc(100% - 32px));
   margin: 0 auto;
   padding: 24px 0 48px;
@@ -1824,6 +1826,18 @@ output {
     BlinkMacSystemFont, sans-serif;
   font-size: 17px;
   line-height: 1.42;
+}
+
+.style-lab-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(248, 240, 223, 0.98) 0%, rgba(251, 244, 231, 0.98) 44%, #f0eadf 100%),
+    radial-gradient(circle at 8% 18%, rgba(216, 136, 98, 0.18), transparent 28%),
+    radial-gradient(circle at 88% 14%, rgba(111, 127, 96, 0.2), transparent 30%);
 }
 
 .style-lab-topbar {
@@ -1874,11 +1888,14 @@ output {
   grid-template-columns: minmax(0, 1fr) minmax(280px, 390px);
   gap: 32px;
   align-items: stretch;
-  margin-bottom: 22px;
+  margin-bottom: 28px;
   padding: 34px;
   border: 1px solid #ddd6c8;
   border-radius: 18px;
-  background: #f8f0df;
+  background:
+    radial-gradient(circle at 92% 12%, rgba(216, 136, 98, 0.16), transparent 30%),
+    linear-gradient(135deg, #f9ecd4 0%, #fbf3e2 55%, #e6eadf 100%);
+  box-shadow: 0 18px 50px rgba(72, 50, 28, 0.08);
 }
 
 .style-lab-hero-copy {
@@ -1997,7 +2014,7 @@ output {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 24px;
 }
 
 .style-lab-categories article {
@@ -2062,7 +2079,7 @@ output {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 18px;
   align-items: center;
-  margin-bottom: 34px;
+  margin-bottom: 0;
   padding: 18px;
 }
 
@@ -2087,8 +2104,18 @@ output {
   border-radius: 50%;
 }
 
+.style-lab-section,
+.style-lab-detail-band,
+.style-lab-cart-band {
+  margin-inline: -18px;
+  padding: 28px 18px;
+  border-radius: 22px;
+}
+
 .style-lab-section {
-  margin-bottom: 34px;
+  margin-top: 24px;
+  margin-bottom: 28px;
+  background: #e4eadf;
 }
 
 .style-lab-section-heading {
@@ -2153,7 +2180,12 @@ output {
   grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
   gap: 0;
   overflow: hidden;
-  margin-bottom: 34px;
+  margin-bottom: 0;
+}
+
+.style-lab-detail-band {
+  margin-bottom: 28px;
+  background: #f7dfcf;
 }
 
 .style-lab-detail-art {
@@ -2228,6 +2260,24 @@ output {
   gap: 18px;
   align-items: center;
   padding: 26px;
+  background: #1e2520;
+  color: #fffaf1;
+}
+
+.style-lab-cart .style-lab-eyebrow,
+.style-lab-cart-summary span {
+  color: rgba(255, 250, 241, 0.72);
+}
+
+.style-lab-cart-summary article {
+  border-color: rgba(255, 250, 241, 0.2);
+  background: rgba(255, 250, 241, 0.08);
+}
+
+.style-lab-cart-summary button {
+  border-color: #fffaf1;
+  background: #fffaf1;
+  color: #17130f;
 }
 
 .style-lab-cart-summary {
