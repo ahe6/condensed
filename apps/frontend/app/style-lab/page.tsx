@@ -37,11 +37,11 @@ const swatches = ["#17130f", "#6f7f60", "#c86f48", "#f3dfb3", "#f8f0df"];
 export default function StyleLabPage() {
   return (
     <main className="style-lab-shell">
-      <section className="style-lab-topbar" aria-label="Style lab navigation">
-        <strong>tele</strong>
-      </section>
-
       <section className="style-lab-hero" aria-label="Storefront concept">
+        <div className="style-lab-hero-brand" aria-label="Storefront brand">
+          <strong>tele</strong>
+          <span>small catalog / useful goods</span>
+        </div>
         <div className="style-lab-hero-copy">
           <p className="style-lab-eyebrow">storefront direction a</p>
           <h1>everyday goods, edited down to what earns a place.</h1>

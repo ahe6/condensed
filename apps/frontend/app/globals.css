@@ -1819,7 +1819,7 @@ output {
   isolation: isolate;
   width: min(1280px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 24px 0 48px;
+  padding: 30px 0 48px;
   color: #191714;
   font-family:
     "Sofia Pro", "Inter", "Helvetica Neue", Arial, ui-sans-serif, system-ui, -apple-system,
@@ -1838,21 +1838,6 @@ output {
     linear-gradient(180deg, rgba(248, 240, 223, 0.98) 0%, rgba(251, 244, 231, 0.98) 44%, #f0eadf 100%),
     radial-gradient(circle at 8% 18%, rgba(216, 136, 98, 0.18), transparent 28%),
     radial-gradient(circle at 88% 14%, rgba(111, 127, 96, 0.2), transparent 30%);
-}
-
-.style-lab-topbar {
-  min-height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 18px;
-  margin-bottom: 22px;
-}
-
-.style-lab-topbar strong {
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: 0;
 }
 
 .style-lab-button {
@@ -1890,6 +1875,35 @@ output {
     linear-gradient(90deg, rgba(250, 239, 216, 0.98) 0%, rgba(250, 239, 216, 0.9) 30%, rgba(250, 239, 216, 0.3) 58%, rgba(250, 239, 216, 0.08) 100%),
     url("/style-lab/editorial-hero.png") center / cover no-repeat;
   box-shadow: 0 18px 50px rgba(72, 50, 28, 0.08);
+}
+
+.style-lab-hero-brand {
+  position: absolute;
+  top: 28px;
+  left: 40px;
+  right: 40px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.style-lab-hero-brand strong {
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.style-lab-hero-brand span {
+  color: #5f5647;
+  font-size: 0.95rem;
+  font-weight: 800;
+  padding: 7px 12px;
+  border: 1px solid rgba(95, 86, 71, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 250, 241, 0.42);
+  backdrop-filter: blur(8px);
 }
 
 .style-lab-hero::after {
@@ -2409,7 +2423,6 @@ output {
   }
 
   .topbar,
-  .style-lab-topbar,
   .nav-actions,
   .product-action,
   .order-summary-heading,
@@ -2459,7 +2472,7 @@ output {
 
   .style-lab-shell {
     width: min(100% - 24px, 1280px);
-    padding: 20px 0 40px;
+    padding: 12px 0 40px;
   }
 
   .style-lab-hero,
@@ -2471,9 +2484,19 @@ output {
   .style-lab-hero {
     min-height: 760px;
     align-items: start;
+    padding-top: 112px;
     background:
       linear-gradient(180deg, rgba(250, 239, 216, 0.98) 0%, rgba(250, 239, 216, 0.9) 38%, rgba(250, 239, 216, 0.18) 72%, rgba(250, 239, 216, 0.08) 100%),
       url("/style-lab/editorial-hero.png") 64% bottom / auto 58% no-repeat;
+  }
+
+  .style-lab-hero-brand {
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
   }
 
   .style-lab-hero-proof {
