@@ -62,7 +62,7 @@ async function getOrderPaymentStatus(
 
 async function getIdToken(page: Page) {
   return page.evaluate(() => {
-    const raw = window.localStorage.getItem("tele.auth");
+    const raw = window.localStorage.getItem("health.auth");
 
     if (!raw) {
       throw new Error("Missing Playwright auth session");

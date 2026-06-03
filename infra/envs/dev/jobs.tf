@@ -19,7 +19,7 @@ resource "aws_ecs_task_definition" "orders_expiry" {
       name      = "orders-expiry"
       image     = "${aws_ecr_repository.backend[0].repository_url}:${var.backend_image_tag}"
       essential = true
-      command   = ["npm", "run", "orders:expire"]
+      command   = ["node", "apps/backend/dist/scripts/expire-unpaid-orders.js"]
       environment = [
         {
           name  = "DB_HOST"

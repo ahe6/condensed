@@ -1,5 +1,5 @@
 aws_profile       = "dev"
 aws_region        = "us-east-2"
-project           = "tele"
-state_bucket_name = "tele-terraform-state-ACCOUNTID-us-east-2"
+project           = "health"
+state_bucket_name = "health-terraform-state-ACCOUNTID-us-east-2"
 

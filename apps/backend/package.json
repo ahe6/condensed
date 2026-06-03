@@ -1,5 +1,5 @@
 {
-  "name": "@tele/backend",
+  "name": "@health/backend",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,6 +11,9 @@
     "check": "tsc -p tsconfig.json --noEmit",
     "orders:expire": "tsx src/scripts/expire-unpaid-orders.ts",
     "notifications:retry": "tsx src/scripts/retry-notifications.ts",
+    "db:reset-dev-user": "node scripts/reset-dev-user.mjs",
+    "db:reset-dev-data": "node scripts/reset-dev-data.mjs",
+    "db:seed-dev-data": "node scripts/seed-dev-data.mjs",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "node scripts/prisma-deploy.mjs",

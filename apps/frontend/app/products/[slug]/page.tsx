@@ -20,7 +20,7 @@ import {
 import { getSession, isAuthConfigured, startLogin } from "../../../src/lib/auth";
 import { formatMoney } from "../../../src/lib/format";
 
-const cartStorageKey = "tele.cartId";
+const cartStorageKey = "health.cartId";
 
 export default function ProductDetailPage() {
   const params = useParams<{ slug: string }>();

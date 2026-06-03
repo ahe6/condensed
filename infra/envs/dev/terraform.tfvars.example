@@ -1,14 +1,14 @@
 aws_profile = "dev"
 aws_region  = "us-east-2"
-project     = "tele"
+project     = "health"
 environment = "dev"
 
 vpc_cidr_block        = "10.20.0.0/16"
 db_subnet_cidr_blocks = ["10.20.10.0/24", "10.20.11.0/24"]
 app_subnet_cidr_blocks = ["10.20.20.0/24", "10.20.21.0/24"]
 
-postgres_db_name                  = "tele"
-postgres_username                 = "tele_admin"
+postgres_db_name                  = "health"
+postgres_username                 = "health_admin"
 postgres_instance_class           = "db.t4g.micro"
 postgres_allocated_storage_gb     = 20
 postgres_max_allocated_storage_gb = 100
@@ -18,6 +18,7 @@ allowed_postgres_cidr_blocks = []
 
 deploy_app_stack       = true
 backend_service_enabled = false
+frontend_service_enabled = false
 deploy_jobs_stack      = false
 orders_expiry_enabled  = true
 orders_expiry_schedule_expression = "rate(15 minutes)"
@@ -28,6 +29,14 @@ backend_container_port  = 3000
 backend_desired_count   = 1
 backend_cpu             = 256
 backend_memory          = 512
+frontend_image_tag      = "latest"
+frontend_container_port = 3001
+frontend_desired_count  = 1
+frontend_cpu            = 256
+frontend_memory         = 512
+frontend_domain         = ""
+backend_domain          = ""
+validate_domain_certificates = false
 stripe_api_key_secret_arn     = ""
 stripe_webhook_secret_arn     = ""
 email_provider                = "none"

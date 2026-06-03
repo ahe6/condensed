@@ -3,7 +3,7 @@ set -euo pipefail
 
 inventory_quantity="${1:-25}"
 
-docker compose exec -T postgres psql -U tele_admin -d tele -v inventory_quantity="$inventory_quantity" <<'SQL'
+docker compose exec -T postgres psql -U health_admin -d health -v inventory_quantity="$inventory_quantity" <<'SQL'
 update product_variants
 set "inventoryQuantity" = :'inventory_quantity'::int,
     "updatedAt" = now()

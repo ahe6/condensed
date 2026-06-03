@@ -1,6 +1,6 @@
-# tele
+# health
 
-`tele` is a TypeScript ecommerce app scaffold with:
+`health` is a TypeScript ecommerce app scaffold with:
 
 - Fastify backend in `apps/backend`
 - Prisma and Postgres for data
@@ -11,7 +11,19 @@
 
 ## Current State
 
-Local development is the active environment. Cognito is deployed for local auth testing. The costly AWS app stack is currently destroyed to avoid AWS costs, while the Terraform bootstrap state bucket is retained.
+Local development is still the fastest dev workflow, and the AWS dev stack is currently deployed under `health-dev`. AWS dev includes Cognito, private RDS Postgres, ECR, the ECS cluster, backend/frontend image repositories, public HTTPS backend/frontend services, and the scheduled Stripe Checkout reconciliation job. The Terraform bootstrap state bucket is retained with its original legacy bucket name.
+
+Current AWS dev URLs:
+
+- Frontend: `https://dev.condensedhealth.com`
+- Backend API: `https://api-dev.condensedhealth.com`
+
+Get the current Terraform-managed URLs with:
+
+```sh
+terraform -chdir=infra/envs/dev output backend_public_url
+terraform -chdir=infra/envs/dev output frontend_public_url
+```
 
 Implemented backend modules:
 
@@ -51,7 +63,7 @@ Local URLs:
 - `apps/backend`: Fastify API, Prisma schema, migrations, scripts, and Dockerfile.
 - `apps/frontend`: Next.js local development UI and Dockerfile.
 - `infra/bootstrap`: one-time Terraform state bucket setup.
-- `infra/envs/dev`: AWS dev environment for Cognito auth plus optional VPC, RDS, ECR, ECS, and public backend service.
+- `infra/envs/dev`: AWS dev environment for Cognito auth plus optional VPC, RDS, ECR, ECS, scheduled jobs, and public backend/frontend services.
 - `docker-compose.yml`: local Postgres and optional frontend container.
 - `Makefile`: common AWS, Terraform, Docker, ECR, and migration commands.
 - `docs`: project docs.
@@ -59,12 +71,16 @@ Local URLs:
 ## Docs
 
 - [Docs Index](docs/README.md)
-- [Local Development](docs/local-dev.md)
-- [Backend Architecture](docs/backend-architecture.md)
-- [Backend API](docs/backend-api.md)
+- [Getting Started](docs/getting-started.md)
+- [Frontend](docs/frontend.md)
+- [Backend](docs/backend.md)
+- [API](docs/api.md)
 - [Auth](docs/auth.md)
-- [Ecommerce Flows](docs/ecommerce-flows.md)
-- [Database Schema](docs/database-schema.md)
+- [Payments](docs/payments.md)
+- [Fulfillment](docs/fulfillment.md)
+- [Notifications](docs/notifications.md)
+- [Flows](docs/flows.md)
+- [Database](docs/database.md)
 - [Infrastructure](docs/infrastructure.md)
 - [Deployment](docs/deployment.md)
 - [Runbooks](docs/runbooks.md)
@@ -79,6 +95,8 @@ npm run frontend:build
 npm run db:generate
 docker compose ps
 make dev-auth-env
+make backend-deploy-aws
+make frontend-deploy-aws
 ```
 
-See [Local Development](docs/local-dev.md) and [Runbooks](docs/runbooks.md) for setup, reset, and troubleshooting commands.
+See [Getting Started](docs/getting-started.md) and [Runbooks](docs/runbooks.md) for setup, reset, and troubleshooting commands.

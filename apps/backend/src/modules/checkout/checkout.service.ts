@@ -135,5 +135,5 @@ function generateOrderNumber() {
   const timestamp = Date.now().toString(36).toUpperCase();
   const suffix = randomInt(1000, 10000).toString();
 
-  return `TELE-${timestamp}-${suffix}`;
+  return `HEALTH-${timestamp}-${suffix}`;
 }

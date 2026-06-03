@@ -41,6 +41,8 @@ File responsibilities:
 - `*.schemas.ts`: Zod schemas and inferred input types
 - `*.service.ts`: business logic and Prisma reads/writes
 
+Some modules are intentionally smaller. `auth` currently reuses user schemas for profile updates, and `notifications` is service-only because notifications are created from business events and retried from a script instead of exposed through public routes.
+
 Avoid adding a repository layer until there is a real repeated data-access pattern to extract.
 
 ## Current Modules
@@ -54,20 +56,15 @@ Current responsibilities:
 - Require Cognito `admin` group membership for backend admin routes
 - Return the current account profile
 - Update local profile name and phone
-- Return and manage the current user's saved addresses
 - Return the current user's order history
 
 Current routes:
 
 - `GET /me`
 - `PATCH /me`
-- `GET /me/addresses`
-- `POST /me/addresses`
-- `PATCH /me/addresses/:id`
-- `DELETE /me/addresses/:id`
 - `GET /me/orders`
 
-Checkout requires the same bearer token and links the created order to the authenticated user.
+Address routes are implemented in the `users` module but require the same current-user auth helper. Checkout also requires the same bearer token and links the created order to the authenticated user.
 
 Backend `/admin/*` routes are protected by a global Fastify pre-handler in `server.ts`.
 
@@ -150,7 +147,7 @@ Current responsibilities:
 - Deduct variant inventory
 - Clear the cart after order creation
 - Create a Stripe Checkout Session with the order in one customer checkout call
-- Expire unpaid orders after a configurable age and release inventory once
+- Reconcile stale Stripe Checkout attempts and release inventory once Stripe reports expiration
 
 Current routes:
 
@@ -159,9 +156,9 @@ Current routes:
 
 Inventory changes and order creation happen in a Prisma transaction.
 
-Unpaid expiry is run by `npm run orders:expire` or `make orders-expire`. By default it cancels `PLACED`/`PENDING`, `UNPAID`/`FAILED`/`EXPIRED`, unfulfilled orders older than 15 minutes, expires open Stripe Checkout Sessions, sets `inventoryReleasedAt`, and increments variant inventory for each order item. Configure with `ORDER_EXPIRY_MINUTES` and `ORDER_EXPIRY_BATCH_SIZE`.
+Stripe reconciliation is run by `npm run orders:expire` or `make orders-expire`. By default it scans open Stripe Checkout attempts older than 15 minutes, retrieves each Checkout Session from Stripe, and only expires/cancels local orders when Stripe reports the session as expired. It sets `inventoryReleasedAt` and increments variant inventory once for each expired order. Configure with `ORDER_EXPIRY_MINUTES` and `ORDER_EXPIRY_BATCH_SIZE`.
 
-AWS dev can run the same command from EventBridge Scheduler through an ECS Fargate one-shot task. Terraform controls that with `deploy_jobs_stack`, `orders_expiry_enabled`, and `orders_expiry_schedule_expression`; it does not require the public backend service.
+AWS dev can run the same command from EventBridge Scheduler through an ECS Fargate one-shot task. Terraform controls that with `deploy_jobs_stack`, `orders_expiry_enabled`, and `orders_expiry_schedule_expression`; it does not require the public backend or frontend services.
 
 ### Orders
 
@@ -193,6 +190,7 @@ Admin order status changes should be explicit service functions, not arbitrary p
 Current responsibilities:
 
 - Create Stripe Checkout Sessions for checkout and unpaid-order recovery
+- Record one local payment attempt per Stripe Checkout Session
 - Handle Stripe Checkout Session webhook status updates
 - Support Checkout Elements from the frontend checkout
 - Record provider-agnostic payment attempts
@@ -210,6 +208,7 @@ Current routes:
 - `POST /admin/payments/:id/pay`
 - `POST /admin/payments/:id/fail`
 - `POST /admin/payments/:id/refund`
+- `POST /admin/payments/:id/sync-stripe`
 - `POST /webhooks/stripe`
 
 Main service functions:
@@ -221,8 +220,9 @@ Main service functions:
 - `markPaymentPaid`
 - `markPaymentFailed`
 - `refundPayment`
+- `syncStripePayment`
 
-Payment status changes happen in a Prisma transaction with the parent order update. Stripe webhooks update the local Stripe payment row and parent order status from Checkout Session events. PaymentIntent events are still handled for older local payment rows.
+Payment status changes happen in a Prisma transaction with the parent order update. Stripe webhooks update the local Stripe attempt, aggregate payment row, and parent order status from Checkout Session events. PaymentIntent events are still handled for compatibility and are linked to the matching attempt when possible.
 
 ### Shipments
 
@@ -264,3 +264,24 @@ Tracking creation and edits write `shipment_tracking_events` rows when carrier o
 Delivered shipment changes also create or update one pending `SHIPMENT_DELIVERED` `notification_events` row for the shipment. If `EMAIL_PROVIDER=ses` is configured, the backend sends the email through SES and marks the event `SENT` or `FAILED`. See [Notifications](notifications.md).
 
 See [Fulfillment](fulfillment.md) for the full shipment workflow and tracking-link behavior.
+
+### Notifications
+
+Current responsibilities:
+
+- Store notification intent/audit records in `notification_events`
+- Create or update delivered-shipment notification events from shipment delivery
+- Send pending notification events through SES when `EMAIL_PROVIDER=ses`
+- Mark notification events `SENT` or `FAILED`
+- Retry pending and failed notification events from a script
+
+Current routes:
+
+- None
+
+Main service functions:
+
+- `sendPendingNotificationEvent`
+- `retryNotificationEvents`
+
+Notifications are triggered by backend business events, not direct HTTP requests. Retry is run with `npm run notifications:retry` or `make notifications-retry`.

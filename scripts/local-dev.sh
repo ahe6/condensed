@@ -8,9 +8,9 @@ backend_url="${BACKEND_URL:-http://127.0.0.1:3000}"
 frontend_url="${FRONTEND_URL:-http://localhost:3001}"
 stripe_webhook_url="${STRIPE_WEBHOOK_URL:-http://127.0.0.1:3000/webhooks/stripe}"
 log_dir="${LOG_DIR:-/tmp}"
-backend_log="${BACKEND_LOG:-$log_dir/tele-backend.log}"
-frontend_log="${FRONTEND_LOG:-$log_dir/tele-frontend.log}"
-stripe_log="${STRIPE_LOG:-$log_dir/tele-stripe-listen.log}"
+backend_log="${BACKEND_LOG:-$log_dir/health-backend.log}"
+frontend_log="${FRONTEND_LOG:-$log_dir/health-frontend.log}"
+stripe_log="${STRIPE_LOG:-$log_dir/health-stripe-listen.log}"
 start_stripe="${START_STRIPE:-auto}"
 apply_migrations=1
 restart=0
@@ -116,7 +116,7 @@ wait_for_url() {
 
 wait_for_postgres() {
   for _ in $(seq 1 45); do
-    if docker compose exec -T postgres pg_isready -U tele_admin -d tele >/dev/null 2>&1; then
+    if docker compose exec -T postgres pg_isready -U health_admin -d health >/dev/null 2>&1; then
       log "Postgres is ready"
       return 0
     fi
@@ -189,9 +189,9 @@ sync_stripe_secret() {
   log "Refreshing local Stripe webhook signing secret"
 
   local secret
-  if ! secret="$(stripe listen --forward-to "$stripe_webhook_url" --print-secret 2>/tmp/tele-stripe-secret.log)"; then
+  if ! secret="$(stripe listen --forward-to "$stripe_webhook_url" --print-secret 2>/tmp/health-stripe-secret.log)"; then
     if [ "$start_stripe" = "1" ]; then
-      cat /tmp/tele-stripe-secret.log >&2 || true
+      cat /tmp/health-stripe-secret.log >&2 || true
       exit 1
     fi
 

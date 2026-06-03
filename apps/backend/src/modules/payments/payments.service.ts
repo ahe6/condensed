@@ -1,11 +1,23 @@
-import { PaymentStatus, PaymentStatusEventSource, Prisma } from "@prisma/client";
+import {
+  FulfillmentStatus,
+  OrderStatus,
+  PaymentAttemptStatus,
+  PaymentStatus,
+  PaymentStatusEventSource,
+  Prisma
+} from "@prisma/client";
 import Stripe from "stripe";
 import { config } from "../../config.js";
 import { prisma } from "../../prisma.js";
-import { orderInclude } from "../orders/orders.service.js";
+import { cancelUnpaidOrderAndReleaseInventory, orderInclude } from "../orders/orders.service.js";
 import type { CreatePaymentInput, CreateStripeCheckoutSessionInput } from "./payments.schemas.js";
 
 const paymentInclude = {
+  attempts: {
+    orderBy: {
+      createdAt: "asc" as const
+    }
+  },
   statusEvents: {
     orderBy: {
       createdAt: "asc" as const
@@ -23,17 +35,37 @@ type CheckoutLineItem = NonNullable<CheckoutSessionCreateParams["line_items"]>[n
 type StripePaymentRecord = {
   id: string;
   orderId: string;
+  provider: string;
+  providerPaymentId: string | null;
   processedAt: Date | null;
   status: PaymentStatus;
+  amount: Prisma.Decimal;
+  currency: string;
+  metadata: Prisma.JsonValue | null;
+};
+type PaymentAttemptRecord = {
+  id: string;
+  paymentId: string;
+  orderId: string;
+  provider: string;
+  providerAttemptId: string;
+  providerPaymentIntentId: string | null;
+  status: PaymentAttemptStatus;
   metadata: Prisma.JsonValue | null;
 };
 type PaymentStatusEventContext = {
   source: PaymentStatusEventSource;
+  paymentAttemptId?: string;
   providerEventId?: string;
   providerObjectId?: string | null;
   reason?: string;
   metadata?: Record<string, unknown>;
   recordSameStatus?: boolean;
+};
+type ReconcileStripeCheckoutSessionsOptions = {
+  batchSize?: number;
+  olderThanMinutes?: number;
+  now?: Date;
 };
 
 export class PaymentError extends Error {
@@ -94,6 +126,13 @@ export async function syncStripePayment(paymentId: string) {
   const payment = await prisma.payment.findUniqueOrThrow({
     where: {
       id: paymentId
+    },
+    include: {
+      attempts: {
+        orderBy: {
+          createdAt: "desc"
+        }
+      }
     }
   });
 
@@ -101,19 +140,23 @@ export async function syncStripePayment(paymentId: string) {
     throw new PaymentError("Only Stripe payments can be synced", 400);
   }
 
-  if (!payment.providerPaymentId) {
+  const latestAttempt = payment.attempts[0] ?? null;
+  const providerPaymentId = latestAttempt?.providerAttemptId ?? payment.providerPaymentId;
+
+  if (!providerPaymentId) {
     throw new PaymentError("Stripe payment has no provider payment id", 400);
   }
 
-  if (payment.providerPaymentId.startsWith("cs_")) {
-    const checkoutSession = await retrieveCheckoutSession(stripeClient, payment.providerPaymentId);
+  if (providerPaymentId.startsWith("cs_")) {
+    const checkoutSession = await retrieveCheckoutSession(stripeClient, providerPaymentId);
+    const attempt = latestAttempt ?? (await findAttemptForCheckoutSession(checkoutSession.id));
 
     const metadata = {
       ...checkoutSessionMetadata(checkoutSession),
       lastStripeSyncAt: new Date().toISOString()
     };
 
-    return applyStripePaymentUpdate(payment, statusFromCheckoutSession(checkoutSession), metadata, {
+    return applyStripeCheckoutSessionUpdate(payment, attempt, checkoutSession, statusFromCheckoutSession(checkoutSession), metadata, {
       source: PaymentStatusEventSource.ADMIN_SYNC,
       providerObjectId: checkoutSession.id,
       reason: "Admin synced Stripe Checkout Session",
@@ -121,8 +164,9 @@ export async function syncStripePayment(paymentId: string) {
     });
   }
 
-  if (payment.providerPaymentId.startsWith("pi_")) {
-    const paymentIntent = await retrievePaymentIntent(stripeClient, payment.providerPaymentId);
+  if (providerPaymentId.startsWith("pi_")) {
+    const paymentIntent = await retrievePaymentIntent(stripeClient, providerPaymentId);
+    const attempt = await findAttemptForPaymentIntent(paymentIntent.id);
 
     const metadata = {
       ...paymentIntentMetadata(paymentIntent),
@@ -131,6 +175,7 @@ export async function syncStripePayment(paymentId: string) {
 
     return applyStripePaymentUpdate(payment, statusFromPaymentIntent(paymentIntent), metadata, {
       source: PaymentStatusEventSource.ADMIN_SYNC,
+      paymentAttemptId: attempt?.id,
       providerObjectId: paymentIntent.id,
       reason: "Admin synced Stripe PaymentIntent",
       metadata
@@ -148,7 +193,15 @@ export async function createStripeCheckoutSession(orderId: string, input: Create
     },
     include: {
       items: true,
-      payments: true
+      payments: {
+        include: {
+          attempts: {
+            orderBy: {
+              createdAt: "desc"
+            }
+          }
+        }
+      }
     }
   });
 
@@ -160,20 +213,19 @@ export async function createStripeCheckoutSession(orderId: string, input: Create
     throw new PaymentError("Order has no items", 400);
   }
 
-  const existingPayment = order.payments.find(
-    (payment) =>
-      payment.provider === "stripe" &&
-      payment.providerPaymentId?.startsWith("cs_") &&
-      payment.status === PaymentStatus.UNPAID
+  const existingPayment = order.payments.find((payment) => payment.provider === "stripe" && payment.status === PaymentStatus.UNPAID);
+  const reusableAttempt = existingPayment?.attempts.find(
+    (attempt) => attempt.provider === "stripe" && attempt.providerAttemptId.startsWith("cs_") && attempt.status === PaymentAttemptStatus.OPEN
   );
 
-  if (existingPayment?.providerPaymentId) {
-    const checkoutSession = await stripeClient.checkout.sessions.retrieve(existingPayment.providerPaymentId);
+  if (existingPayment && reusableAttempt) {
+    const checkoutSession = await stripeClient.checkout.sessions.retrieve(reusableAttempt.providerAttemptId);
 
     if (canReuseCheckoutSession(checkoutSession)) {
       return {
         clientSecret: checkoutSession.client_secret,
         checkoutSessionId: checkoutSession.id,
+        paymentAttempt: reusableAttempt,
         payment: await prisma.payment.findUniqueOrThrow({
           where: {
             id: existingPayment.id
@@ -212,24 +264,54 @@ export async function createStripeCheckoutSession(orderId: string, input: Create
   }
 
   const payment = await prisma.$transaction(async (tx) => {
-    const createdPayment = await tx.payment.create({
+    const createdPayment =
+      existingPayment ??
+      (await tx.payment.create({
+        data: {
+          orderId: order.id,
+          provider: "stripe",
+          status: PaymentStatus.UNPAID,
+          amount: order.total,
+          currency: order.currency,
+          metadata: {
+            latestCheckoutSessionId: checkoutSession.id
+          }
+        }
+      }));
+
+    const attempt = await tx.paymentAttempt.create({
       data: {
+        paymentId: createdPayment.id,
         orderId: order.id,
         provider: "stripe",
-        providerPaymentId: checkoutSession.id,
-        status: PaymentStatus.UNPAID,
+        providerAttemptId: checkoutSession.id,
+        providerPaymentIntentId: stripeId(checkoutSession.payment_intent),
+        status: paymentAttemptStatusFromCheckoutSession(checkoutSession),
         amount: order.total,
         currency: order.currency,
-        metadata: {
-          checkoutPaymentStatus: checkoutSession.payment_status,
+        expiresAt: unixTimestampToDate(checkoutSession.expires_at),
+        metadata: checkoutSessionMetadata(checkoutSession)
+      }
+    });
+
+    await tx.payment.update({
+      where: {
+        id: createdPayment.id
+      },
+      data: {
+        providerPaymentId: checkoutSession.id,
+        metadata: mergeMetadata(createdPayment.metadata, {
+          latestCheckoutSessionId: checkoutSession.id,
           checkoutSessionId: checkoutSession.id,
-          checkoutSessionStatus: checkoutSession.status
-        }
+          checkoutSessionStatus: checkoutSession.status,
+          checkoutPaymentStatus: checkoutSession.payment_status
+        })
       }
     });
 
     await createPaymentStatusEvent(tx, createdPayment, PaymentStatus.UNPAID, {
       source: PaymentStatusEventSource.SYSTEM,
+      paymentAttemptId: attempt.id,
       providerObjectId: checkoutSession.id,
       reason: "Stripe Checkout Session payment created",
       metadata: {
@@ -251,7 +333,89 @@ export async function createStripeCheckoutSession(orderId: string, input: Create
   return {
     clientSecret: checkoutSession.client_secret,
     checkoutSessionId: checkoutSession.id,
+    paymentAttempt: payment.attempts[payment.attempts.length - 1],
     payment
+  };
+}
+
+export async function reconcileStripeCheckoutSessions(options: ReconcileStripeCheckoutSessionsOptions = {}) {
+  const now = options.now ?? new Date();
+  const olderThanMinutes = options.olderThanMinutes ?? 15;
+  const batchSize = options.batchSize ?? 50;
+  const staleBefore = new Date(now.getTime() - olderThanMinutes * 60_000);
+  const attempts = await prisma.paymentAttempt.findMany({
+    where: {
+      provider: "stripe",
+      providerAttemptId: {
+        startsWith: "cs_"
+      },
+      status: PaymentAttemptStatus.OPEN,
+      createdAt: {
+        lte: staleBefore
+      },
+      order: {
+        fulfillmentStatus: FulfillmentStatus.UNFULFILLED,
+        inventoryReleasedAt: null,
+        paymentStatus: {
+          in: [PaymentStatus.UNPAID, PaymentStatus.FAILED, PaymentStatus.EXPIRED]
+        },
+        status: {
+          in: [OrderStatus.PENDING, OrderStatus.PLACED]
+        }
+      }
+    },
+    include: {
+      payment: true
+    },
+    orderBy: {
+      createdAt: "asc"
+    },
+    take: batchSize
+  });
+  const reconciledAttemptIds: string[] = [];
+  const openAttemptIds: string[] = [];
+  const paidAttemptIds: string[] = [];
+  const expiredOrderIds: string[] = [];
+  const failedAttemptIds: string[] = [];
+
+  for (const attempt of attempts) {
+    const checkoutSession = await retrieveCheckoutSession(getStripe(), attempt.providerAttemptId);
+    const status = statusFromCheckoutSession(checkoutSession, PaymentStatus.UNPAID);
+    const metadata = {
+      ...checkoutSessionMetadata(checkoutSession),
+      lastStripeReconciliationAt: now.toISOString()
+    };
+    const updatedPayment = await applyStripeCheckoutSessionUpdate(attempt.payment, attempt, checkoutSession, status, metadata, {
+      source: PaymentStatusEventSource.SYSTEM,
+      paymentAttemptId: attempt.id,
+      providerObjectId: checkoutSession.id,
+      reason: "Stripe Checkout Session reconciliation",
+      metadata
+    });
+
+    reconciledAttemptIds.push(attempt.id);
+
+    if (status === PaymentStatus.PAID || status === PaymentStatus.AUTHORIZED) {
+      paidAttemptIds.push(attempt.id);
+    } else if (status === PaymentStatus.EXPIRED) {
+      expiredOrderIds.push(updatedPayment.orderId);
+    } else if (status === PaymentStatus.FAILED) {
+      failedAttemptIds.push(attempt.id);
+    } else {
+      openAttemptIds.push(attempt.id);
+    }
+  }
+
+  return {
+    batchSize,
+    staleBefore: staleBefore.toISOString(),
+    reconciledCount: reconciledAttemptIds.length,
+    reconciledAttemptIds,
+    openAttemptIds,
+    paidAttemptIds,
+    failedAttemptIds,
+    expiredCount: expiredOrderIds.length,
+    expiredOrderIds
   };
 }
 
@@ -357,14 +521,21 @@ async function updateStripeCheckoutSession(
   event: Stripe.Event
 ) {
   const syncedSession = await retrieveCheckoutSession(getStripe(), checkoutSession.id);
-  const payment = await prisma.payment.findUnique({
-    where: {
-      provider_providerPaymentId: {
-        provider: "stripe",
-        providerPaymentId: syncedSession.id
-      }
-    }
-  });
+  const attempt = await findAttemptForCheckoutSession(syncedSession.id);
+  const payment = attempt
+    ? await prisma.payment.findUnique({
+        where: {
+          id: attempt.paymentId
+        }
+      })
+    : await prisma.payment.findUnique({
+        where: {
+          provider_providerPaymentId: {
+            provider: "stripe",
+            providerPaymentId: syncedSession.id
+          }
+        }
+      });
 
   if (!payment || status === PaymentStatus.UNPAID) {
     return;
@@ -375,7 +546,7 @@ async function updateStripeCheckoutSession(
     lastStripeEventAt: new Date().toISOString()
   };
 
-  await applyStripePaymentUpdate(payment, statusFromCheckoutSession(syncedSession, status), metadata, {
+  await applyStripeCheckoutSessionUpdate(payment, attempt, syncedSession, statusFromCheckoutSession(syncedSession, status), metadata, {
     source: PaymentStatusEventSource.STRIPE_WEBHOOK,
     providerEventId: event.id,
     providerObjectId: syncedSession.id,
@@ -386,6 +557,7 @@ async function updateStripeCheckoutSession(
 
 async function updateStripePayment(paymentIntent: Stripe.PaymentIntent, status: PaymentStatus, event: Stripe.Event) {
   const syncedPaymentIntent = await retrievePaymentIntent(getStripe(), paymentIntent.id);
+  const attemptByPaymentIntent = await findAttemptForPaymentIntent(syncedPaymentIntent.id);
   const paymentByPaymentIntent = await prisma.payment.findUnique({
     where: {
       provider_providerPaymentId: {
@@ -395,6 +567,13 @@ async function updateStripePayment(paymentIntent: Stripe.PaymentIntent, status: 
     }
   });
   const payment =
+    (attemptByPaymentIntent
+      ? await prisma.payment.findUnique({
+          where: {
+            id: attemptByPaymentIntent.paymentId
+          }
+        })
+      : null) ??
     paymentByPaymentIntent ??
     (syncedPaymentIntent.metadata.orderId
       ? await prisma.payment.findFirst({
@@ -413,6 +592,21 @@ async function updateStripePayment(paymentIntent: Stripe.PaymentIntent, status: 
     return;
   }
 
+  const attempt =
+    attemptByPaymentIntent ??
+    (await prisma.paymentAttempt.findFirst({
+      where: {
+        paymentId: payment.id,
+        provider: "stripe",
+        providerAttemptId: {
+          startsWith: "cs_"
+        },
+        status: PaymentAttemptStatus.OPEN
+      },
+      orderBy: {
+        createdAt: "desc"
+      }
+    }));
   const metadata = {
     ...paymentIntentMetadata(syncedPaymentIntent, payment.providerPaymentId),
     lastStripeEventAt: new Date().toISOString()
@@ -420,6 +614,7 @@ async function updateStripePayment(paymentIntent: Stripe.PaymentIntent, status: 
 
   await applyStripePaymentUpdate(payment, statusFromPaymentIntent(syncedPaymentIntent, status), metadata, {
     source: PaymentStatusEventSource.STRIPE_WEBHOOK,
+    paymentAttemptId: attempt?.id,
     providerEventId: event.id,
     providerObjectId: syncedPaymentIntent.id,
     reason: event.type,
@@ -477,14 +672,49 @@ async function applyStripePaymentUpdate(
   eventContext: PaymentStatusEventContext
 ) {
   return prisma.$transaction(async (tx) => {
+    const currentPayment = await tx.payment.findUniqueOrThrow({
+      where: {
+        id: payment.id
+      }
+    });
+    const attemptStatus =
+      metadata.stripeStatus === "canceled"
+        ? PaymentAttemptStatus.CANCELED
+        : paymentAttemptStatusFromPaymentStatus(status);
+    const aggregateStatus = eventContext.paymentAttemptId
+      ? await aggregatePaymentStatusForAttempt(tx, currentPayment, eventContext.paymentAttemptId, status)
+      : status;
+    let attemptStatusChanged = false;
+
+    if (eventContext.paymentAttemptId) {
+      const currentAttempt = await tx.paymentAttempt.findUnique({
+        where: {
+          id: eventContext.paymentAttemptId
+        }
+      });
+      attemptStatusChanged = currentAttempt?.status !== attemptStatus;
+
+      await tx.paymentAttempt.update({
+        where: {
+          id: eventContext.paymentAttemptId
+        },
+        data: {
+          providerPaymentIntentId: metadata.paymentIntentId ? String(metadata.paymentIntentId) : undefined,
+          status: attemptStatus,
+          ...paymentAttemptTerminalDateUpdate(attemptStatus),
+          metadata: mergeMetadata(currentAttempt?.metadata ?? null, metadata)
+        }
+      });
+    }
+
     await tx.payment.update({
       where: {
         id: payment.id
       },
       data: {
-        status,
-        processedAt: status === PaymentStatus.UNPAID ? payment.processedAt : new Date(),
-        metadata: mergeMetadata(payment.metadata, metadata)
+        status: aggregateStatus,
+        processedAt: processedAtForStatus(currentPayment, aggregateStatus),
+        metadata: mergeMetadata(currentPayment.metadata, metadata)
       }
     });
 
@@ -493,11 +723,15 @@ async function applyStripePaymentUpdate(
         id: payment.orderId
       },
       data: {
-        paymentStatus: status
+        paymentStatus: aggregateStatus
       }
     });
 
-    await createPaymentStatusEvent(tx, payment, status, eventContext);
+    await createPaymentStatusEvent(tx, currentPayment, aggregateStatus, {
+      ...eventContext,
+      recordSameStatus:
+        eventContext.recordSameStatus ?? (aggregateStatus === currentPayment.status && attemptStatusChanged)
+    });
 
     return tx.payment.findUniqueOrThrow({
       where: {
@@ -506,6 +740,102 @@ async function applyStripePaymentUpdate(
       include: paymentInclude
     });
   });
+}
+
+async function applyStripeCheckoutSessionUpdate(
+  payment: StripePaymentRecord,
+  attempt: PaymentAttemptRecord | null,
+  checkoutSession: Stripe.Checkout.Session,
+  status: PaymentStatus,
+  metadata: Record<string, unknown>,
+  eventContext: PaymentStatusEventContext
+) {
+  const updatedPayment = await prisma.$transaction(async (tx) => {
+    const currentPayment = await tx.payment.findUniqueOrThrow({
+      where: {
+        id: payment.id
+      }
+    });
+    const currentAttempt =
+      attempt ??
+      (await tx.paymentAttempt.findUnique({
+        where: {
+          provider_providerAttemptId: {
+            provider: "stripe",
+            providerAttemptId: checkoutSession.id
+          }
+        }
+      })) ??
+      (await tx.paymentAttempt.create({
+        data: {
+          paymentId: currentPayment.id,
+          orderId: currentPayment.orderId,
+          provider: "stripe",
+          providerAttemptId: checkoutSession.id,
+          providerPaymentIntentId: stripeId(checkoutSession.payment_intent),
+          status: PaymentAttemptStatus.OPEN,
+          amount: currentPayment.amount,
+          currency: currentPayment.currency,
+          expiresAt: unixTimestampToDate(checkoutSession.expires_at)
+        }
+      }));
+    const attemptStatus = paymentAttemptStatusFromCheckoutSession(checkoutSession, status);
+    const aggregateStatus = await aggregatePaymentStatusForAttempt(tx, currentPayment, currentAttempt.id, status);
+
+    await tx.paymentAttempt.update({
+      where: {
+        id: currentAttempt.id
+      },
+      data: {
+        providerPaymentIntentId: stripeId(checkoutSession.payment_intent),
+        status: attemptStatus,
+        expiresAt: unixTimestampToDate(checkoutSession.expires_at),
+        ...paymentAttemptTerminalDateUpdate(attemptStatus),
+        metadata: mergeMetadata(currentAttempt.metadata, metadata)
+      }
+    });
+
+    await tx.payment.update({
+      where: {
+        id: currentPayment.id
+      },
+      data: {
+        providerPaymentId: checkoutSession.id,
+        status: aggregateStatus,
+        processedAt: processedAtForStatus(currentPayment, aggregateStatus),
+        metadata: mergeMetadata(currentPayment.metadata, metadata)
+      }
+    });
+
+    await tx.order.update({
+      where: {
+        id: currentPayment.orderId
+      },
+      data: {
+        paymentStatus: aggregateStatus
+      }
+    });
+
+    await createPaymentStatusEvent(tx, currentPayment, aggregateStatus, {
+      ...eventContext,
+      paymentAttemptId: currentAttempt.id,
+      recordSameStatus:
+        eventContext.recordSameStatus ?? (aggregateStatus === currentPayment.status && attemptStatus !== currentAttempt.status)
+    });
+
+    return tx.payment.findUniqueOrThrow({
+      where: {
+        id: currentPayment.id
+      },
+      include: paymentInclude
+    });
+  });
+
+  if (status === PaymentStatus.EXPIRED && updatedPayment.order.paymentStatus === PaymentStatus.EXPIRED) {
+    await cancelUnpaidOrderAndReleaseInventory(updatedPayment.orderId);
+  }
+
+  return updatedPayment;
 }
 
 async function createPaymentStatusEvent(
@@ -520,9 +850,22 @@ async function createPaymentStatusEvent(
     return;
   }
 
+  if (context.providerEventId) {
+    const existingEvent = await tx.paymentStatusEvent.findUnique({
+      where: {
+        providerEventId: context.providerEventId
+      }
+    });
+
+    if (existingEvent) {
+      return;
+    }
+  }
+
   await tx.paymentStatusEvent.create({
     data: {
       paymentId: payment.id,
+      paymentAttemptId: context.paymentAttemptId,
       orderId: payment.orderId,
       fromStatus: isInitialEvent ? null : payment.status,
       toStatus,
@@ -535,7 +878,39 @@ async function createPaymentStatusEvent(
   });
 }
 
+async function findAttemptForCheckoutSession(checkoutSessionId: string) {
+  return prisma.paymentAttempt.findUnique({
+    where: {
+      provider_providerAttemptId: {
+        provider: "stripe",
+        providerAttemptId: checkoutSessionId
+      }
+    }
+  });
+}
+
+async function findAttemptForPaymentIntent(paymentIntentId: string) {
+  return prisma.paymentAttempt.findUnique({
+    where: {
+      provider_providerPaymentIntentId: {
+        provider: "stripe",
+        providerPaymentIntentId: paymentIntentId
+      }
+    }
+  });
+}
+
 async function findStripePaymentForPaymentIntent(paymentIntent: Stripe.PaymentIntent) {
+  const attempt = await findAttemptForPaymentIntent(paymentIntent.id);
+
+  if (attempt) {
+    return prisma.payment.findUnique({
+      where: {
+        id: attempt.paymentId
+      }
+    });
+  }
+
   const paymentByPaymentIntent = await prisma.payment.findUnique({
     where: {
       provider_providerPaymentId: {
@@ -600,6 +975,108 @@ function statusFromPaymentIntent(paymentIntent: Stripe.PaymentIntent, fallbackSt
     default:
       return fallbackStatus;
   }
+}
+
+function paymentAttemptStatusFromCheckoutSession(
+  checkoutSession: Stripe.Checkout.Session,
+  paymentStatus: PaymentStatus = statusFromCheckoutSession(checkoutSession)
+) {
+  if (paymentStatus === PaymentStatus.PAID || paymentStatus === PaymentStatus.AUTHORIZED) {
+    return PaymentAttemptStatus.COMPLETED;
+  }
+
+  if (paymentStatus === PaymentStatus.EXPIRED || checkoutSession.status === "expired") {
+    return PaymentAttemptStatus.EXPIRED;
+  }
+
+  if (paymentStatus === PaymentStatus.FAILED) {
+    return PaymentAttemptStatus.FAILED;
+  }
+
+  return PaymentAttemptStatus.OPEN;
+}
+
+function paymentAttemptStatusFromPaymentStatus(status: PaymentStatus) {
+  switch (status) {
+    case PaymentStatus.PAID:
+    case PaymentStatus.AUTHORIZED:
+    case PaymentStatus.REFUNDED:
+    case PaymentStatus.DISPUTED:
+      return PaymentAttemptStatus.COMPLETED;
+    case PaymentStatus.EXPIRED:
+      return PaymentAttemptStatus.EXPIRED;
+    case PaymentStatus.FAILED:
+      return PaymentAttemptStatus.FAILED;
+    case PaymentStatus.UNPAID:
+      return PaymentAttemptStatus.OPEN;
+  }
+}
+
+async function aggregatePaymentStatusForAttempt(
+  tx: Prisma.TransactionClient,
+  payment: StripePaymentRecord,
+  currentAttemptId: string,
+  incomingStatus: PaymentStatus
+) {
+  if (
+    incomingStatus === PaymentStatus.PAID ||
+    incomingStatus === PaymentStatus.AUTHORIZED ||
+    incomingStatus === PaymentStatus.REFUNDED ||
+    incomingStatus === PaymentStatus.DISPUTED
+  ) {
+    return incomingStatus;
+  }
+
+  if (incomingStatus === PaymentStatus.UNPAID) {
+    return payment.status;
+  }
+
+  const activeAttemptCount = await tx.paymentAttempt.count({
+    where: {
+      paymentId: payment.id,
+      id: {
+        not: currentAttemptId
+      },
+      status: {
+        in: [PaymentAttemptStatus.OPEN, PaymentAttemptStatus.COMPLETED]
+      }
+    }
+  });
+
+  return activeAttemptCount > 0 ? payment.status : incomingStatus;
+}
+
+function paymentAttemptTerminalDateUpdate(status: PaymentAttemptStatus) {
+  const now = new Date();
+
+  switch (status) {
+    case PaymentAttemptStatus.COMPLETED:
+      return {
+        completedAt: now
+      };
+    case PaymentAttemptStatus.EXPIRED:
+      return {
+        expiredAt: now
+      };
+    case PaymentAttemptStatus.FAILED:
+      return {
+        failedAt: now
+      };
+    case PaymentAttemptStatus.CANCELED:
+      return {
+        canceledAt: now
+      };
+    case PaymentAttemptStatus.OPEN:
+      return {};
+  }
+}
+
+function processedAtForStatus(payment: { processedAt: Date | null }, status: PaymentStatus) {
+  return status === PaymentStatus.UNPAID ? payment.processedAt : new Date();
+}
+
+function unixTimestampToDate(timestamp: number | null) {
+  return timestamp ? new Date(timestamp * 1000) : null;
 }
 
 function checkoutSessionMetadata(checkoutSession: Stripe.Checkout.Session) {

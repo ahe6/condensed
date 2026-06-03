@@ -507,13 +507,13 @@ POST /admin/payments/:id/sync-stripe
 POST /webhooks/stripe
 ```
 
-`POST /orders/:id/stripe-checkout-session` creates or reuses a card-only Stripe Checkout Session with `ui_mode: "elements"` for an existing unpaid order and records a local `payments` row with provider `stripe`. The normal customer checkout path uses `POST /checkout/stripe`; this route is kept for payment recovery. The session uses the order email as `customer_email` and enables phone collection, so the frontend confirms checkout with the shipping phone number.
+`POST /orders/:id/stripe-checkout-session` creates or reuses a card-only Stripe Checkout Session with `ui_mode: "elements"` for an existing unpaid order and records a local Stripe payment plus a `payment_attempts` row for the Checkout Session. The normal customer checkout path uses `POST /checkout/stripe`; this route is kept for payment recovery. The session uses the order email as `customer_email` and enables phone collection, so the frontend confirms checkout with the shipping phone number.
 
 Request:
 
 ```json
 {
-  "returnUrl": "http://localhost:3001/?order=TELE-123456&session_id={CHECKOUT_SESSION_ID}"
+  "returnUrl": "http://localhost:3001/?order=HEALTH-123456&session_id={CHECKOUT_SESSION_ID}"
 }
 ```
 
@@ -523,6 +523,7 @@ Response:
 {
   "clientSecret": "cs_...",
   "checkoutSessionId": "cs_...",
+  "paymentAttempt": {},
   "payment": {}
 }
 ```
@@ -547,9 +548,9 @@ Payment status routes update the payment and the parent order `paymentStatus` in
 - `fail` sets both to `FAILED`
 - `refund` sets both to `REFUNDED`
 
-`POST /admin/payments/:id/sync-stripe` retrieves the current Checkout Session or PaymentIntent from Stripe and updates the local payment plus parent order. It stores Stripe details such as `paymentIntentId`, `chargeId`, Stripe status, and dispute flags in payment metadata. It only supports payments whose provider is `stripe`.
+`POST /admin/payments/:id/sync-stripe` retrieves the latest Checkout Session or PaymentIntent from Stripe and updates the local payment attempt, aggregate payment, and parent order. It stores Stripe details such as `paymentIntentId`, `chargeId`, Stripe status, and dispute flags in metadata. It only supports payments whose provider is `stripe`.
 
-Payment responses include `statusEvents`, an ordered audit trail of payment status changes. Admin manual actions, Stripe webhooks, and admin Stripe sync write status event rows when they change payment status.
+Payment responses include `attempts` and `statusEvents`. `attempts` is the ordered list of provider-side attempts under the aggregate payment. `statusEvents` is the ordered audit trail of payment status changes and includes `paymentAttemptId` when the event is tied to a specific attempt. Admin manual actions, Stripe webhooks, and admin Stripe sync write status event rows when they change payment status.
 
 `POST /webhooks/stripe` verifies the Stripe signature when `STRIPE_WEBHOOK_SECRET` is configured and updates local payment/order status for:
 

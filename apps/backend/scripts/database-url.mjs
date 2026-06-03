@@ -1,7 +1,4 @@
-import { spawnSync } from "node:child_process";
-import "dotenv/config";
-
-function databaseUrlFromEnv() {
+export function databaseUrlFromEnv() {
   if (process.env.DATABASE_URL) {
     return process.env.DATABASE_URL;
   }
@@ -15,16 +12,16 @@ function databaseUrlFromEnv() {
   const secret = JSON.parse(DB_SECRET_JSON);
   const username = encodeURIComponent(secret.username);
   const password = encodeURIComponent(secret.password);
+  const host = DB_HOST;
+  const port = encodeURIComponent(DB_PORT);
+  const database = encodeURIComponent(DB_NAME);
 
-  return `postgresql://${username}:${password}@${DB_HOST}:${DB_PORT}/${DB_NAME}?schema=public`;
+  return `postgresql://${username}:${password}@${host}:${port}/${database}`;
 }
 
-process.env.DATABASE_URL = databaseUrlFromEnv();
+export async function createPrismaClient() {
+  process.env.DATABASE_URL = databaseUrlFromEnv();
+  const { PrismaClient } = await import("@prisma/client");
 
-const result = spawnSync("prisma", ["migrate", "deploy"], {
-  env: process.env,
-  stdio: "inherit",
-  shell: true
-});
-
-process.exit(result.status ?? 1);
+  return new PrismaClient();
+}

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { getCart, getMyCart } from "../lib/api";
 import { getSession, isAuthConfigured } from "../lib/auth";
 
-const cartStorageKey = "tele.cartId";
+const cartStorageKey = "health.cartId";
 
 const links = [
   { href: "/cart", label: "Cart", match: (pathname: string) => pathname === "/cart" },

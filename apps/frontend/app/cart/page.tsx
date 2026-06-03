@@ -31,7 +31,7 @@ import {
 import { getSession, isAuthConfigured, startLogin } from "../../src/lib/auth";
 import { formatMoney } from "../../src/lib/format";
 
-const cartStorageKey = "tele.cartId";
+const cartStorageKey = "health.cartId";
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 

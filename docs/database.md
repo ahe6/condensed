@@ -168,7 +168,7 @@ Admin order search includes note body and author email.
 
 ### `payments`
 
-Payment attempts or captures for an order.
+Aggregate payment records for an order.
 
 Important fields:
 
@@ -182,7 +182,27 @@ Important fields:
 
 The pair `provider + providerPaymentId` is unique when a provider payment ID exists.
 
-Current backend payment routes support provider-agnostic manual payments and Stripe Checkout Session records. Stripe payments store the Checkout Session ID in `providerPaymentId` and provider details in `metadata`, including synced `paymentIntentId`, `chargeId`, Stripe status, and dispute fields when available. Marking a payment `AUTHORIZED`, `PAID`, `FAILED`, `REFUNDED`, or `DISPUTED` also updates the parent order `paymentStatus` in the same transaction. Stripe webhooks and the admin Stripe sync action apply the same status updates for Stripe-created payments.
+Current backend payment routes support provider-agnostic manual payments and Stripe Checkout. Stripe payments keep the latest Checkout Session ID in `providerPaymentId` for compatibility and store provider details in `metadata`, including synced `paymentIntentId`, `chargeId`, Stripe status, and dispute fields when available. Marking a payment `AUTHORIZED`, `PAID`, `FAILED`, `REFUNDED`, or `DISPUTED` also updates the parent order `paymentStatus` in the same transaction. Stripe webhooks and the admin Stripe sync action apply the same aggregate updates for Stripe-created payments.
+
+### `payment_attempts`
+
+Provider-side attempts under a payment. For Stripe Checkout, each Checkout Session gets one row.
+
+Important fields:
+
+- `paymentId`
+- `orderId`
+- `provider`
+- `providerAttemptId`: provider-side attempt ID, such as a Stripe Checkout Session ID
+- `providerPaymentIntentId`: Stripe PaymentIntent ID when available
+- `status`: `OPEN`, `COMPLETED`, `EXPIRED`, `FAILED`, or `CANCELED`
+- `expiresAt`
+- `completedAt`, `expiredAt`, `failedAt`, `canceledAt`
+- `metadata`: provider-specific attempt JSON
+
+The pairs `provider + providerAttemptId` and `provider + providerPaymentIntentId` are unique when the provider IDs exist.
+
+Stripe owns Checkout Session expiration. The scheduled job reconciles old open local attempts against Stripe; it does not locally decide that an open Stripe session has expired.
 
 ### `payment_status_events`
 
@@ -191,6 +211,7 @@ Append-only history of payment status transitions.
 Important fields:
 
 - `paymentId`
+- `paymentAttemptId`: optional attempt associated with the event
 - `orderId`
 - `fromStatus`
 - `toStatus`

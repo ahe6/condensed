@@ -1,6 +1,6 @@
-const authStorageKey = "tele.auth";
-const codeVerifierKey = "tele.auth.codeVerifier";
-const stateKey = "tele.auth.state";
+const authStorageKey = "health.auth";
+const codeVerifierKey = "health.auth.codeVerifier";
+const stateKey = "health.auth.state";
 
 type TokenResponse = {
   access_token: string;

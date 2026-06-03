@@ -23,7 +23,7 @@ const envSchema = z.object({
   DB_SECRET_JSON: z.string().optional(),
   DB_HOST: z.string().optional(),
   DB_PORT: z.coerce.number().int().positive().default(5432),
-  DB_NAME: z.string().default("tele"),
+  DB_NAME: z.string().default("health"),
   COGNITO_ISSUER: z.string().url().optional(),
   COGNITO_CLIENT_ID: z.string().optional(),
   STRIPE_API_KEY: z.string().optional(),

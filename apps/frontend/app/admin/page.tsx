@@ -2332,7 +2332,7 @@ export default function AdminPage() {
     <main className="shell">
       <section className="topbar" aria-label="Admin status">
         <div>
-          <p className="eyebrow">Tele</p>
+          <p className="eyebrow">Health</p>
           <h1>Admin</h1>
         </div>
         <div className="nav-actions">

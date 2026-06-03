@@ -18,12 +18,26 @@ Local URLs:
 - Admin frontend: `http://localhost:3001/admin`
 - Postgres: `127.0.0.1:5432`
 
+Current AWS dev public URLs:
+
+- API: `https://api-dev.condensedhealth.com`
+- Frontend: `https://dev.condensedhealth.com`
+
+Get the Terraform-managed public URLs with:
+
+```sh
+terraform -chdir=infra/envs/dev output backend_public_url
+terraform -chdir=infra/envs/dev output frontend_public_url
+```
+
+Local development is the normal iteration loop. AWS dev is for integration checks after local checks/builds pass.
+
 Docker Compose Postgres settings:
 
 ```text
-database: tele
-username: tele_admin
-password: tele_password
+database: health
+username: health_admin
+password: health_password
 ```
 
 The backend reads local env from the repo root `.env` and `apps/backend/.env`. Backend-local values take precedence. Examples are `.env.example` and `apps/backend/.env.example`.
@@ -145,8 +159,8 @@ Addresses route at `/addresses`:
 Order detail routes:
 
 - Shows signed-in customer order details through `GET /orders/:orderNumber`.
-- Expires old unpaid orders locally with `npm run orders:expire` or `make orders-expire`.
-- Runs unpaid-order expiry remotely with AWS EventBridge Scheduler when the Terraform jobs stack is enabled.
+- Reconciles old open Stripe Checkout attempts locally with `npm run orders:expire` or `make orders-expire`.
+- Runs Stripe Checkout reconciliation remotely with AWS EventBridge Scheduler when the Terraform jobs stack is enabled.
 
 Admin route at `/admin`:
 
@@ -200,6 +214,22 @@ npm run test:stripe-checkout
 The smoke test restocks `dev-mug` locally before creating an order.
 Because checkout now requires sign-in, set `PLAYWRIGHT_AUTH_STATE` to a Playwright storage-state JSON file for a signed-in customer before running it.
 It uses installed Google Chrome through Playwright, so no Playwright browser download is required.
+
+## Deploy To AWS Dev
+
+Deploy backend changes:
+
+```sh
+make backend-deploy-aws
+```
+
+Deploy frontend changes:
+
+```sh
+make frontend-deploy-aws
+```
+
+See [Deployment](deployment.md) for Terraform prerequisites, public service controls, and the deployed HTTPS/Cognito configuration.
 
 ## Local Containers
 

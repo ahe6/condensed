@@ -1,6 +1,6 @@
 # Docs
 
-This directory holds the working documentation for `tele`.
+This directory holds the working documentation for `health`.
 
 ## Start Here
 
@@ -18,9 +18,14 @@ This directory holds the working documentation for `tele`.
 ## Operations
 
 - [Infrastructure](infrastructure.md): AWS account, Terraform state, VPC, RDS, ECR, ECS, and cost notes.
-- [Deployment](deployment.md): build images, recreate AWS dev, run migrations, and enable the backend service.
+- [Deployment](deployment.md): deploy backend and frontend images, run migrations, manage public AWS services, and verify AWS dev.
 - [Runbooks](runbooks.md): common step-by-step commands for local and AWS operations.
 
 ## Current Environment
 
-Local development is active. Cognito is deployed for local auth testing. Costly AWS app resources in `infra/envs/dev` are destroyed to avoid cost; bootstrap state storage remains.
+Local development remains the fastest dev loop. The AWS dev stack is currently deployed under `health-dev`, including Cognito, RDS, ECR, backend and frontend ECS services, public HTTPS ALBs, and the scheduled Stripe Checkout reconciliation job. Bootstrap state storage remains in the original retained state bucket.
+
+Current AWS dev URLs:
+
+- Frontend: `https://dev.condensedhealth.com`
+- Backend API: `https://api-dev.condensedhealth.com`

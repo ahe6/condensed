@@ -37,6 +37,14 @@ enum PaymentStatusEventSource {
   STRIPE_WEBHOOK
 }
 
+enum PaymentAttemptStatus {
+  OPEN
+  COMPLETED
+  EXPIRED
+  FAILED
+  CANCELED
+}
+
 enum ShipmentStatusEventSource {
   SYSTEM
   ADMIN_MANUAL
@@ -238,6 +246,7 @@ model Order {
   addresses              OrderAddress[]
   items                  OrderItem[]
   payments               Payment[]
+  paymentAttempts        PaymentAttempt[]
   paymentStatusEvents    PaymentStatusEvent[]
   shipmentStatusEvents   ShipmentStatusEvent[]
   shipmentTrackingEvents ShipmentTrackingEvent[]
@@ -319,6 +328,7 @@ model Payment {
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
   order             Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  attempts          PaymentAttempt[]
   statusEvents      PaymentStatusEvent[]
 
   @@unique([provider, providerPaymentId])
@@ -326,9 +336,41 @@ model Payment {
   @@map("payments")
 }
 
+model PaymentAttempt {
+  id                      String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paymentId               String               @db.Uuid
+  orderId                 String               @db.Uuid
+  provider                String
+  providerAttemptId       String
+  providerPaymentIntentId String?
+  status                  PaymentAttemptStatus @default(OPEN)
+  amount                  Decimal              @db.Decimal(12, 2)
+  currency                String               @default("USD") @db.Char(3)
+  expiresAt               DateTime?
+  completedAt             DateTime?
+  expiredAt               DateTime?
+  failedAt                DateTime?
+  canceledAt              DateTime?
+  metadata                Json?
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  payment                 Payment              @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  order                   Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  statusEvents            PaymentStatusEvent[]
+
+  @@unique([provider, providerAttemptId])
+  @@unique([provider, providerPaymentIntentId])
+  @@index([paymentId])
+  @@index([orderId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("payment_attempts")
+}
+
 model PaymentStatusEvent {
   id               String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   paymentId        String                   @db.Uuid
+  paymentAttemptId String?                  @db.Uuid
   orderId          String                   @db.Uuid
   fromStatus       PaymentStatus?
   toStatus         PaymentStatus
@@ -339,9 +381,11 @@ model PaymentStatusEvent {
   metadata         Json?
   createdAt        DateTime                 @default(now())
   payment          Payment                  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  paymentAttempt   PaymentAttempt?          @relation(fields: [paymentAttemptId], references: [id], onDelete: SetNull)
   order            Order                    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@unique([providerEventId])
+  @@index([paymentAttemptId, createdAt])
   @@index([paymentId, createdAt])
   @@index([orderId, createdAt])
   @@index([providerObjectId])

@@ -198,10 +198,32 @@ export type PaymentStatus =
   | "REFUNDED"
   | "DISPUTED";
 export type PaymentStatusEventSource = "SYSTEM" | "ADMIN_MANUAL" | "ADMIN_SYNC" | "STRIPE_WEBHOOK";
+export type PaymentAttemptStatus = "OPEN" | "COMPLETED" | "EXPIRED" | "FAILED" | "CANCELED";
+
+export type PaymentAttempt = {
+  id: string;
+  paymentId: string;
+  orderId: string;
+  provider: string;
+  providerAttemptId: string;
+  providerPaymentIntentId: string | null;
+  status: PaymentAttemptStatus;
+  amount: string;
+  currency: string;
+  expiresAt: string | null;
+  completedAt: string | null;
+  expiredAt: string | null;
+  failedAt: string | null;
+  canceledAt: string | null;
+  metadata: unknown | null;
+  createdAt: string;
+  updatedAt: string;
+};
 
 export type PaymentStatusEvent = {
   id: string;
   paymentId: string;
+  paymentAttemptId: string | null;
   orderId: string;
   fromStatus: PaymentStatus | null;
   toStatus: PaymentStatus;
@@ -225,6 +247,7 @@ export type Payment = {
   metadata: unknown | null;
   createdAt: string;
   updatedAt: string;
+  attempts: PaymentAttempt[];
   statusEvents: PaymentStatusEvent[];
 };
 
@@ -394,6 +417,7 @@ export type ShipmentWithOrder = Shipment & {
 export type StripeCheckoutSession = {
   clientSecret: string;
   checkoutSessionId: string;
+  paymentAttempt: PaymentAttempt;
   payment: PaymentWithOrder;
 };
 

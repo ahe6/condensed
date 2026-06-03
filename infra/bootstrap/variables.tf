@@ -13,7 +13,7 @@ variable "aws_profile" {
 variable "project" {
   description = "Short project name used in resource names and tags."
   type        = string
-  default     = "tele"
+  default     = "health"
 }
 
 variable "state_bucket_name" {

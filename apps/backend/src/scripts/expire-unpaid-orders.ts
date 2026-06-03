@@ -1,11 +1,11 @@
-import { expireUnpaidOrders } from "../modules/orders/orders.service.js";
+import { reconcileStripeCheckoutSessions } from "../modules/payments/payments.service.js";
 import { prisma } from "../prisma.js";
 
 const olderThanMinutes = parsePositiveInt(process.env.ORDER_EXPIRY_MINUTES, 15);
 const batchSize = parsePositiveInt(process.env.ORDER_EXPIRY_BATCH_SIZE, 50);
 
 try {
-  const result = await expireUnpaidOrders({
+  const result = await reconcileStripeCheckoutSessions({
     batchSize,
     olderThanMinutes
   });

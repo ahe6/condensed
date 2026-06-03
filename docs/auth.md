@@ -4,9 +4,9 @@ Authentication uses Amazon Cognito. The app stack can stay local while Cognito r
 
 ## Current State
 
-- Cognito is deployed in auth-only mode.
-- Local Postgres remains the active development database.
-- Costly AWS app resources such as VPC, RDS, ECR, ECS, and ALB are not deployed.
+- Cognito is deployed as part of the `health-dev` AWS dev stack.
+- Local Postgres remains the active local development database.
+- AWS dev also has private RDS, ECR, ECS, and public backend/frontend ALBs deployed.
 - New signups use link-based email confirmation.
 - Backend admin routes require Cognito `admin` group membership.
 
@@ -14,8 +14,8 @@ Authentication uses Amazon Cognito. The app stack can stay local while Cognito r
 
 Terraform manages Cognito in `infra/envs/dev/auth.tf`:
 
-- User pool: `tele-dev`
-- Hosted UI domain
+- User pool: `health-dev`
+- Hosted UI domain: `https://health-dev-173748329850.auth.us-east-2.amazoncognito.com`
 - Public frontend app client using authorization code flow with PKCE
 - `admin` user group
 - Link-based email confirmation
@@ -54,6 +54,8 @@ Use `http://localhost:3001` consistently during local auth testing.
 7. Backend links the Cognito `sub` to local `users.externalAuthId`.
 
 Do not mix `localhost` and `127.0.0.1` in the same login attempt. Browser storage is origin-specific, and PKCE state must be read from the same origin that started login.
+
+Deployed AWS dev frontend login uses HTTPS at `https://dev.condensedhealth.com`. Terraform registers `https://dev.condensedhealth.com/auth/callback` as a Cognito callback URL and `https://dev.condensedhealth.com` as a logout URL. If the domain changes, update `frontend_domain`, complete ACM DNS validation through Cloudflare, apply Terraform, and redeploy the frontend so Cognito config is included in the image.
 
 ## Signup Confirmation
 

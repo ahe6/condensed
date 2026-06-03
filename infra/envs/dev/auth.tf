@@ -42,8 +42,8 @@ resource "aws_cognito_user_pool" "main" {
 
   verification_message_template {
     default_email_option  = "CONFIRM_WITH_LINK"
-    email_message_by_link = "Confirm your Tele account by selecting {##Confirm account##}."
-    email_subject_by_link = "Confirm your Tele account"
+    email_message_by_link = "Confirm your Health account by selecting {##Confirm account##}."
+    email_subject_by_link = "Confirm your Health account"
   }
 }
 
@@ -61,8 +61,8 @@ resource "aws_cognito_user_pool_client" "frontend" {
   allowed_oauth_flows                  = ["code"]
   allowed_oauth_flows_user_pool_client = true
   allowed_oauth_scopes                 = ["email", "openid", "profile"]
-  callback_urls                        = var.auth_callback_urls
-  logout_urls                          = var.auth_logout_urls
+  callback_urls                        = local.auth_callback_urls
+  logout_urls                          = local.auth_logout_urls
   supported_identity_providers         = ["COGNITO"]
 
   explicit_auth_flows = [

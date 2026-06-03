@@ -10,6 +10,8 @@ dist
 *.tsbuildinfo
 .env
 **/.env
+.env.*
+**/.env.*
 *.tfstate
 *.tfstate.*
 npm-debug.log*

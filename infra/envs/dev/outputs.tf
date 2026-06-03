@@ -33,6 +33,11 @@ output "backend_ecr_repository_url" {
   value       = local.deploy_app_stack ? aws_ecr_repository.backend[0].repository_url : null
 }
 
+output "frontend_ecr_repository_url" {
+  description = "ECR repository URL for frontend Docker images."
+  value       = local.deploy_app_stack ? aws_ecr_repository.frontend[0].repository_url : null
+}
+
 output "ecs_cluster_name" {
   description = "ECS cluster name for dev workloads."
   value       = local.deploy_app_stack ? aws_ecs_cluster.main[0].name : null
@@ -61,6 +66,57 @@ output "orders_expiry_schedule_name" {
 output "backend_load_balancer_dns_name" {
   description = "Public DNS name for the backend load balancer when the backend service is enabled."
   value       = local.deploy_app_stack && var.backend_service_enabled ? aws_lb.backend[0].dns_name : null
+}
+
+output "frontend_load_balancer_dns_name" {
+  description = "Public DNS name for the frontend load balancer when the frontend service is enabled."
+  value       = local.deploy_frontend_service ? aws_lb.frontend[0].dns_name : null
+}
+
+output "backend_public_url" {
+  description = "Public backend API URL. Uses backend_domain over HTTPS after certificate validation is enabled, otherwise the backend ALB HTTP URL."
+  value = local.deploy_app_stack && var.backend_service_enabled ? (
+    local.backend_https_enabled ? local.backend_public_url : "http://${aws_lb.backend[0].dns_name}"
+  ) : null
+}
+
+output "frontend_public_url" {
+  description = "Public frontend URL. Uses frontend_domain over HTTPS after certificate validation is enabled, otherwise the frontend ALB HTTP URL."
+  value = local.deploy_frontend_service ? (
+    local.frontend_https_enabled ? local.frontend_public_url : "http://${aws_lb.frontend[0].dns_name}"
+  ) : null
+}
+
+output "backend_domain" {
+  description = "Configured backend API hostname, if any."
+  value       = local.backend_domain
+}
+
+output "frontend_domain" {
+  description = "Configured frontend hostname, if any."
+  value       = local.frontend_domain
+}
+
+output "backend_acm_validation_records" {
+  description = "DNS CNAME records to add for backend ACM certificate validation."
+  value = local.deploy_app_stack && var.backend_service_enabled && local.backend_domain != "" ? [
+    for option in aws_acm_certificate.backend[0].domain_validation_options : {
+      name  = option.resource_record_name
+      type  = option.resource_record_type
+      value = option.resource_record_value
+    }
+  ] : []
+}
+
+output "frontend_acm_validation_records" {
+  description = "DNS CNAME records to add for frontend ACM certificate validation."
+  value = local.deploy_frontend_service && local.frontend_domain != "" ? [
+    for option in aws_acm_certificate.frontend[0].domain_validation_options : {
+      name  = option.resource_record_name
+      type  = option.resource_record_type
+      value = option.resource_record_value
+    }
+  ] : []
 }
 
 output "cognito_user_pool_id" {

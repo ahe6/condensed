@@ -1,4 +1,4 @@
-bucket  = "tele-terraform-state-ACCOUNTID-us-east-2"
+bucket  = "health-terraform-state-ACCOUNTID-us-east-2"
 key     = "envs/dev/terraform.tfstate"
 region  = "us-east-2"
 profile = "dev"

@@ -1817,15 +1817,17 @@ output {
 .style-lab-shell {
   position: relative;
   isolation: isolate;
-  width: min(1280px, calc(100% - 32px));
+  width: min(1320px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 30px 0 48px;
-  color: #191714;
+  padding: 28px 0 56px;
+  color: #17130f;
   font-family:
-    "Sofia Pro", "Inter", "Helvetica Neue", Arial, ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, sans-serif;
-  font-size: 17px;
-  line-height: 1.42;
+    Inter, "Helvetica Neue", Arial, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
 }
 
 .style-lab-shell::before {
@@ -1835,46 +1837,65 @@ output {
   z-index: -1;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(248, 240, 223, 0.98) 0%, rgba(251, 244, 231, 0.98) 44%, #f0eadf 100%),
-    radial-gradient(circle at 8% 18%, rgba(216, 136, 98, 0.18), transparent 28%),
-    radial-gradient(circle at 88% 14%, rgba(111, 127, 96, 0.2), transparent 30%);
+    linear-gradient(90deg, rgba(23, 19, 15, 0.035) 1px, transparent 1px) 0 0 / 72px 72px,
+    linear-gradient(180deg, rgba(255, 251, 242, 0.94) 0%, rgba(246, 236, 218, 0.96) 42%, #ece2d2 100%);
 }
 
 .style-lab-button {
-  min-height: 42px;
+  min-height: 48px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 18px;
-  border: 1px solid #d7d2c7;
-  border-radius: 999px;
-  background: #fffaf1;
-  color: #191714;
-  font-size: 0.95rem;
-  font-weight: 800;
+  padding: 0 22px;
+  border: 1px solid rgba(23, 19, 15, 0.22);
+  border-radius: 4px;
+  background: rgba(255, 251, 242, 0.88);
+  color: #17130f;
+  font-size: 0.94rem;
+  font-weight: 650;
   text-decoration: none;
+  box-shadow: inset 0 -1px 0 rgba(23, 19, 15, 0.08);
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
+}
+
+.style-lab-button:hover {
+  border-color: rgba(23, 19, 15, 0.45);
+  background: #fffaf1;
+  box-shadow: 0 8px 18px rgba(51, 38, 22, 0.12);
+  transform: translateY(-1px);
 }
 
 .style-lab-button.primary {
   border-color: #17130f;
   background: #17130f;
   color: #fffaf1;
+  box-shadow: 0 10px 22px rgba(23, 19, 15, 0.18);
+}
+
+.style-lab-button.primary:hover {
+  background: #2a2118;
 }
 
 .style-lab-hero {
-  min-height: 650px;
+  min-height: 620px;
   position: relative;
   display: grid;
   align-items: center;
   overflow: hidden;
   margin-bottom: 14px;
-  padding: 54px 40px;
-  border: 1px solid #ddd6c8;
-  border-radius: 26px;
+  padding: 58px 44px 50px;
+  border: 1px solid rgba(59, 46, 31, 0.22);
+  border-radius: 8px;
   background:
-    linear-gradient(90deg, rgba(250, 239, 216, 0.98) 0%, rgba(250, 239, 216, 0.9) 30%, rgba(250, 239, 216, 0.3) 58%, rgba(250, 239, 216, 0.08) 100%),
+    linear-gradient(90deg, rgba(255, 247, 232, 0.99) 0%, rgba(255, 247, 232, 0.92) 31%, rgba(255, 247, 232, 0.36) 58%, rgba(255, 247, 232, 0.08) 100%),
     url("/style-lab/editorial-hero.png") center / cover no-repeat;
-  box-shadow: 0 18px 50px rgba(72, 50, 28, 0.08);
+  box-shadow:
+    0 22px 55px rgba(59, 46, 31, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .style-lab-hero-brand {
@@ -1891,19 +1912,20 @@ output {
 
 .style-lab-hero-brand strong {
   font-size: 1.55rem;
-  font-weight: 800;
+  font-weight: 750;
   letter-spacing: 0;
 }
 
 .style-lab-hero-brand span {
-  color: #5f5647;
-  font-size: 0.95rem;
-  font-weight: 800;
-  padding: 7px 12px;
-  border: 1px solid rgba(95, 86, 71, 0.16);
-  border-radius: 999px;
-  background: rgba(255, 250, 241, 0.42);
-  backdrop-filter: blur(8px);
+  color: #4d4335;
+  font-size: 0.9rem;
+  font-weight: 650;
+  padding: 8px 12px;
+  border: 1px solid rgba(95, 86, 71, 0.2);
+  border-radius: 4px;
+  background: rgba(255, 250, 241, 0.68);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px);
 }
 
 .style-lab-hero::after {
@@ -1912,7 +1934,7 @@ output {
   inset: auto 0 0;
   height: 34%;
   pointer-events: none;
-  background: linear-gradient(180deg, transparent, rgba(31, 25, 18, 0.18));
+  background: linear-gradient(180deg, transparent, rgba(31, 25, 18, 0.24));
 }
 
 .style-lab-hero-copy {
@@ -1920,32 +1942,33 @@ output {
   z-index: 1;
   display: grid;
   align-content: center;
-  gap: 18px;
-  max-width: 680px;
+  gap: 16px;
+  max-width: 620px;
 }
 
 .style-lab-eyebrow {
-  color: #716452;
-  font-size: 0.9rem;
-  font-weight: 800;
+  color: #76624d;
+  font-size: 0.76rem;
+  font-weight: 700;
   letter-spacing: 0;
-  text-transform: none;
+  text-transform: uppercase;
 }
 
 .style-lab-hero h1 {
-  max-width: 700px;
-  font-size: 5.65rem;
-  font-weight: 800;
-  line-height: 0.92;
+  max-width: 630px;
+  font-size: 4.15rem;
+  font-weight: 700;
+  line-height: 1.04;
   letter-spacing: 0;
+  text-wrap: balance;
 }
 
 .style-lab-hero-copy > p:not(.style-lab-eyebrow) {
-  max-width: 580px;
-  color: #5f5647;
-  font-size: 1.22rem;
+  max-width: 540px;
+  color: #463d32;
+  font-size: 1.06rem;
   font-weight: 500;
-  line-height: 1.48;
+  line-height: 1.66;
 }
 
 .style-lab-actions {
@@ -1971,56 +1994,24 @@ output {
   display: inline-flex;
   align-items: center;
   padding: 0 14px;
-  border: 1px solid rgba(255, 250, 241, 0.34);
-  border-radius: 999px;
-  background: rgba(25, 23, 20, 0.52);
+  border: 1px solid rgba(255, 250, 241, 0.4);
+  border-radius: 4px;
+  background: rgba(23, 19, 15, 0.64);
   color: #fffaf1;
-  font-size: 0.86rem;
-  font-weight: 800;
+  font-size: 0.74rem;
+  font-weight: 750;
+  text-transform: uppercase;
   backdrop-filter: blur(10px);
-}
-
-.style-lab-proof-strip {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1px;
-  overflow: hidden;
-  margin-bottom: 26px;
-  border: 1px solid #ddd6c8;
-  border-radius: 18px;
-  background: #ddd6c8;
-}
-
-.style-lab-proof-strip article {
-  min-height: 96px;
-  display: grid;
-  align-content: center;
-  gap: 6px;
-  padding: 18px;
-  background: rgba(255, 250, 241, 0.72);
-}
-
-.style-lab-proof-strip span {
-  color: #716452;
-  font-size: 0.85rem;
-  font-weight: 800;
-}
-
-.style-lab-proof-strip strong {
-  max-width: 280px;
-  font-size: 1.08rem;
-  line-height: 1.12;
 }
 
 .style-lab-hero-card,
 .style-lab-product-card,
 .style-lab-detail,
-.style-lab-cart,
-.style-lab-palette,
-.style-lab-categories article {
-  border: 1px solid #ddd6c8;
-  border-radius: 16px;
+.style-lab-cart {
+  border: 1px solid rgba(59, 46, 31, 0.18);
+  border-radius: 8px;
   background: #fffaf1;
+  box-shadow: 0 10px 25px rgba(59, 46, 31, 0.08);
 }
 
 .style-lab-hero-card {
@@ -2042,16 +2033,16 @@ output {
 .style-lab-product-card p,
 .style-lab-detail-buy span,
 .style-lab-cart-summary span {
-  color: #756956;
+  color: #6c5d4d;
   font-size: 0.9rem;
   font-weight: 700;
 }
 
 .style-lab-hero-card strong,
 .style-lab-product-card h3 {
-  font-size: 1.28rem;
-  font-weight: 800;
-  line-height: 1.05;
+  font-size: 1.17rem;
+  font-weight: 700;
+  line-height: 1.16;
 }
 
 .style-lab-product-art,
@@ -2064,6 +2055,16 @@ output {
   color: #3f4f3d;
   font-size: 3rem;
   font-weight: 950;
+}
+
+.style-lab-product-art::after,
+.style-lab-detail-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 38%);
+  box-shadow: inset 0 -1px 0 rgba(23, 19, 15, 0.14);
 }
 
 .style-lab-product-art img,
@@ -2086,112 +2087,19 @@ output {
   background: #d9ded8;
 }
 
-.style-lab-categories {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.style-lab-categories article {
-  min-height: 96px;
-  display: grid;
-  align-content: end;
-  gap: 6px;
-  padding: 16px;
-  overflow: hidden;
-  position: relative;
-}
-
-.style-lab-categories article::before {
-  content: "";
-  width: 88px;
-  height: 88px;
-  position: absolute;
-  top: -26px;
-  right: -20px;
-  border-radius: 999px;
-  background: rgba(255, 250, 241, 0.35);
-}
-
-.style-lab-categories article.style-lab-category-sage {
-  background: #dfe7df;
-}
-
-.style-lab-categories article.style-lab-category-ink {
-  background: #1e2520;
-  color: #fffaf1;
-}
-
-.style-lab-categories article.style-lab-category-cream {
-  background: #f3dfb3;
-}
-
-.style-lab-categories article.style-lab-category-clay {
-  background: #d88862;
-  color: #fffaf1;
-}
-
-.style-lab-categories span {
-  position: relative;
-  z-index: 1;
-  color: currentColor;
-  opacity: 0.72;
-  font-size: 0.9rem;
-  font-weight: 800;
-  text-transform: none;
-}
-
-.style-lab-categories strong {
-  position: relative;
-  z-index: 1;
-  font-size: 1.15rem;
-  font-weight: 800;
-  line-height: 1.05;
-}
-
-.style-lab-palette {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 18px;
-  align-items: center;
-  margin-bottom: 0;
-  padding: 18px;
-}
-
-.style-lab-palette h2 {
-  max-width: 620px;
-  font-size: 2.35rem;
-  font-weight: 800;
-  line-height: 0.98;
-}
-
-.style-lab-swatches {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.style-lab-swatches span {
-  width: 54px;
-  height: 54px;
-  display: block;
-  border: 1px solid #d7d2c7;
-  border-radius: 50%;
-}
-
 .style-lab-section,
 .style-lab-detail-band,
 .style-lab-cart-band {
   margin-inline: -18px;
   padding: 28px 18px;
-  border-radius: 22px;
+  border-radius: 8px;
 }
 
 .style-lab-section {
   margin-top: 24px;
   margin-bottom: 28px;
-  background: #e4eadf;
+  border: 1px solid rgba(57, 76, 50, 0.16);
+  background: linear-gradient(180deg, #e9efe3 0%, #dfe9d7 100%);
 }
 
 .style-lab-section-heading {
@@ -2203,10 +2111,11 @@ output {
 .style-lab-section-heading h2,
 .style-lab-detail h2,
 .style-lab-cart h2 {
-  font-size: 2.8rem;
-  font-weight: 800;
-  line-height: 0.95;
+  font-size: 2.2rem;
+  font-weight: 650;
+  line-height: 1.12;
   letter-spacing: 0;
+  text-wrap: balance;
 }
 
 .style-lab-product-grid {
@@ -2217,11 +2126,25 @@ output {
 
 .style-lab-product-card {
   overflow: hidden;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.62),
+    0 12px 24px rgba(57, 76, 50, 0.11);
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
 }
 
 .style-lab-product-card .style-lab-product-art {
   aspect-ratio: 4 / 3;
   font-size: 2.4rem;
+  border-bottom: 1px solid rgba(59, 46, 31, 0.14);
+}
+
+.style-lab-product-card:hover {
+  border-color: rgba(23, 19, 15, 0.32);
+  box-shadow: 0 18px 34px rgba(57, 76, 50, 0.16);
+  transform: translateY(-3px);
 }
 
 .style-lab-product-card:hover .style-lab-product-art img,
@@ -2246,9 +2169,16 @@ output {
 .style-lab-detail-buy button,
 .style-lab-cart-summary button {
   border-color: #17130f;
-  border-radius: 999px;
+  border-radius: 4px;
   background: #17130f;
   color: #fffaf1;
+  box-shadow: 0 10px 18px rgba(23, 19, 15, 0.13);
+}
+
+.style-lab-product-buy button:hover,
+.style-lab-detail-buy button:hover,
+.style-lab-cart-summary button:hover {
+  background: #2a2118;
 }
 
 .style-lab-detail {
@@ -2261,7 +2191,8 @@ output {
 
 .style-lab-detail-band {
   margin-bottom: 28px;
-  background: #f7dfcf;
+  border: 1px solid rgba(184, 92, 56, 0.16);
+  background: linear-gradient(180deg, #f7dfcf 0%, #f0cdb8 100%);
 }
 
 .style-lab-detail-art {
@@ -2273,6 +2204,9 @@ output {
   align-content: center;
   gap: 18px;
   padding: 34px;
+  background:
+    linear-gradient(180deg, rgba(255, 250, 241, 0.96), rgba(255, 246, 233, 0.96)),
+    #fffaf1;
 }
 
 .style-lab-detail article > p:not(.style-lab-eyebrow) {
@@ -2291,13 +2225,14 @@ output {
   display: grid;
   place-items: center;
   padding: 8px;
-  border: 1px solid #ddd6c8;
-  border-radius: 999px;
-  color: #5f5647;
-  font-size: 0.85rem;
-  font-weight: 800;
+  border: 1px solid rgba(59, 46, 31, 0.16);
+  border-radius: 4px;
+  background: rgba(255, 250, 241, 0.64);
+  color: #514536;
+  font-size: 0.78rem;
+  font-weight: 700;
   text-align: center;
-  text-transform: none;
+  text-transform: uppercase;
 }
 
 .style-lab-detail label {
@@ -2313,9 +2248,19 @@ output {
 }
 
 .style-lab-detail select {
-  border-color: #d7d2c7;
-  border-radius: 12px;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid rgba(59, 46, 31, 0.22);
+  border-radius: 4px;
   background: #fffaf1;
+  color: #17130f;
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.style-lab-detail select:focus {
+  outline: 2px solid rgba(184, 92, 56, 0.28);
+  outline-offset: 2px;
 }
 
 .style-lab-detail-buy {
@@ -2336,8 +2281,12 @@ output {
   gap: 18px;
   align-items: center;
   padding: 26px;
-  background: #1e2520;
+  border-color: rgba(255, 250, 241, 0.18);
+  background:
+    linear-gradient(135deg, rgba(255, 250, 241, 0.06), transparent 44%),
+    #1b211d;
   color: #fffaf1;
+  box-shadow: 0 16px 36px rgba(23, 19, 15, 0.18);
 }
 
 .style-lab-cart .style-lab-eyebrow,
@@ -2396,14 +2345,8 @@ output {
     font-size: 3.4rem;
   }
 
-  .style-lab-categories,
-  .style-lab-proof-strip,
   .style-lab-product-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .style-lab-palette {
-    grid-template-columns: 1fr;
   }
 
   .side-stack {
@@ -2506,11 +2449,8 @@ output {
     justify-content: flex-start;
   }
 
-  .style-lab-categories,
   .style-lab-product-grid,
   .style-lab-pills,
-  .style-lab-palette,
-  .style-lab-proof-strip,
   .style-lab-cart-summary {
     grid-template-columns: 1fr;
   }

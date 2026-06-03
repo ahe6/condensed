@@ -13,7 +13,7 @@ variable "aws_profile" {
 variable "project" {
   description = "Short project name used in resource names and tags."
   type        = string
-  default     = "tele"
+  default     = "health"
 }
 
 variable "environment" {
@@ -53,13 +53,13 @@ variable "app_subnet_cidr_blocks" {
 variable "postgres_db_name" {
   description = "Initial Postgres database name."
   type        = string
-  default     = "tele"
+  default     = "health"
 }
 
 variable "postgres_username" {
   description = "Postgres master username. AWS manages the password in Secrets Manager."
   type        = string
-  default     = "tele_admin"
+  default     = "health_admin"
 }
 
 variable "postgres_instance_class" {
@@ -100,6 +100,12 @@ variable "deploy_app_stack" {
 
 variable "backend_service_enabled" {
   description = "Whether to run the backend ECS service and public load balancer."
+  type        = bool
+  default     = false
+}
+
+variable "frontend_service_enabled" {
+  description = "Whether to run the frontend ECS service and public load balancer."
   type        = bool
   default     = false
 }
@@ -162,6 +168,64 @@ variable "backend_memory" {
   description = "Backend ECS task memory in MiB."
   type        = number
   default     = 512
+}
+
+variable "frontend_image_tag" {
+  description = "Docker image tag to deploy for the frontend ECS service."
+  type        = string
+  default     = "latest"
+}
+
+variable "frontend_container_port" {
+  description = "Port exposed by the frontend container."
+  type        = number
+  default     = 3001
+}
+
+variable "frontend_desired_count" {
+  description = "Number of frontend ECS tasks to run."
+  type        = number
+  default     = 1
+}
+
+variable "frontend_cpu" {
+  description = "Frontend ECS task CPU units."
+  type        = number
+  default     = 256
+}
+
+variable "frontend_memory" {
+  description = "Frontend ECS task memory in MiB."
+  type        = number
+  default     = 512
+}
+
+variable "frontend_domain" {
+  description = "Optional custom hostname for the frontend, without scheme. When set, Cognito callbacks and deployed URLs use HTTPS."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.frontend_domain == "" || !can(regex("[:/]", var.frontend_domain))
+    error_message = "frontend_domain must be a hostname only, without http://, https://, or a path."
+  }
+}
+
+variable "backend_domain" {
+  description = "Optional custom hostname for the backend API, without scheme. When set, deployed frontend builds use the HTTPS API URL."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.backend_domain == "" || !can(regex("[:/]", var.backend_domain))
+    error_message = "backend_domain must be a hostname only, without http://, https://, or a path."
+  }
+}
+
+variable "validate_domain_certificates" {
+  description = "Whether Terraform should wait for ACM DNS validation and attach HTTPS listeners. Set true after adding the ACM validation CNAMEs in DNS."
+  type        = bool
+  default     = false
 }
 
 variable "stripe_api_key_secret_arn" {

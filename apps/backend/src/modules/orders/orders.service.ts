@@ -9,6 +9,11 @@ export const orderInclude = {
   items: true,
   payments: {
     include: {
+      attempts: {
+        orderBy: {
+          createdAt: "asc" as const
+        }
+      },
       statusEvents: {
         orderBy: {
           createdAt: "asc" as const
@@ -232,6 +237,10 @@ export async function cancelOrder(orderId: string) {
   });
 }
 
+export async function cancelUnpaidOrderAndReleaseInventory(orderId: string, releasedAt = new Date()) {
+  return prisma.$transaction(async (tx) => cancelUnpaidOrderAndReleaseInventoryTx(tx, orderId, releasedAt));
+}
+
 export function markOrderPlaced(orderId: string) {
   return prisma.order.update({
     where: {
@@ -337,44 +346,73 @@ async function cancelOrderAndReleaseInventory(
       return null;
     }
 
-    const updateResult = await tx.order.updateMany({
+    return cancelUnpaidOrderAndReleaseInventoryTx(tx, order.id, releasedAt);
+  });
+}
+
+async function cancelUnpaidOrderAndReleaseInventoryTx(
+  tx: Prisma.TransactionClient,
+  orderId: string,
+  releasedAt = new Date()
+) {
+  const order = await tx.order.findFirst({
+    where: {
+      id: orderId,
+      fulfillmentStatus: FulfillmentStatus.UNFULFILLED,
+      inventoryReleasedAt: null,
+      paymentStatus: {
+        in: [PaymentStatus.UNPAID, PaymentStatus.FAILED, PaymentStatus.EXPIRED]
+      },
+      status: {
+        in: [OrderStatus.PENDING, OrderStatus.PLACED]
+      }
+    },
+    include: {
+      items: true
+    }
+  });
+
+  if (!order) {
+    return null;
+  }
+
+  const updateResult = await tx.order.updateMany({
+    where: {
+      id: order.id,
+      inventoryReleasedAt: null
+    },
+    data: {
+      inventoryReleasedAt: releasedAt,
+      status: OrderStatus.CANCELLED
+    }
+  });
+
+  if (updateResult.count !== 1) {
+    return null;
+  }
+
+  for (const item of order.items) {
+    if (!item.variantId) {
+      continue;
+    }
+
+    await tx.productVariant.update({
       where: {
-        id: order.id,
-        inventoryReleasedAt: null
+        id: item.variantId
       },
       data: {
-        inventoryReleasedAt: releasedAt,
-        status: OrderStatus.CANCELLED
-      }
-    });
-
-    if (updateResult.count !== 1) {
-      return null;
-    }
-
-    for (const item of order.items) {
-      if (!item.variantId) {
-        continue;
-      }
-
-      await tx.productVariant.update({
-        where: {
-          id: item.variantId
-        },
-        data: {
-          inventoryQuantity: {
-            increment: item.quantity
-          }
+        inventoryQuantity: {
+          increment: item.quantity
         }
-      });
-    }
-
-    return tx.order.findUniqueOrThrow({
-      where: {
-        id: order.id
-      },
-      include: orderInclude
+      }
     });
+  }
+
+  return tx.order.findUniqueOrThrow({
+    where: {
+      id: order.id
+    },
+    include: orderInclude
   });
 }
 

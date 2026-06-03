@@ -61,9 +61,10 @@ Order creation is the boundary where mutable cart data becomes durable purchase 
 Unpaid order expiry:
 
 ```text
-scheduled/manual job scans old unpaid, unfulfilled orders
-  -> expire open Stripe Checkout Sessions
-  -> mark eligible orders cancelled
+scheduled/manual job scans old open local Stripe Checkout attempts
+  -> retrieve Checkout Session state from Stripe
+  -> leave locally open attempts open when Stripe still reports open
+  -> mark expired attempts/orders only when Stripe reports expired
   -> restore order item quantities to variants
   -> set inventoryReleasedAt so release is not repeated
 ```
@@ -137,5 +138,5 @@ Recommended sequence:
 
 1. Add SES sending for pending notification events.
 2. Add retry handling for failed notification events.
-3. Schedule unpaid-order expiry in AWS.
+3. Maintain scheduled Stripe Checkout reconciliation in AWS.
 4. Add carrier label purchase or live carrier status sync when fulfillment leaves manual operations.

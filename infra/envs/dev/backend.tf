@@ -69,6 +69,17 @@ resource "aws_vpc_security_group_ingress_rule" "alb_http" {
   description       = "Public HTTP"
 }
 
+resource "aws_vpc_security_group_ingress_rule" "alb_https" {
+  count = local.backend_https_enabled ? 1 : 0
+
+  security_group_id = aws_security_group.alb[0].id
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = 443
+  ip_protocol       = "tcp"
+  to_port           = 443
+  description       = "Public HTTPS"
+}
+
 resource "aws_vpc_security_group_egress_rule" "alb_backend" {
   count = local.deploy_app_stack && var.backend_service_enabled ? 1 : 0
 
@@ -121,12 +132,63 @@ resource "aws_lb_target_group" "backend" {
   }
 }
 
-resource "aws_lb_listener" "backend_http" {
-  count = local.deploy_app_stack && var.backend_service_enabled ? 1 : 0
+resource "aws_acm_certificate" "backend" {
+  count = local.deploy_app_stack && var.backend_service_enabled && local.backend_domain != "" ? 1 : 0
+
+  domain_name       = local.backend_domain
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_acm_certificate_validation" "backend" {
+  count = local.backend_https_enabled ? 1 : 0
+
+  certificate_arn         = aws_acm_certificate.backend[0].arn
+  validation_record_fqdns = [for option in aws_acm_certificate.backend[0].domain_validation_options : option.resource_record_name]
+}
+
+resource "aws_lb_listener" "backend_http_forward" {
+  count = local.deploy_app_stack && var.backend_service_enabled && !local.backend_https_enabled ? 1 : 0
 
   load_balancer_arn = aws_lb.backend[0].arn
   port              = 80
   protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.backend[0].arn
+  }
+}
+
+resource "aws_lb_listener" "backend_http_redirect" {
+  count = local.backend_https_enabled ? 1 : 0
+
+  load_balancer_arn = aws_lb.backend[0].arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+}
+
+resource "aws_lb_listener" "backend_https" {
+  count = local.backend_https_enabled ? 1 : 0
+
+  load_balancer_arn = aws_lb.backend[0].arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = aws_acm_certificate_validation.backend[0].certificate_arn
 
   default_action {
     type             = "forward"
@@ -299,7 +361,7 @@ resource "aws_ecs_task_definition" "backend" {
         },
         {
           name  = "APP_BASE_URL"
-          value = var.app_base_url
+          value = local.backend_app_base_url
         }
       ]
       secrets = concat(
@@ -414,7 +476,9 @@ resource "aws_ecs_service" "backend" {
   }
 
   depends_on = [
-    aws_lb_listener.backend_http,
+    aws_lb_listener.backend_http_forward,
+    aws_lb_listener.backend_http_redirect,
+    aws_lb_listener.backend_https,
     aws_iam_role_policy_attachment.backend_task_execution,
     aws_iam_role_policy.backend_task_execution_secrets
   ]

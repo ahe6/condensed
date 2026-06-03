@@ -25,36 +25,27 @@ const products = [
   }
 ];
 
-const categories = [
-  { name: "Workspace", tone: "sage" },
-  { name: "Carry", tone: "ink" },
-  { name: "Home", tone: "cream" },
-  { name: "Gifts", tone: "clay" }
-];
-
-const swatches = ["#17130f", "#6f7f60", "#c86f48", "#f3dfb3", "#f8f0df"];
-
 export default function StyleLabPage() {
   return (
     <main className="style-lab-shell">
       <section className="style-lab-hero" aria-label="Storefront concept">
         <div className="style-lab-hero-brand" aria-label="Storefront brand">
-          <strong>tele</strong>
-          <span>small catalog / useful goods</span>
+          <strong>health</strong>
+          <span>Small catalog / reliable shipping</span>
         </div>
         <div className="style-lab-hero-copy">
-          <p className="style-lab-eyebrow">storefront direction a</p>
-          <h1>everyday goods, edited down to what earns a place.</h1>
+          <p className="style-lab-eyebrow">Desk and daily carry</p>
+          <h1>Useful goods for better everyday routines.</h1>
           <p>
-            a softer direct-to-consumer storefront direction with confident type, quiet surfaces,
-            and product-first cards.
+            Durable accessories for work, home, and travel. Live inventory, secure checkout, and
+            tracked delivery on every order.
           </p>
           <div className="style-lab-actions">
             <a className="style-lab-button primary" href="#products">
-              start shopping
+              Shop arrivals
             </a>
             <a className="style-lab-button" href="#detail">
-              view product
+              See daily mug
             </a>
           </div>
         </div>
@@ -65,46 +56,10 @@ export default function StyleLabPage() {
         </div>
       </section>
 
-      <section className="style-lab-proof-strip" aria-label="Storefront reassurance">
-        <article>
-          <span>01</span>
-          <strong>small catalog, easier decisions</strong>
-        </article>
-        <article>
-          <span>02</span>
-          <strong>checkout designed for repeat buying</strong>
-        </article>
-        <article>
-          <span>03</span>
-          <strong>product pages centered on the useful details</strong>
-        </article>
-      </section>
-
-      <section className="style-lab-categories" aria-label="Category tiles">
-        {categories.map((category) => (
-          <article className={`style-lab-category-${category.tone}`} key={category.name}>
-            <span>{category.name.toLowerCase()}</span>
-            <strong>shop {category.name.toLowerCase()}</strong>
-          </article>
-        ))}
-      </section>
-
-      <section className="style-lab-palette" aria-label="Color palette concept">
-        <div>
-          <p className="style-lab-eyebrow">color story</p>
-          <h2>warm neutrals with sage, clay, and ink accents.</h2>
-        </div>
-        <div className="style-lab-swatches" aria-label="Palette swatches">
-          {swatches.map((swatch) => (
-            <span key={swatch} style={{ background: swatch }} />
-          ))}
-        </div>
-      </section>
-
       <section className="style-lab-section" id="products" aria-label="Product card concepts">
         <div className="style-lab-section-heading">
-          <p className="style-lab-eyebrow">product grid</p>
-          <h2>clean cards with strong product targets.</h2>
+          <p className="style-lab-eyebrow">Popular right now</p>
+          <h2>Ready-to-ship essentials for the desk and bag.</h2>
         </div>
         <div className="style-lab-product-grid">
           {products.map((product) => (
@@ -133,10 +88,10 @@ export default function StyleLabPage() {
             <img src="/style-lab/daily-mug.png" alt="Daily Mug mock product detail" />
           </div>
           <article>
-            <p className="style-lab-eyebrow">product detail</p>
-            <h2>daily mug</h2>
+            <p className="style-lab-eyebrow">In stock today</p>
+            <h2>Daily Mug</h2>
             <p>
-              a focused product page layout with the buying controls held in one calm purchase panel.
+              Stoneware weight, soft-touch glaze, and a stable base for long desk days.
             </p>
             <div className="style-lab-pills">
               <span>live stock</span>
@@ -155,7 +110,7 @@ export default function StyleLabPage() {
                 <strong>$21.50</strong>
                 <span>98 in stock</span>
               </div>
-              <button type="button">add to cart</button>
+              <button type="button">Add to cart</button>
             </div>
           </article>
         </section>
@@ -164,8 +119,8 @@ export default function StyleLabPage() {
       <div className="style-lab-cart-band">
         <section className="style-lab-cart" id="cart" aria-label="Cart concept">
           <div>
-            <p className="style-lab-eyebrow">cart</p>
-            <h2>checkout summary</h2>
+            <p className="style-lab-eyebrow">Secure checkout</p>
+            <h2>Review, pay, and track it from your account.</h2>
           </div>
           <div className="style-lab-cart-summary">
             <article>
@@ -176,7 +131,7 @@ export default function StyleLabPage() {
               <span>total</span>
               <strong>$39.50</strong>
             </article>
-            <button type="button">continue</button>
+            <button type="button">Continue</button>
           </div>
         </section>
       </div>

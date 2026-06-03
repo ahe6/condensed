@@ -4,7 +4,7 @@ Payments are modeled locally, with Stripe used as the external payment processor
 
 ## Local Model
 
-Each order has a top-level `paymentStatus` for quick reads. Each payment attempt is stored in `payments`.
+Each order has a top-level `paymentStatus` for quick reads. The `payments` table stores the aggregate payment state for an order. The `payment_attempts` table stores provider-side attempts under a payment.
 
 Current payment statuses:
 
@@ -16,7 +16,7 @@ Current payment statuses:
 - `REFUNDED`
 - `DISPUTED`
 
-Stripe payments store the Checkout Session ID in `providerPaymentId`. Payment metadata stores Stripe details that are useful for debugging and reconciliation, such as `checkoutSessionId`, `paymentIntentId`, `chargeId`, `stripeStatus`, and dispute fields.
+Stripe payments keep the latest Checkout Session ID in `providerPaymentId` for compatibility. Each Stripe Checkout Session is stored as a `payment_attempts` row with `providerAttemptId=cs_...`, optional `providerPaymentIntentId=pi_...`, attempt status, Stripe expiration time, terminal timestamps, and attempt metadata. Payment metadata stores aggregate Stripe details that are useful for debugging and reconciliation, such as `checkoutSessionId`, `paymentIntentId`, `chargeId`, `stripeStatus`, and dispute fields.
 
 Payment status changes are stored in `payment_status_events`. This table is the audit trail for transitions like:
 
@@ -31,6 +31,7 @@ Each event stores:
 
 - `fromStatus`
 - `toStatus`
+- `paymentAttemptId` when the transition is tied to a specific attempt
 - `source`: `SYSTEM`, `ADMIN_MANUAL`, `ADMIN_SYNC`, or `STRIPE_WEBHOOK`
 - `providerEventId`: Stripe webhook event ID when available
 - `providerObjectId`: provider object such as Checkout Session, PaymentIntent, Charge, or Dispute ID
@@ -48,7 +49,7 @@ Flow:
 
 1. The frontend asks the backend for `POST /checkout/stripe`.
 2. The backend creates the local order and a card-only Stripe Checkout Session with `ui_mode: "elements"`.
-3. The backend returns the order plus Checkout Session client secret.
+3. The backend stores or reuses a local Stripe payment attempt and returns the order plus Checkout Session client secret.
 4. The frontend confirms the session in the browser.
 5. Stripe sends webhook events to the backend.
 6. The backend updates the local payment and parent order.
@@ -97,11 +98,13 @@ New checkout payments are reconciled from Checkout Session and dispute events. P
 
 `checkout.session.expired` maps to `EXPIRED`, not `FAILED`. `EXPIRED` means the customer did not complete the hosted Checkout Session before it closed. `FAILED` is reserved for actual failed payment attempts such as `checkout.session.async_payment_failed` or `payment_intent.payment_failed`.
 
+Stripe is the source of truth for Checkout Session expiration. The local scheduled job only reconciles old open attempts by retrieving the Checkout Session from Stripe. If Stripe still reports the session as open, the local order stays open. If Stripe reports `expired`, the matching attempt becomes `EXPIRED`, the aggregate payment/order moves to `EXPIRED` when no other open/completed attempt remains, and inventory is released once through `orders.inventoryReleasedAt`.
+
 ## Admin Sync
 
 Admin Stripe payment rows include `Sync Stripe`.
 
-`POST /admin/payments/:id/sync-stripe` retrieves the Checkout Session or PaymentIntent from Stripe and updates the local payment plus parent order. This is useful when:
+`POST /admin/payments/:id/sync-stripe` retrieves the latest Checkout Session or PaymentIntent from Stripe and updates the local attempt, aggregate payment, and parent order. This is useful when:
 
 - The webhook listener was stopped during local testing.
 - A webhook failed signature verification because the secret was stale.
