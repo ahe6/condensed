@@ -6,15 +6,16 @@ region="${AWS_REGION:-us-east-2}"
 terraform_dir="${TERRAFORM_DIR:-infra/envs/dev}"
 confirm="${CONFIRM:-}"
 
-if [[ "$confirm" != "health-dev" ]]; then
-  echo "Usage: CONFIRM=health-dev $0" >&2
-  echo "This resets AWS dev app data, syncs Stripe test credentials/webhook, applies Terraform, rolls backend, and deploys frontend." >&2
+if [[ "$confirm" != "delete-dev-app-data" ]]; then
+  echo "Usage: CONFIRM=delete-dev-app-data $0" >&2
+  echo "WARNING: this deletes AWS dev orders, payments, carts, addresses, notes, shipments, and notifications before reseeding catalog data." >&2
+  echo "It then syncs Stripe test credentials/webhook, applies Terraform, rolls backend, and deploys frontend." >&2
   exit 2
 fi
 
 cluster="$(terraform -chdir="$terraform_dir" output -raw ecs_cluster_name)"
 
-echo "==> Resetting and seeding AWS dev app data"
+echo "==> DELETING and reseeding AWS dev app data"
 AWS_PROFILE="$profile" AWS_REGION="$region" TERRAFORM_DIR="$terraform_dir" scripts/reset-aws-dev-data.sh --yes --seed
 
 echo "==> Syncing Stripe test secrets from .env.test"

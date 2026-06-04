@@ -107,19 +107,19 @@ The command restocks `dev-mug` to 25 units before running so repeated smoke test
 
 ## AWS Dev Smoke Test
 
-Prepare AWS dev for a clean manual checkout smoke test:
-
-```sh
-make dev-smoke-prepare CONFIRM=health-dev
-```
-
-This resets and seeds AWS dev app data, syncs Stripe test credentials from `.env.test`, ensures the Stripe test webhook endpoint points at `https://api-dev.condensedhealth.com/webhooks/stripe`, applies Terraform, rolls the backend to pick up current Secrets Manager values, and deploys the frontend.
-
 Run the non-destructive wiring check:
 
 ```sh
 make dev-smoke-check
 ```
+
+The destructive reset-and-prepare path is only for disposable AWS dev data:
+
+```sh
+make dev-reset-smoke-prepare CONFIRM=delete-dev-app-data
+```
+
+This deletes AWS dev orders, payments, carts, addresses, notes, shipments, and notifications before reseeding catalog data. It also syncs Stripe test credentials from `.env.test`, ensures the Stripe test webhook endpoint points at `https://api-dev.condensedhealth.com/webhooks/stripe`, applies Terraform, rolls the backend to pick up current Secrets Manager values, and deploys the frontend.
 
 The check verifies:
 

@@ -1398,6 +1398,104 @@ output {
   gap: 8px;
 }
 
+.payment-quick-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.stripe-payment-details {
+  display: grid;
+  gap: 10px;
+}
+
+.stripe-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.stripe-detail-grid div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.stripe-detail-grid dt {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.stripe-detail-grid dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.stripe-detail-grid a {
+  color: var(--accent);
+}
+
+.payment-warning-list {
+  display: grid;
+  gap: 6px;
+}
+
+.warning.compact {
+  margin: 0;
+  padding: 8px 10px;
+}
+
+.stripe-attempts {
+  display: grid;
+  gap: 8px;
+}
+
+.stripe-attempts summary {
+  width: fit-content;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.stripe-attempts[open] summary {
+  margin-bottom: 8px;
+}
+
+.manual-payment-actions {
+  display: grid;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.manual-payment-actions summary {
+  width: fit-content;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.manual-payment-actions[open] {
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.manual-payment-actions[open] summary {
+  margin-bottom: 8px;
+}
+
 .shipment-item-picker,
 .shipment-item-list {
   grid-column: 1 / -1;

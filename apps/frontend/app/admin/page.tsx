@@ -186,6 +186,142 @@ function eventSourceLabel(source: string) {
   return source.toLowerCase().replace(/_/g, " ");
 }
 
+function metadataRecord(metadata: unknown): Record<string, unknown> {
+  return metadata && typeof metadata === "object" && !Array.isArray(metadata)
+    ? (metadata as Record<string, unknown>)
+    : {};
+}
+
+function metadataText(metadata: unknown, key: string) {
+  const value = metadataRecord(metadata)[key];
+
+  return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
+function metadataBooleanText(metadata: unknown, key: string) {
+  const value = metadataBoolean(metadata, key);
+
+  return typeof value === "boolean" ? String(value) : null;
+}
+
+function metadataBoolean(metadata: unknown, key: string) {
+  const value = metadataRecord(metadata)[key];
+
+  return typeof value === "boolean" ? value : null;
+}
+
+function latestPaymentAttempt(payment: Payment) {
+  return payment.attempts[payment.attempts.length - 1] ?? null;
+}
+
+function latestPaymentEvent(payment: Payment) {
+  return payment.statusEvents[payment.statusEvents.length - 1] ?? null;
+}
+
+function latestStripeEvent(payment: Payment) {
+  return [...payment.statusEvents]
+    .reverse()
+    .find((event) => event.source === "STRIPE_WEBHOOK" || event.source === "ADMIN_SYNC");
+}
+
+function stripeLastUpdateAt(payment: Payment) {
+  return latestStripeEvent(payment)?.createdAt ?? metadataText(payment.metadata, "lastStripeSyncAt");
+}
+
+function stripeCheckoutSessionId(payment: Payment) {
+  return (
+    payment.providerPaymentId?.startsWith("cs_") ? payment.providerPaymentId : null
+  ) ?? metadataText(payment.metadata, "checkoutSessionId");
+}
+
+function stripePaymentIntentId(payment: Payment) {
+  return (
+    latestPaymentAttempt(payment)?.providerPaymentIntentId ??
+    metadataText(payment.metadata, "paymentIntentId")
+  );
+}
+
+function stripeChargeId(payment: Payment) {
+  return metadataText(payment.metadata, "chargeId");
+}
+
+function stripeDashboardUrl(id: string, livemode: boolean | null) {
+  const modePath = livemode === true ? "" : "/test";
+
+  if (id.startsWith("cs_")) {
+    return `https://dashboard.stripe.com${modePath}/checkout/sessions/${encodeURIComponent(id)}`;
+  }
+
+  if (id.startsWith("pi_")) {
+    return `https://dashboard.stripe.com${modePath}/payments/${encodeURIComponent(id)}`;
+  }
+
+  if (id.startsWith("ch_")) {
+    return `https://dashboard.stripe.com${modePath}/payments/${encodeURIComponent(id)}`;
+  }
+
+  return null;
+}
+
+function stripeObjectLink(id: string | null, livemode: boolean | null) {
+  if (!id) {
+    return "None";
+  }
+
+  const url = stripeDashboardUrl(id, livemode);
+
+  if (!url) {
+    return id;
+  }
+
+  return (
+    <a href={url} rel="noreferrer" target="_blank">
+      {id}
+    </a>
+  );
+}
+
+function isCompletedPaymentStatus(status: PaymentStatus) {
+  return status === "AUTHORIZED" || status === "PAID" || status === "REFUNDED" || status === "DISPUTED";
+}
+
+function paymentWarnings(order: Order, payment: Payment) {
+  if (payment.provider !== "stripe") {
+    return [];
+  }
+
+  const warnings: string[] = [];
+  const attempt = latestPaymentAttempt(payment);
+  const latestEvent = latestPaymentEvent(payment);
+  const lastStripeUpdateAt = stripeLastUpdateAt(payment);
+
+  if (!lastStripeUpdateAt) {
+    warnings.push("No Stripe webhook or sync event has updated this payment yet.");
+  }
+
+  if (latestEvent?.source === "ADMIN_MANUAL") {
+    warnings.push("Last payment status change was manual; sync Stripe before fulfillment decisions.");
+  }
+
+  if (attempt?.status === "OPEN" && payment.status === "UNPAID") {
+    warnings.push("Awaiting Stripe confirmation; webhook delivery may still be pending.");
+  }
+
+  if (attempt?.status === "OPEN" && attempt.expiresAt && new Date(attempt.expiresAt).getTime() < Date.now()) {
+    warnings.push("Latest Stripe checkout attempt is past its expiry time; run Sync Stripe or the expiry job.");
+  }
+
+  if (attempt?.status === "COMPLETED" && !isCompletedPaymentStatus(payment.status)) {
+    warnings.push("Stripe attempt is completed, but local payment status is not settled.");
+  }
+
+  if (order.paymentStatus !== payment.status && payment.status === "PAID") {
+    warnings.push(`Payment is PAID but order payment status is ${order.paymentStatus}.`);
+  }
+
+  return warnings;
+}
+
 function trackingChangeLabel(
   fromCarrier: string | null,
   fromTrackingNumber: string | null,
@@ -439,6 +575,105 @@ function AdminNotificationSection({ order }: { order: Order }) {
         </ol>
       )}
     </section>
+  );
+}
+
+function StripePaymentDetails({ order, payment }: { order: Order; payment: Payment }) {
+  const checkoutSessionId = stripeCheckoutSessionId(payment);
+  const paymentIntentId = stripePaymentIntentId(payment);
+  const chargeId = stripeChargeId(payment);
+  const attempt = latestPaymentAttempt(payment);
+  const lastStripeUpdateAt = stripeLastUpdateAt(payment);
+  const warnings = paymentWarnings(order, payment);
+  const stripeStatus = metadataText(payment.metadata, "stripeStatus");
+  const checkoutStatus = metadataText(payment.metadata, "checkoutSessionStatus");
+  const checkoutPaymentStatus = metadataText(payment.metadata, "checkoutPaymentStatus");
+  const chargeDisputed = metadataBooleanText(payment.metadata, "chargeDisputed");
+  const livemode = metadataBoolean(payment.metadata, "livemode");
+
+  return (
+    <div className="stripe-payment-details">
+      {warnings.length > 0 ? (
+        <div className="payment-warning-list" aria-label="Stripe payment warnings">
+          {warnings.map((warning) => (
+            <p className="warning compact" key={warning}>
+              {warning}
+            </p>
+          ))}
+        </div>
+      ) : null}
+
+      <dl className="stripe-detail-grid">
+        <div>
+          <dt>Checkout Session</dt>
+          <dd>{stripeObjectLink(checkoutSessionId, livemode)}</dd>
+        </div>
+        <div>
+          <dt>Payment Intent</dt>
+          <dd>{stripeObjectLink(paymentIntentId, livemode)}</dd>
+        </div>
+        <div>
+          <dt>Charge</dt>
+          <dd>{stripeObjectLink(chargeId, livemode)}</dd>
+        </div>
+        <div>
+          <dt>Latest Attempt</dt>
+          <dd>{attempt ? attempt.status : "None"}</dd>
+        </div>
+        <div>
+          <dt>Stripe Status</dt>
+          <dd>{stripeStatus ?? "Unknown"}</dd>
+        </div>
+        <div>
+          <dt>Checkout Status</dt>
+          <dd>{checkoutStatus ?? "Unknown"}</dd>
+        </div>
+        <div>
+          <dt>Checkout Payment</dt>
+          <dd>{checkoutPaymentStatus ?? "Unknown"}</dd>
+        </div>
+        <div>
+          <dt>Charge Disputed</dt>
+          <dd>{chargeDisputed ?? "Unknown"}</dd>
+        </div>
+        <div>
+          <dt>Stripe Mode</dt>
+          <dd>{livemode === null ? "Unknown" : livemode ? "Live" : "Test"}</dd>
+        </div>
+        <div>
+          <dt>Attempt Expires</dt>
+          <dd>{formatDateTime(attempt?.expiresAt ?? null)}</dd>
+        </div>
+        <div>
+          <dt>Last Stripe Update</dt>
+          <dd>{lastStripeUpdateAt ? formatDateTime(lastStripeUpdateAt) : "Never"}</dd>
+        </div>
+      </dl>
+
+      {payment.attempts.length > 0 ? (
+        <details className="stripe-attempts">
+          <summary>Attempts ({payment.attempts.length})</summary>
+          <ol className="status-event-list" aria-label="Stripe payment attempts">
+            {payment.attempts.map((item) => (
+              <li key={item.id}>
+                <span>{formatDateTime(item.createdAt)}</span>
+                <strong>
+                  {item.status} - {formatMoney(item.amount, item.currency)}
+                </strong>
+                <small>Checkout: {item.providerAttemptId}</small>
+                {item.providerPaymentIntentId ? (
+                  <small>Payment intent: {item.providerPaymentIntentId}</small>
+                ) : null}
+                {item.completedAt ? <small>Completed: {formatDateTime(item.completedAt)}</small> : null}
+                {item.expiredAt ? <small>Expired: {formatDateTime(item.expiredAt)}</small> : null}
+                {item.failedAt ? <small>Failed: {formatDateTime(item.failedAt)}</small> : null}
+                {item.canceledAt ? <small>Canceled: {formatDateTime(item.canceledAt)}</small> : null}
+              </li>
+            ))}
+          </ol>
+        </details>
+      ) : null}
+    </div>
   );
 }
 
@@ -1909,13 +2144,18 @@ export default function AdminPage() {
 
         <div className="payment-list">
           {order.payments.length === 0 ? (
-            <button
-              type="button"
-              disabled={pendingAction === `create-payment-${order.id}`}
-              onClick={() => void handleCreatePayment(order)}
-            >
-              {pendingAction === `create-payment-${order.id}` ? "Creating" : "Create Manual Payment"}
-            </button>
+            <details className="manual-payment-actions">
+              <summary>Manual actions</summary>
+              <div className="payment-controls">
+                <button
+                  type="button"
+                  disabled={pendingAction === `create-payment-${order.id}`}
+                  onClick={() => void handleCreatePayment(order)}
+                >
+                  {pendingAction === `create-payment-${order.id}` ? "Creating" : "Create Manual Payment"}
+                </button>
+              </div>
+            </details>
           ) : (
             order.payments.map((payment) => {
                 const isBusy = pendingAction === `payment-${payment.id}`;
@@ -1940,58 +2180,68 @@ export default function AdminPage() {
                         <dd>{formatDateTime(payment.processedAt)}</dd>
                       </div>
                     </dl>
-                    <div className="payment-controls">
-                      <button
-                        className={actionButtonClass(payment.status === "AUTHORIZED")}
-                        type="button"
-                        disabled={isPaymentActionDisabled(payment, "AUTHORIZED", isBusy)}
-                        onClick={() => void handlePaymentAction(payment.id, authorizePayment)}
-                      >
-                        Authorize
-                      </button>
-                      <button
-                        className={actionButtonClass(payment.status === "PAID")}
-                        type="button"
-                        disabled={isPaymentActionDisabled(payment, "PAID", isBusy)}
-                        onClick={() => void handlePaymentAction(payment.id, markPaymentPaid)}
-                      >
-                        Paid
-                      </button>
-                      <button
-                        className={actionButtonClass(payment.status === "FAILED")}
-                        type="button"
-                        disabled={isPaymentActionDisabled(payment, "FAILED", isBusy)}
-                        onClick={() => void handlePaymentAction(payment.id, markPaymentFailed)}
-                      >
-                        Failed
-                      </button>
-                      <button
-                        className={actionButtonClass(payment.status === "REFUNDED")}
-                        type="button"
-                        disabled={isPaymentActionDisabled(payment, "REFUNDED", isBusy)}
-                        onClick={() => void handlePaymentAction(payment.id, refundPayment)}
-                      >
-                        Refund
-                      </button>
-                      {payment.provider === "stripe" ? (
-                        <button
-                          className="status-action"
-                          type="button"
-                          disabled={isBusy}
-                          onClick={() => void handlePaymentAction(payment.id, syncStripePayment)}
-                        >
-                          Sync Stripe
-                        </button>
-                      ) : null}
-                      {payment.statusEvents.length > 0 ? (
-                        <button
-                          className="status-action"
-                          type="button"
-                          onClick={() => togglePaymentHistory(payment.id)}
-                        >
-                          {isHistoryOpen ? "Hide History" : `History (${payment.statusEvents.length})`}
-                        </button>
-                      ) : null}
+                    {payment.provider === "stripe" ? (
+                      <StripePaymentDetails order={order} payment={payment} />
+                    ) : null}
+                    <div className="payment-quick-actions">
+                      <div className="payment-controls">
+                        {payment.provider === "stripe" ? (
+                          <button
+                            className="status-action"
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() => void handlePaymentAction(payment.id, syncStripePayment)}
+                          >
+                            Sync Stripe
+                          </button>
+                        ) : null}
+                        {payment.statusEvents.length > 0 ? (
+                          <button
+                            className="status-action"
+                            type="button"
+                            onClick={() => togglePaymentHistory(payment.id)}
+                          >
+                            {isHistoryOpen ? "Hide History" : `History (${payment.statusEvents.length})`}
+                          </button>
+                        ) : null}
+                      </div>
+                      <details className="manual-payment-actions">
+                        <summary>Manual actions</summary>
+                        <div className="payment-controls">
+                          <button
+                            className={actionButtonClass(payment.status === "AUTHORIZED")}
+                            type="button"
+                            disabled={isPaymentActionDisabled(payment, "AUTHORIZED", isBusy)}
+                            onClick={() => void handlePaymentAction(payment.id, authorizePayment)}
+                          >
+                            Authorize
+                          </button>
+                          <button
+                            className={actionButtonClass(payment.status === "PAID")}
+                            type="button"
+                            disabled={isPaymentActionDisabled(payment, "PAID", isBusy)}
+                            onClick={() => void handlePaymentAction(payment.id, markPaymentPaid)}
+                          >
+                            Paid
+                          </button>
+                          <button
+                            className={actionButtonClass(payment.status === "FAILED")}
+                            type="button"
+                            disabled={isPaymentActionDisabled(payment, "FAILED", isBusy)}
+                            onClick={() => void handlePaymentAction(payment.id, markPaymentFailed)}
+                          >
+                            Failed
+                          </button>
+                          <button
+                            className={actionButtonClass(payment.status === "REFUNDED")}
+                            type="button"
+                            disabled={isPaymentActionDisabled(payment, "REFUNDED", isBusy)}
+                            onClick={() => void handlePaymentAction(payment.id, refundPayment)}
+                          >
+                            Refund
+                          </button>
+                        </div>
+                      </details>
                     </div>
 
                     {isHistoryOpen ? (
@@ -2576,7 +2826,7 @@ export default function AdminPage() {
                             <section className="admin-work-section activity-accordion">
                               <div className="panel-heading">
                                 <div>
-                                  <h3>Activity & Actions</h3>
+                                  <h3>Fulfillment & Payment</h3>
                                   <small>
                                     {orderTimeline(order).length} events, {order.payments.length} payments,{" "}
                                     {order.shipments.length} shipments, {order.notificationEvents?.length ?? 0} notifications
@@ -2594,8 +2844,8 @@ export default function AdminPage() {
 
                               {isOrderActivityOpen(order.id) ? (
                                 <div className="activity-stack">
-                                  {renderPaymentSection(order)}
                                   {renderFulfillmentSection(order)}
+                                  {renderPaymentSection(order)}
                                   <AdminNotificationSection order={order} />
                                   <AdminOrderTimeline order={order} />
                                 </div>

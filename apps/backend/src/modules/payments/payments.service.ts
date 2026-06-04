@@ -160,7 +160,8 @@ export async function syncStripePayment(paymentId: string) {
       source: PaymentStatusEventSource.ADMIN_SYNC,
       providerObjectId: checkoutSession.id,
       reason: "Admin synced Stripe Checkout Session",
-      metadata
+      metadata,
+      recordSameStatus: true
     });
   }
 
@@ -178,7 +179,8 @@ export async function syncStripePayment(paymentId: string) {
       paymentAttemptId: attempt?.id,
       providerObjectId: paymentIntent.id,
       reason: "Admin synced Stripe PaymentIntent",
-      metadata
+      metadata,
+      recordSameStatus: true
     });
   }
 
@@ -1089,6 +1091,7 @@ function checkoutSessionMetadata(checkoutSession: Stripe.Checkout.Session) {
     checkoutPaymentStatus: checkoutSession.payment_status,
     checkoutSessionId: checkoutSession.id,
     checkoutSessionStatus: checkoutSession.status,
+    livemode: checkoutSession.livemode,
     paymentIntentId: stripeId(checkoutSession.payment_intent),
     stripeStatus: paymentIntent?.status
   };
@@ -1101,6 +1104,7 @@ function paymentIntentMetadata(paymentIntent: Stripe.PaymentIntent, providerPaym
     chargeDisputed: charge?.disputed,
     chargeId: stripeId(paymentIntent.latest_charge),
     checkoutSessionId: providerPaymentId?.startsWith("cs_") ? providerPaymentId : undefined,
+    livemode: paymentIntent.livemode,
     paymentIntentId: paymentIntent.id,
     stripeStatus: paymentIntent.status
   };
