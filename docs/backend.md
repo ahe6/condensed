@@ -41,7 +41,7 @@ File responsibilities:
 - `*.schemas.ts`: Zod schemas and inferred input types
 - `*.service.ts`: business logic and Prisma reads/writes
 
-Some modules are intentionally smaller. `auth` currently reuses user schemas for profile updates, and `notifications` is service-only because notifications are created from business events and retried from a script instead of exposed through public routes.
+Route-backed modules should keep all three files even when the module is small. `notifications` is service-only because notifications are created from business events and retried from a script instead of exposed through public routes.
 
 Avoid adding a repository layer until there is a real repeated data-access pattern to extract.
 

@@ -24,15 +24,6 @@ export const createUserSchema = z.object({
   phone: z.string().trim().min(1).optional()
 });
 
-export const updateCurrentUserSchema = z
-  .object({
-    name: z.string().trim().min(1).nullable().optional(),
-    phone: z.string().trim().min(1).nullable().optional()
-  })
-  .refine((value) => Object.keys(value).length > 0, {
-    message: "At least one field is required"
-  });
-
 export const addressIdParamsSchema = z.object({
   id: z.string().uuid()
 });
@@ -45,5 +36,4 @@ export const updateAddressSchema = addressSchema.partial().refine((value) => Obj
 
 export type CreateAddressInput = z.infer<typeof createAddressSchema>;
 export type CreateUserInput = z.infer<typeof createUserSchema>;
-export type UpdateCurrentUserInput = z.infer<typeof updateCurrentUserSchema>;
 export type UpdateAddressInput = z.infer<typeof updateAddressSchema>;

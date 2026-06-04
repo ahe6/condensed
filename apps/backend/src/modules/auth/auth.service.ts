@@ -2,6 +2,7 @@ import { createRemoteJWKSet, jwtVerify } from "jose";
 import { config } from "../../config.js";
 import { prisma } from "../../prisma.js";
 import { orderInclude } from "../orders/orders.service.js";
+import type { UpdateCurrentUserInput } from "./auth.schemas.js";
 
 type CognitoClaims = {
   "cognito:groups"?: string[];
@@ -97,6 +98,15 @@ export async function listCurrentUserOrders(authorization: string | undefined) {
     orderBy: {
       createdAt: "desc"
     }
+  });
+}
+
+export function updateCurrentUserProfile(userId: string, input: UpdateCurrentUserInput) {
+  return prisma.user.update({
+    where: {
+      id: userId
+    },
+    data: input
   });
 }
 
