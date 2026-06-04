@@ -2,6 +2,8 @@
 
 This doc covers customer notification records and email sending. Fulfillment behavior lives in [Fulfillment](fulfillment.md), table details live in [Database](database.md), and AWS deployment details live in [Deployment](../runbooks/deploy.md).
 
+Last verified against the backend notification service on 2026-06-04.
+
 ## Current Model
 
 Notifications are stored as intent/audit records in `notification_events`.
@@ -70,6 +72,7 @@ if EMAIL_PROVIDER=ses, send email through SES
 mark event SENT with providerMessageId
 or mark event FAILED with errorMessage
 if EMAIL_PROVIDER=none, keep event PENDING
+if EMAIL_FROM is missing for SES, mark event FAILED
 ```
 
 Config:
@@ -109,7 +112,7 @@ The command finds `FAILED` and `PENDING` notification events, sends them when em
 NOTIFICATION_RETRY_BATCH_SIZE=50
 ```
 
-This can run manually in local dev or through a scheduled AWS job later.
+This can run manually in local dev. AWS scheduling can be added later if notification retry needs to run continuously.
 
 ## Email Content Rules
 

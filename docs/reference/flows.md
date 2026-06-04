@@ -2,6 +2,8 @@
 
 This doc describes how ecommerce information moves through the backend. Code organization lives in [Backend](../architecture/backend.md), endpoint details live in [API](api.md), fulfillment details live in [Fulfillment](../architecture/fulfillment.md), and database table details live in [Database](../architecture/database.md).
 
+Last verified against the backend services on 2026-06-04.
+
 ## Catalog Management
 
 ```text
@@ -86,9 +88,10 @@ Expanded admin orders include an internal timeline built from order creation/pla
 ## Payment Update
 
 ```text
-Stripe Checkout Session webhook or admin action updates payment
-backend records payment state
-backend updates order payment status
+Stripe Checkout Session webhook, Stripe-compatible PaymentIntent event, admin sync, or admin action updates payment
+backend records provider attempt and payment state
+backend writes payment status history
+backend updates order payment status in the same transaction
 ```
 
 Do not mark an order paid only from the frontend. Payment state should come from backend-controlled Stripe webhook confirmation or an admin path.
@@ -101,7 +104,7 @@ Current payment status changes update the payment and parent order in the same P
 admin creates shipment
 admin assigns order item quantities
 admin adds tracking
-admin marks shipment shipped or delivered
+admin marks shipment shipped, delivered, or returned
 backend recalculates order fulfillment status
 backend queues notification event when delivered
 ```
@@ -116,7 +119,7 @@ When a shipment is marked delivered, the backend records one pending `SHIPMENT_D
 
 When a shipment has a supported carrier and tracking number, the frontend builds a public tracking link. Supported carrier names currently include UPS, USPS, FedEx, and DHL. This is a link-out only; the app does not call carrier APIs for live tracking updates.
 
-See [Fulfillment](../architecture/fulfillment.md) for the full shipment and tracking behavior. See [Notifications](../architecture/notifications.md) for delivered email records and the planned SES sender.
+See [Fulfillment](../architecture/fulfillment.md) for the full shipment and tracking behavior. See [Notifications](../architecture/notifications.md) for delivered email records and SES sending.
 
 ## Design Rules
 
@@ -136,7 +139,7 @@ Local database records are disposable during early development unless we add see
 
 Recommended sequence:
 
-1. Add SES sending for pending notification events.
-2. Add retry handling for failed notification events.
-3. Maintain scheduled Stripe Checkout reconciliation in AWS.
-4. Add carrier label purchase or live carrier status sync when fulfillment leaves manual operations.
+1. Keep scheduled Stripe Checkout reconciliation enabled and observable in AWS.
+2. Add carrier label purchase or live carrier status sync when fulfillment leaves manual operations.
+3. Make admin refunds call Stripe's Refund API instead of only changing local state.
+4. Persist Stripe webhook deliveries locally if webhook debugging becomes recurring operational work.

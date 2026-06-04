@@ -1,9 +1,5 @@
 # Docs TODO
 
-## Verification
-
-- Verify [Payments](architecture/payments.md), [Fulfillment](architecture/fulfillment.md), [Notifications](architecture/notifications.md), and [Flows](reference/flows.md) against the current backend services after the next backend behavior pass.
-
 ## Coverage
 
 - Audit [Backend](architecture/backend.md) against every route file in `apps/backend/src/modules` whenever backend modules change.

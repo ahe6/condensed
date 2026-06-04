@@ -2,6 +2,8 @@
 
 This doc covers order shipment handling, tracking updates, and fulfillment history. Route details live in [API](../reference/api.md), notification behavior lives in [Notifications](notifications.md), table details live in [Database](database.md), and end-to-end process context lives in [Flows](../reference/flows.md).
 
+Last verified against the backend shipment service and admin UI on 2026-06-04.
+
 ## Current Model
 
 Fulfillment is tracked with shipment packages and shipment line items.
@@ -67,12 +69,14 @@ When `deliver` runs, the backend also creates a `SHIPMENT_DELIVERED` notificatio
 
 Shipment creation validates that requested line item quantities belong to the order and do not exceed remaining unallocated quantity.
 
-Order fulfillment status is based on shipped or delivered shipment item quantity:
+Order fulfillment status is based on shipped, delivered, and returned shipment item quantity:
 
 - `UNFULFILLED`: no quantity has shipped.
 - `PARTIAL`: shipped quantity is greater than zero and less than the order total quantity.
 - `FULFILLED`: shipped quantity is greater than or equal to the order total quantity.
 - `RETURNED`: returned shipment item quantity covers the full order quantity.
+
+Returned quantity is checked first. A fully returned order reports `RETURNED`; otherwise only `SHIPPED` and `DELIVERED` shipments count toward shipped quantity.
 
 ## Payment Guardrails
 
@@ -111,6 +115,6 @@ Delivered notification records appear in the expanded admin notification section
 
 - No carrier API integration yet.
 - No label purchase flow yet.
-- No SES email sending yet; delivered notifications are recorded as pending events only.
+- SES email sending exists when `EMAIL_PROVIDER=ses` and `EMAIL_FROM` are configured; production SES sender/domain setup is still operational work.
 - No webhook or polling integration for live carrier delivery updates yet.
 - Return handling is still shipment-level, not a full return merchandise authorization flow.

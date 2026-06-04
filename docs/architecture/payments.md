@@ -2,6 +2,8 @@
 
 Payments are modeled locally, with Stripe used as the external payment processor. The backend owns the local order and payment state; Stripe webhooks and admin sync keep that state aligned with Stripe.
 
+Last verified against the backend payment service and admin UI on 2026-06-04.
+
 ## Local Model
 
 Each order has a top-level `paymentStatus` for quick reads. The `payments` table stores the aggregate payment state for an order. The `payment_attempts` table stores provider-side attempts under a payment.
@@ -39,7 +41,7 @@ Each event stores:
 - `metadata`
 - `createdAt`
 
-Admin payment rows keep the current payment state and actions visible. Status history is folded behind a per-payment `History` control and is also summarized in the combined admin order timeline.
+Admin payment rows keep the current payment state and actions visible. Stripe rows show structured Stripe details, dashboard links, attempt history, and warning states for cases like missing webhook/sync confirmation, stale open attempts, manual last updates, or payment/order status mismatches. Status history is folded behind a per-payment `History` control and is also summarized in the combined admin order timeline.
 
 ## Stripe Checkout
 
@@ -179,4 +181,4 @@ The smoke test restocks `dev-mug`, creates an order, pays with Stripe's successf
 - Make admin refunds call Stripe's Refund API.
 - Store Stripe webhook deliveries in a local `webhook_events` table.
 - Add a richer dispute model or `payment_disputes` table.
-- Show Stripe metadata in a structured admin details panel.
+- Add automated reconciliation visibility for webhook delivery failures if Stripe webhooks are persisted locally.
