@@ -75,7 +75,7 @@ make local-dev-restart
 
 The local dev script asks Stripe CLI for the local `whsec_...` signing secret, writes it to `.env` and `apps/backend/.env`, starts the backend with that secret, and forwards events to `http://127.0.0.1:3000/webhooks/stripe`. Checkout payments use Checkout Session webhooks such as `checkout.session.completed`; the Stripe CLI forwards those during local testing.
 
-See [Payments](payments.md) for test cards, admin Stripe sync, dispute behavior, and the current refund caveat.
+See [Payments](../architecture/payments.md) for test cards, admin Stripe sync, dispute behavior, and the current refund caveat.
 
 ## Sync Stripe To AWS Dev
 
@@ -312,7 +312,7 @@ For a domain change, update `frontend_domain` and `backend_domain`, apply once w
 
 ## Deploy Cognito Only
 
-Use this for local auth development without recreating RDS/ECS. See [Auth](auth.md) for the full auth model.
+Use this for local auth development without recreating RDS/ECS. See [Auth](../architecture/auth.md) for the full auth model.
 
 ```sh
 make aws-login
@@ -327,7 +327,7 @@ Restart backend and frontend dev servers after `make dev-auth-env`.
 
 ## Auth Tasks
 
-Signup recovery, deleting throwaway users, and granting admin access are covered in [Auth](auth.md).
+Signup recovery, deleting throwaway users, and granting admin access are covered in [Auth](../architecture/auth.md).
 
 Reset one dev signup account without taking AWS resources down:
 

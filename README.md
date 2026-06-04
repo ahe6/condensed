@@ -77,19 +77,21 @@ Local URLs:
 ## Docs
 
 - [Docs Index](docs/README.md)
-- [Getting Started](docs/getting-started.md)
-- [Frontend](docs/frontend.md)
-- [Backend](docs/backend.md)
-- [API](docs/api.md)
-- [Auth](docs/auth.md)
-- [Payments](docs/payments.md)
-- [Fulfillment](docs/fulfillment.md)
-- [Notifications](docs/notifications.md)
-- [Flows](docs/flows.md)
-- [Database](docs/database.md)
-- [Infrastructure](docs/infrastructure.md)
-- [Deployment](docs/deployment.md)
-- [Runbooks](docs/runbooks.md)
+- [Local Development](docs/start/local-development.md)
+- [AWS Dev](docs/start/aws-dev.md)
+- [Production](docs/start/production.md)
+- [Frontend](docs/architecture/frontend.md)
+- [Backend](docs/architecture/backend.md)
+- [API](docs/reference/api.md)
+- [Auth](docs/architecture/auth.md)
+- [Payments](docs/architecture/payments.md)
+- [Fulfillment](docs/architecture/fulfillment.md)
+- [Notifications](docs/architecture/notifications.md)
+- [Flows](docs/reference/flows.md)
+- [Database](docs/architecture/database.md)
+- [Infrastructure](docs/architecture/infrastructure.md)
+- [Deployment](docs/runbooks/deploy.md)
+- [Runbooks](docs/runbooks/README.md)
 
 ## Common Commands
 
@@ -105,4 +107,4 @@ make backend-deploy-aws
 make frontend-deploy-aws
 ```
 
-See [Getting Started](docs/getting-started.md) and [Runbooks](docs/runbooks.md) for setup, reset, and troubleshooting commands.
+See [Local Development](docs/start/local-development.md) and [Runbooks](docs/runbooks/README.md) for setup, reset, and troubleshooting commands.

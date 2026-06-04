@@ -94,7 +94,7 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:3000
 
 Override `NEXT_PUBLIC_API_URL` when pointing the frontend at a deployed backend, or use `npm run frontend:dev:aws` for the current AWS dev backend.
 
-Auth setup, signup recovery, and admin access commands are covered in [Auth](auth.md).
+Auth setup, signup recovery, and admin access commands are covered in [Auth](../architecture/auth.md).
 
 Stripe payment testing needs:
 
@@ -123,7 +123,7 @@ APP_BASE_URL=http://localhost:3001
 
 Set `EMAIL_PROVIDER=ses` and `EMAIL_FROM` only after SES is configured.
 
-Local Stripe checkout uses Checkout Sessions with Checkout Elements. The frontend requests `POST /checkout/stripe` to create the local order and Stripe Checkout Session together, then confirms the session in the browser. Webhooks are still the normal source of truth for marking the order paid. See [Payments](payments.md) for the full Stripe checkout, webhook, sync, dispute, and refund behavior.
+Local Stripe checkout uses Checkout Sessions with Checkout Elements. The frontend requests `POST /checkout/stripe` to create the local order and Stripe Checkout Session together, then confirms the session in the browser. Webhooks are still the normal source of truth for marking the order paid. See [Payments](../architecture/payments.md) for the full Stripe checkout, webhook, sync, dispute, and refund behavior.
 
 Current frontend scope:
 
@@ -187,7 +187,7 @@ Admin route at `/admin`:
 - Requires a signed-in Cognito user in the `admin` group.
 - Runs on port `3001`.
 
-See [Fulfillment](fulfillment.md) for shipment guardrails, tracking links, and fulfillment history.
+See [Fulfillment](../architecture/fulfillment.md) for shipment guardrails, tracking links, and fulfillment history.
 
 ## Useful Endpoints
 
@@ -200,7 +200,7 @@ See [Fulfillment](fulfillment.md) for shipment guardrails, tracking links, and f
 - `GET /orders/:orderNumber`: signed-in customer order detail
 - `/admin/*`: admin catalog, order, payment, and shipment routes
 
-See [API](api.md) for the full route reference.
+See [API](../reference/api.md) for the full route reference.
 
 ## Checks And Builds
 
@@ -235,7 +235,7 @@ Deploy frontend changes:
 make frontend-deploy-aws
 ```
 
-See [Deployment](deployment.md) for Terraform prerequisites, public service controls, and the deployed HTTPS/Cognito configuration.
+See [Deployment](../runbooks/deploy.md) for Terraform prerequisites, public service controls, and the deployed HTTPS/Cognito configuration.
 
 ## Local Containers
 

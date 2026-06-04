@@ -2,7 +2,7 @@
 
 The backend is a Fastify app in `apps/backend`.
 
-Backend module conventions live in [Backend](backend.md). Business flows live in [Flows](flows.md). Fulfillment workflow details live in [Fulfillment](fulfillment.md).
+Backend module conventions live in [Backend](../architecture/backend.md). Business flows live in [Flows](flows.md). Fulfillment workflow details live in [Fulfillment](../architecture/fulfillment.md).
 
 ## Structure
 
@@ -51,7 +51,7 @@ All `/admin/*` routes require a valid Cognito ID token with membership in the `a
 
 Authenticated customer routes expect a Cognito ID token in the `Authorization: Bearer <token>` header.
 
-See [Auth](auth.md) for the Cognito flow and admin group setup.
+See [Auth](../architecture/auth.md) for the Cognito flow and admin group setup.
 
 ## Health
 
@@ -619,7 +619,7 @@ The `deliver` action also creates or updates a pending `SHIPMENT_DELIVERED` noti
 
 Shipment responses include `items`, `statusEvents`, an ordered audit trail of shipment status changes, and `trackingEvents`, an ordered audit trail of carrier/tracking changes. The nested admin order response includes `notificationEvents`.
 
-See [Fulfillment](fulfillment.md) for operator workflow, tracking links, and current limitations.
+See [Fulfillment](../architecture/fulfillment.md) for operator workflow, tracking links, and current limitations.
 
 ## Error Handling
 

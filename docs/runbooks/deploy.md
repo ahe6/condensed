@@ -470,7 +470,7 @@ Stripe checkout uses Checkout Sessions with Checkout Elements. Configure deploye
 - `charge.dispute.updated`
 - `charge.dispute.closed`
 
-PaymentIntent events can stay enabled for backwards compatibility with older local payment rows, but new checkout payments are reconciled from Checkout Session events. See [Payments](payments.md) for the full payment, webhook, sync, dispute, and refund behavior.
+PaymentIntent events can stay enabled for backwards compatibility with older local payment rows, but new checkout payments are reconciled from Checkout Session events. See [Payments](../architecture/payments.md) for the full payment, webhook, sync, dispute, and refund behavior.
 
 For local webhook testing, use the Stripe CLI to forward events to:
 
@@ -513,7 +513,7 @@ Retry pending or failed notifications with:
 npm run notifications:retry
 ```
 
-See [Notifications](notifications.md) for notification event behavior and email content rules.
+See [Notifications](../architecture/notifications.md) for notification event behavior and email content rules.
 
 ## Public Backend Service
 

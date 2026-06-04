@@ -1,6 +1,6 @@
 # Backend
 
-This doc describes how backend code should be organized. Endpoint details live in [API](api.md), ecommerce process details live in [Flows](flows.md), fulfillment details live in [Fulfillment](fulfillment.md), notification behavior lives in [Notifications](notifications.md), and database table details live in [Database](database.md).
+This doc describes how backend code should be organized. Endpoint details live in [API](../reference/api.md), ecommerce process details live in [Flows](../reference/flows.md), fulfillment details live in [Fulfillment](fulfillment.md), notification behavior lives in [Notifications](notifications.md), and database table details live in [Database](database.md).
 
 ## Request Flow
 

@@ -1,6 +1,6 @@
 # Fulfillment
 
-This doc covers order shipment handling, tracking updates, and fulfillment history. Route details live in [API](api.md), notification behavior lives in [Notifications](notifications.md), table details live in [Database](database.md), and end-to-end process context lives in [Flows](flows.md).
+This doc covers order shipment handling, tracking updates, and fulfillment history. Route details live in [API](../reference/api.md), notification behavior lives in [Notifications](notifications.md), table details live in [Database](database.md), and end-to-end process context lives in [Flows](../reference/flows.md).
 
 ## Current Model
 

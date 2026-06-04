@@ -1,6 +1,6 @@
 # Flows
 
-This doc describes how ecommerce information moves through the backend. Code organization lives in [Backend](backend.md), endpoint details live in [API](api.md), fulfillment details live in [Fulfillment](fulfillment.md), and database table details live in [Database](database.md).
+This doc describes how ecommerce information moves through the backend. Code organization lives in [Backend](../architecture/backend.md), endpoint details live in [API](api.md), fulfillment details live in [Fulfillment](../architecture/fulfillment.md), and database table details live in [Database](../architecture/database.md).
 
 ## Catalog Management
 
@@ -116,7 +116,7 @@ When a shipment is marked delivered, the backend records one pending `SHIPMENT_D
 
 When a shipment has a supported carrier and tracking number, the frontend builds a public tracking link. Supported carrier names currently include UPS, USPS, FedEx, and DHL. This is a link-out only; the app does not call carrier APIs for live tracking updates.
 
-See [Fulfillment](fulfillment.md) for the full shipment and tracking behavior. See [Notifications](notifications.md) for delivered email records and the planned SES sender.
+See [Fulfillment](../architecture/fulfillment.md) for the full shipment and tracking behavior. See [Notifications](../architecture/notifications.md) for delivered email records and the planned SES sender.
 
 ## Design Rules
 
