@@ -2,7 +2,6 @@
 
 ## Verification
 
-- Verify [Database](architecture/database.md) against `apps/backend/prisma/schema.prisma`, all migrations in `apps/backend/prisma/migrations`, and the functional docs that reference database behavior.
 - Verify [Payments](architecture/payments.md), [Fulfillment](architecture/fulfillment.md), [Notifications](architecture/notifications.md), and [Flows](reference/flows.md) against the current backend services after the next backend behavior pass.
 
 ## Coverage

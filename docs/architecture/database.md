@@ -2,6 +2,8 @@
 
 The Prisma schema lives at `apps/backend/prisma/schema.prisma`. Prisma migrations in `apps/backend/prisma/migrations` are the source of truth for database changes. Fulfillment workflow behavior lives in [Fulfillment](fulfillment.md).
 
+Last verified against the Prisma schema and migration history on 2026-06-04.
+
 ## Current Scope
 
 The schema covers a practical ecommerce core:
@@ -9,9 +11,10 @@ The schema covers a practical ecommerce core:
 - Identity: users and addresses
 - Catalog: products, variants, images, and categories
 - Shopping: carts and cart items
-- Checkout: orders, order addresses, and order items
-- Money movement: payments
-- Fulfillment: shipments
+- Checkout: orders, order addresses, order items, and admin order notes
+- Money movement: payments, payment attempts, and payment status events
+- Fulfillment: shipments, shipment line items, shipment status events, and shipment tracking events
+- Notifications: customer notification event records
 
 ## Identity
 
@@ -182,7 +185,9 @@ Important fields:
 
 The pair `provider + providerPaymentId` is unique when a provider payment ID exists.
 
-Current backend payment routes support provider-agnostic manual payments and Stripe Checkout. Stripe payments keep the latest Checkout Session ID in `providerPaymentId` for compatibility and store provider details in `metadata`, including synced `paymentIntentId`, `chargeId`, Stripe status, and dispute fields when available. Marking a payment `AUTHORIZED`, `PAID`, `FAILED`, `REFUNDED`, or `DISPUTED` also updates the parent order `paymentStatus` in the same transaction. Stripe webhooks and the admin Stripe sync action apply the same aggregate updates for Stripe-created payments.
+Current backend payment routes support provider-agnostic manual payments and Stripe Checkout. Stripe Checkout payments keep the latest Checkout Session ID in `providerPaymentId` for compatibility and store provider details in `metadata`, including synced `paymentIntentId`, `chargeId`, Stripe status, and dispute fields when available. Older or direct Stripe PaymentIntent-compatible rows may still use a PaymentIntent ID as `providerPaymentId`.
+
+Payment status transitions update the parent order `paymentStatus` in the same transaction. Stripe webhooks and the admin Stripe sync action apply aggregate updates from Checkout Sessions, compatible PaymentIntent events, and disputes.
 
 ### `payment_attempts`
 
@@ -200,9 +205,11 @@ Important fields:
 - `completedAt`, `expiredAt`, `failedAt`, `canceledAt`
 - `metadata`: provider-specific attempt JSON
 
-The pairs `provider + providerAttemptId` and `provider + providerPaymentIntentId` are unique when the provider IDs exist.
+The pair `provider + providerAttemptId` is unique. The pair `provider + providerPaymentIntentId` is unique when the payment intent ID exists.
 
-Stripe owns Checkout Session expiration. The scheduled job reconciles old open local attempts against Stripe; it does not locally decide that an open Stripe session has expired.
+Stripe owns Checkout Session expiration. The scheduled job reconciles old open local attempts against Stripe; it does not locally decide that an open Stripe session has expired. An expired or failed attempt only moves the aggregate payment and parent order when no other open or completed attempt remains.
+
+The `payment_attempts` migration backfilled existing Stripe Checkout Session payment rows where `providerPaymentId` started with `cs_`. It also linked existing payment status events to matching attempts when the event `providerObjectId` matched the attempt ID.
 
 ### `payment_status_events`
 
@@ -222,7 +229,9 @@ Important fields:
 - `metadata`
 - `createdAt`
 
-Existing payments were backfilled with one `SYSTEM` event that records their current status at migration time.
+`providerEventId` is unique when present so the same Stripe webhook event cannot create duplicate status history.
+
+Existing payments were backfilled with one `SYSTEM` event that records their current status at migration time. A later migration linked those backfilled events to payment attempts where possible.
 
 ## Fulfillment
 
@@ -240,12 +249,14 @@ Important fields:
 
 Shipment records contain package-level carrier and tracking state. The shipped quantities live in `shipment_items`.
 
-Marking a shipment shipped or delivered recalculates the parent order fulfillment status from shipped/delivered shipment item quantities:
+Marking a shipment shipped, delivered, or returned recalculates the parent order fulfillment status from shipment item quantities:
 
 - `UNFULFILLED`: no order item quantity is shipped
 - `PARTIAL`: some, but not all, order item quantity is shipped
 - `FULFILLED`: all order item quantity is shipped
 - `RETURNED`: all order item quantity is attached to returned shipments
+
+The calculation treats `SHIPPED` and `DELIVERED` shipments as shipped quantity. It treats `RETURNED` shipments as returned quantity and checks returned quantity first, so a fully returned order reports `RETURNED`.
 
 ### `shipment_items`
 
@@ -257,7 +268,7 @@ Important fields:
 - `orderItemId`
 - `quantity`
 
-`shipment_items` lets one order split across multiple shipments. Quantity must be positive. A shipment cannot contain the same order item more than once.
+`shipment_items` lets one order split across multiple shipments. Quantity must be positive; this is enforced by a migration-level check constraint. A shipment cannot contain the same order item more than once.
 
 Existing shipments were backfilled with every order item on the first shipment for each order, preserving the old order-level shipment behavior for local dev data.
 
@@ -342,6 +353,12 @@ Apply local migrations:
 npm run db:migrate
 ```
 
+Apply already-created migrations without creating a new local migration:
+
+```sh
+npm run db:deploy
+```
+
 Regenerate Prisma Client:
 
 ```sh
@@ -353,6 +370,12 @@ Check migration status from the backend workspace:
 ```sh
 cd apps/backend
 npx prisma migrate status --schema prisma/schema.prisma
+```
+
+Validate the schema when a database URL is available:
+
+```sh
+DATABASE_URL=postgresql://user:password@localhost:5432/health npx prisma validate --schema apps/backend/prisma/schema.prisma
 ```
 
 When AWS dev is recreated, run deployed migrations inside AWS:
