@@ -67,6 +67,14 @@ Use local development for normal iteration:
 make local-dev-restart
 ```
 
+For frontend/design changes that need real AWS dev API, Cognito, and Stripe settings without waiting for ECS:
+
+```sh
+npm run frontend:dev:aws
+```
+
+This runs only the local Next.js dev server with hot reload and points it at `https://api-dev.condensedhealth.com`.
+
 Use AWS deployment for integration checks:
 
 - backend container startup and runtime environment
@@ -607,7 +615,13 @@ make frontend-deploy-aws
 
 ## Manual Frontend Configuration
 
-Point a locally running frontend at a deployed backend with:
+Prefer the helper for local frontend iteration against AWS dev:
+
+```sh
+npm run frontend:dev:aws
+```
+
+To wire the values manually, point a locally running frontend at a deployed backend with:
 
 ```text
 NEXT_PUBLIC_API_URL=https://api-dev.condensedhealth.com

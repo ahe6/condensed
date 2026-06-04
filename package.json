@@ -14,6 +14,7 @@
     "dev:local": "scripts/local-dev.sh",
     "dev:local:restart": "scripts/local-dev.sh --restart",
     "frontend:dev": "npm --workspace apps/frontend run dev",
+    "frontend:dev:aws": "scripts/frontend-dev-aws.sh",
     "frontend:build": "npm --workspace apps/frontend run build",
     "frontend:start": "npm --workspace apps/frontend run start",
     "frontend:check": "npm --workspace apps/frontend run check",

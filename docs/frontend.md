@@ -210,9 +210,12 @@ Useful frontend commands:
 npm run frontend:check
 npm run frontend:build
 npm run frontend:dev
+npm run frontend:dev:aws
 ```
 
 Run the app locally at `http://localhost:3001`.
+
+Use `npm run frontend:dev:aws` for frontend/design iteration against AWS dev. It starts the local Next.js dev server with hot reload, points `NEXT_PUBLIC_API_URL` at the deployed AWS dev backend, and uses the dev Cognito/Stripe public config from Terraform or local env fallbacks.
 
 Deploy the frontend to AWS dev when the public frontend service is enabled:
 

@@ -52,6 +52,12 @@ Restart the local app processes after env changes:
 make local-dev-restart
 ```
 
+Run only the local frontend against AWS dev backend/auth/Stripe for fast UI iteration:
+
+```sh
+npm run frontend:dev:aws
+```
+
 Local URLs:
 
 - Backend API: `http://127.0.0.1:3000`

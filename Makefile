@@ -7,7 +7,7 @@ FRONTEND_TAG ?= latest
 BOOTSTRAP_DIR := infra/bootstrap
 DEV_DIR := infra/envs/dev
 
-.PHONY: aws-login aws-whoami fmt validate local-dev local-dev-restart bootstrap-init bootstrap-plan bootstrap-apply dev-init dev-plan dev-auth-plan dev-auth-apply dev-jobs-plan dev-jobs-apply dev-auth-env dev-test-env dev-stripe-secrets-sync dev-stripe-webhook-sync dev-reset-smoke-prepare dev-smoke-prepare dev-smoke-check dev-auth-add-admin dev-auth-delete-user dev-auth-reset-user dev-db-reset-data dev-db-seed dev-db-reset-seed backend-docker-build frontend-docker-build backend-ecr-login backend-ecr-push frontend-ecr-login frontend-ecr-push backend-migrate-aws backend-deploy-aws frontend-deploy-aws orders-expire orders-expire-aws notifications-retry
+.PHONY: aws-login aws-whoami fmt validate local-dev local-dev-restart frontend-dev-aws bootstrap-init bootstrap-plan bootstrap-apply dev-init dev-plan dev-auth-plan dev-auth-apply dev-jobs-plan dev-jobs-apply dev-auth-env dev-test-env dev-stripe-secrets-sync dev-stripe-webhook-sync dev-reset-smoke-prepare dev-smoke-prepare dev-smoke-check dev-auth-add-admin dev-auth-delete-user dev-auth-reset-user dev-db-reset-data dev-db-seed dev-db-reset-seed backend-docker-build frontend-docker-build backend-ecr-login backend-ecr-push frontend-ecr-login frontend-ecr-push backend-migrate-aws backend-deploy-aws frontend-deploy-aws orders-expire orders-expire-aws notifications-retry
 
 aws-login:
 	aws sso login --profile $(AWS_PROFILE)
@@ -27,6 +27,9 @@ local-dev:
 
 local-dev-restart:
 	scripts/local-dev.sh --restart
+
+frontend-dev-aws:
+	scripts/frontend-dev-aws.sh
 
 bootstrap-init:
 	terraform -chdir=$(BOOTSTRAP_DIR) init

@@ -78,6 +78,12 @@ npm run frontend:dev
 stripe listen --forward-to http://127.0.0.1:3000/webhooks/stripe
 ```
 
+For frontend-only iteration with hot reload against AWS dev backend/auth/Stripe:
+
+```sh
+npm run frontend:dev:aws
+```
+
 ## Configuration
 
 The frontend defaults to:
@@ -86,7 +92,7 @@ The frontend defaults to:
 NEXT_PUBLIC_API_URL=http://127.0.0.1:3000
 ```
 
-Override `NEXT_PUBLIC_API_URL` when pointing the frontend at a deployed backend.
+Override `NEXT_PUBLIC_API_URL` when pointing the frontend at a deployed backend, or use `npm run frontend:dev:aws` for the current AWS dev backend.
 
 Auth setup, signup recovery, and admin access commands are covered in [Auth](auth.md).
 
