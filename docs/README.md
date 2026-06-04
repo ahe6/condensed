@@ -11,11 +11,14 @@ This directory holds the working documentation for `health`.
 ## Architecture
 
 - [Frontend](architecture/frontend.md): Next.js app structure, shop flow, admin UI, auth, Stripe Elements, and UI conventions.
-- [Backend](architecture/backend.md): request flow, module conventions, and current backend modules.
+- [Backend](architecture/backend.md): request flow, module conventions, server hooks, admin flow, transactions, and external events.
+- [Backend Modules](architecture/backend-modules.md): current backend module ownership, route inventory, and main service functions.
+- [Catalog](architecture/catalog.md): public catalog and admin product/category/variant/image/inventory behavior.
+- [Orders](architecture/orders.md): customer order lookup, admin order search, notes, timeline, and cancellation behavior.
 - [Auth](architecture/auth.md): Cognito login, local auth setup, user linking, and admin group access.
 - [Payments](architecture/payments.md): Stripe checkout, webhooks, admin sync, disputes, refunds, and test cards.
 - [Fulfillment](architecture/fulfillment.md): shipment creation, tracking updates, fulfillment guardrails, and tracking links.
-- [Notifications](architecture/notifications.md): customer notification records and planned SES email sending.
+- [Notifications](architecture/notifications.md): customer notification records, SES email sending, and retry behavior.
 - [Database](architecture/database.md): Prisma models, relationships, and migration notes.
 - [Infrastructure](architecture/infrastructure.md): AWS account, Terraform state, VPC, RDS, ECR, ECS, and cost notes.
 

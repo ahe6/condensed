@@ -1,0 +1,76 @@
+# Catalog
+
+This doc covers public catalog behavior and admin catalog management. Route contracts live in [API](../reference/api.md), module inventory lives in [Backend Modules](backend-modules.md), and table details live in [Database](database.md).
+
+## Model
+
+Catalog data is split across:
+
+- `products`: merchandised product pages
+- `product_variants`: purchasable SKUs with price, currency, and inventory
+- `product_images`: display images for products
+- `categories`: navigation taxonomy
+- `product_categories`: product/category join table
+
+Cart items and order items reference variants. Products are for display, grouping, and status.
+
+## Public Catalog
+
+Public routes expose only active sellable catalog records:
+
+- `GET /products`
+- `GET /products/:slug`
+- `GET /categories`
+
+Product list/detail responses include variants and images so the frontend can render product cards, product detail, and variant selection without separate calls.
+
+Public product browsing should treat variants as the purchasable unit. A product without a usable active variant is not enough to sell on its own.
+
+## Admin Catalog
+
+Admin catalog routes are protected by the global `/admin/*` Cognito admin pre-handler.
+
+Admin routes:
+
+- `GET /admin/products`
+- `POST /admin/products`
+- `PATCH /admin/products/:id`
+- `POST /admin/products/:id/publish`
+- `POST /admin/products/:id/archive`
+- `POST /admin/products/:id/categories`
+- `DELETE /admin/products/:id/categories/:categoryId`
+- `POST /admin/products/:id/images`
+- `POST /admin/products/:id/variants`
+- `PATCH /admin/variants/:id`
+- `PATCH /admin/variants/:id/inventory`
+- `POST /admin/categories`
+
+Admin product list returns every product status, including `DRAFT` and `ARCHIVED`, so operators can stage or recover catalog records.
+
+## Product Status
+
+Product status controls public visibility:
+
+- `DRAFT`: editable staging state; hidden from public product list/detail
+- `ACTIVE`: visible to public product routes
+- `ARCHIVED`: retained for history/admin visibility; hidden from public product routes
+
+The backend uses explicit publish/archive routes instead of generic status patching.
+
+## Inventory
+
+Variant inventory is stored on `product_variants.inventoryQuantity`.
+
+Cart updates reject quantities above current inventory. Checkout revalidates inventory inside the order-creation transaction before decrementing inventory. Admin inventory edits use `PATCH /admin/variants/:id/inventory`.
+
+There is no inventory movement ledger yet. The current record is the variant's live sellable quantity.
+
+## Relationships To Other Flows
+
+Catalog services are upstream of cart and checkout:
+
+- carts reject inactive products and invalid variants
+- checkout snapshots product/variant names, SKU, unit price, and quantity into order items
+- order history remains readable if product names, variants, or images change later
+
+Catalog data should stay operationally simple until product options, inventory movement history, or supplier/vendor workflows become real requirements.

@@ -1,6 +1,6 @@
 # Backend
 
-This doc describes how backend code should be organized. Endpoint details live in [API](../reference/api.md), ecommerce process details live in [Flows](../reference/flows.md), fulfillment details live in [Fulfillment](fulfillment.md), notification behavior lives in [Notifications](notifications.md), and database table details live in [Database](database.md).
+This doc describes how backend code should be organized and how backend requests move through the system. Module inventory lives in [Backend Modules](backend-modules.md). Catalog behavior lives in [Catalog](catalog.md). Order/admin-order behavior lives in [Orders](orders.md). Endpoint contracts live in [API](../reference/api.md), ecommerce process context lives in [Flows](../reference/flows.md), and database table details live in [Database](database.md).
 
 ## Request Flow
 
@@ -22,17 +22,11 @@ Schema files own input validation. They should also export TypeScript types infe
 
 Shared error handling lives in `apps/backend/src/server.ts`.
 
-The server also owns the process-level endpoints and cross-cutting hooks:
-
-- `GET /health`: lightweight process health response.
-- `GET /ready`: database readiness check using Prisma.
-- `/admin/*` pre-handler: verifies the caller is in the Cognito `admin` group before any admin route runs.
-
 ## Module Convention
 
 Backend modules live in `apps/backend/src/modules`.
 
-Each module should use this shape:
+Each route-backed module should use this shape:
 
 ```text
 module-name/
@@ -51,7 +45,20 @@ Route-backed modules should keep all three files even when the module is small. 
 
 Avoid adding a repository layer until there is a real repeated data-access pattern to extract.
 
-## Admin Surface
+## Server-Level Flow
+
+`apps/backend/src/server.ts` owns process-level behavior:
+
+- registers CORS
+- preserves the raw JSON body for `POST /webhooks/stripe`
+- maps known Zod, domain, and Prisma errors to HTTP responses
+- exposes `GET /health` for lightweight process health
+- exposes `GET /ready` for database readiness
+- registers all backend modules
+
+The `/ready` endpoint checks database availability with Prisma. The `/health` endpoint only confirms the process is responding.
+
+## Admin Flow
 
 Admin routes are spread across the owning business modules instead of a separate `admin` module:
 
@@ -60,292 +67,35 @@ Admin routes are spread across the owning business modules instead of a separate
 - Payment admin routes live in `payments`.
 - Shipment admin routes live in `shipments`.
 
-This keeps admin behavior near the service code that owns the state transition. Exact request and response shapes belong in [API](../reference/api.md); this doc should stay focused on module ownership, route inventory, and where business rules live.
+All `/admin/*` routes pass through the global Fastify pre-handler in `server.ts`. That hook requires a Cognito ID token whose user belongs to the `admin` group before the module route handler runs.
 
-## Current Modules
+This keeps admin behavior near the service code that owns the state transition. Exact request and response shapes belong in [API](../reference/api.md).
 
-### Auth
+## Transaction Flow
 
-Current responsibilities:
+Any state change that updates multiple records should happen in one Prisma transaction. Current examples:
 
-- Verify Cognito ID tokens
-- Upsert or link local users by Cognito subject and email
-- Require Cognito `admin` group membership for backend admin routes
-- Return the current account profile
-- Update local profile name and phone
-- Return the current user's order history
+- checkout creates an order, snapshots items/addresses, deducts inventory, and clears the cart
+- payment status changes update the payment and parent order together
+- shipment status changes update the shipment and parent order fulfillment status together
+- delivered shipments create or update the delivered notification event before the transaction returns
 
-Current routes:
+Services should expose explicit state-transition functions such as `markPaymentPaid`, `markShipmentDelivered`, or `cancelOrder`. Avoid accepting arbitrary patch objects for business states like payment, fulfillment, or order status.
 
-- `GET /me`
-- `PATCH /me`
-- `GET /me/orders`
+## External Event Flow
 
-Address routes are implemented in the `users` module but require the same current-user auth helper. Checkout also requires the same bearer token and links the created order to the authenticated user.
+Stripe webhooks enter through `POST /webhooks/stripe`. The server keeps the raw body for signature verification, then the payments service updates local payment attempts, aggregate payment state, payment history, and parent order status.
 
-Backend `/admin/*` routes are protected by a global Fastify pre-handler in `server.ts`.
+Scheduled jobs should call service functions instead of reimplementing business rules. Current examples:
 
-### Users
+- `orders:expire` reconciles old open Stripe Checkout attempts against Stripe and releases inventory only when Stripe reports expiration
+- `notifications:retry` retries pending or failed notification events through the notification service
 
-Current responsibilities:
+## Related Docs
 
-- List users
-- Create users
-- List current user's saved addresses
-- Create current user's saved addresses
-- Update current user's saved addresses
-- Delete current user's saved addresses
-- Set default shipping and billing addresses
-
-Current routes:
-
-- `GET /users`
-- `POST /users`
-- `GET /me/addresses`
-- `POST /me/addresses`
-- `PATCH /me/addresses/:id`
-- `DELETE /me/addresses/:id`
-
-Main service functions:
-
-- `listUsers`
-- `createUser`
-- `listUserAddresses`
-- `createUserAddress`
-- `updateUserAddress`
-- `deleteUserAddress`
-
-### Catalog
-
-Current responsibilities:
-
-- List public active products
-- Get product by slug
-- List categories
-- Create/update products through admin routes
-- Publish/archive products
-- Create/update variants
-- Set variant inventory
-- Add product images
-- Assign/remove categories
-
-Current public routes:
-
-- `GET /products`
-- `GET /products/:slug`
-- `GET /categories`
-
-Current admin routes:
-
-- `GET /admin/products`
-- `POST /admin/products`
-- `PATCH /admin/products/:id`
-- `POST /admin/products/:id/publish`
-- `POST /admin/products/:id/archive`
-- `POST /admin/products/:id/categories`
-- `DELETE /admin/products/:id/categories/:categoryId`
-- `POST /admin/products/:id/images`
-- `POST /admin/products/:id/variants`
-- `PATCH /admin/variants/:id`
-- `PATCH /admin/variants/:id/inventory`
-- `POST /admin/categories`
-
-Main service functions:
-
-- `listProducts`
-- `listAdminProducts`
-- `getProductBySlug`
-- `listCategories`
-- `createCategory`
-- `createProduct`
-- `updateProduct`
-- `setProductStatus`
-- `assignProductCategory`
-- `removeProductCategory`
-- `addProductImage`
-- `createProductVariant`
-- `updateProductVariant`
-- `setVariantInventory`
-
-Catalog services are the foundation for cart and checkout. Cart items should reference `product_variants`, not `products`.
-
-### Carts
-
-Current responsibilities:
-
-- Create anonymous carts
-- Create or reuse signed-in customer carts
-- Adopt or merge an anonymous browser-local cart into a signed-in customer cart
-- Enforce cart ownership for user-owned carts
-- Get a cart with items and calculated totals
-- Add variants to a cart
-- Increment existing cart item quantities
-- Update cart item quantities
-- Reject inactive products and cart quantities above current variant inventory
-- Remove cart items
-- Clear a cart
-
-Current routes:
-
-- `GET /me/cart`
-- `POST /me/cart`
-- `POST /carts`
-- `GET /carts/:id`
-- `POST /carts/:id/items`
-- `PATCH /carts/:id/items/:itemId`
-- `DELETE /carts/:id/items/:itemId`
-- `DELETE /carts/:id/items`
-
-Cart totals are calculated from current variant prices and returned in the response. They are not stored in the database.
-
-Signed-in clients should use `POST /me/cart` at startup. Passing a browser-local `cartId` lets the backend attach that cart to the user or merge its items into the user's existing cart.
-
-### Checkout
-
-Current responsibilities:
-
-- Convert a valid cart into an order
-- Validate cart items, product status, currency, and inventory
-- Snapshot order items
-- Snapshot shipping and billing addresses
-- Deduct variant inventory
-- Clear the cart after order creation
-- Create a Stripe Checkout Session with the order in one customer checkout call
-- Reconcile stale Stripe Checkout attempts and release inventory once Stripe reports expiration
-
-Current routes:
-
-- `POST /checkout`
-- `POST /checkout/stripe`
-
-Inventory changes and order creation happen in a Prisma transaction.
-
-Stripe reconciliation is run by `npm run orders:expire` or `make orders-expire`. By default it scans open Stripe Checkout attempts older than 15 minutes, retrieves each Checkout Session from Stripe, and only expires/cancels local orders when Stripe reports the session as expired. It sets `inventoryReleasedAt` and increments variant inventory once for each expired order. Configure with `ORDER_EXPIRY_MINUTES` and `ORDER_EXPIRY_BATCH_SIZE`.
-
-AWS dev can run the same command from EventBridge Scheduler through an ECS Fargate one-shot task. Terraform controls that with `deploy_jobs_stack`, `orders_expiry_enabled`, and `orders_expiry_schedule_expression`; it does not require the public backend or frontend services.
-
-### Orders
-
-Current responsibilities:
-
-- Get one order by order number
-- List all orders through an admin route
-- Mark an order placed through a controlled admin route
-- Cancel an order through a controlled admin route
-
-Current routes:
-
-- `GET /orders/:orderNumber`
-- `GET /admin/orders`
-- `POST /admin/orders/:id/place`
-- `POST /admin/orders/:id/cancel`
-- `POST /admin/orders/:id/notes`
-
-The admin order list accepts search, payment/fulfillment filters, event date ranges, sort, page, and page size query params. The backend uses SQL for matching, counting, ranking, and pagination, then fetches the selected order rows with their admin relations for the response envelope. Search includes order fields, customer names, line items, SKUs, note bodies/authors, and status text.
-
-Admin notes are internal order records. They are included only in admin order responses and store the signed-in admin email when Cognito provides it.
-
-The admin frontend builds a combined order timeline from the admin order response. Timeline rows include order creation/placement, notes, payment status events, shipment status events, tracking changes, and notification events. Detailed payment, shipment, and notification histories remain available behind folded per-record sections.
-
-Admin order status changes should be explicit service functions, not arbitrary patch objects, so state transitions stay controlled.
-
-### Payments
-
-Current responsibilities:
-
-- Create Stripe Checkout Sessions for checkout and unpaid-order recovery
-- Record one local payment attempt per Stripe Checkout Session
-- Handle Stripe Checkout Session webhook status updates
-- Support Checkout Elements from the frontend checkout
-- Record provider-agnostic payment attempts
-- Mark payments authorized
-- Mark payments paid
-- Mark payments failed
-- Mark payments refunded
-- Update the parent order `paymentStatus` when payment state changes
-
-Current routes:
-
-- `POST /orders/:id/stripe-checkout-session` for existing unpaid order recovery
-- `POST /admin/orders/:id/payments`
-- `POST /admin/payments/:id/authorize`
-- `POST /admin/payments/:id/pay`
-- `POST /admin/payments/:id/fail`
-- `POST /admin/payments/:id/refund`
-- `POST /admin/payments/:id/sync-stripe`
-- `POST /webhooks/stripe`
-
-Main service functions:
-
-- `createStripeCheckoutSession`
-- `handleStripeWebhook`
-- `createPayment`
-- `markPaymentAuthorized`
-- `markPaymentPaid`
-- `markPaymentFailed`
-- `refundPayment`
-- `syncStripePayment`
-
-Payment status changes happen in a Prisma transaction with the parent order update. Stripe webhooks update the local Stripe attempt, aggregate payment row, and parent order status from Checkout Session events. PaymentIntent events are still handled for compatibility and are linked to the matching attempt when possible.
-
-### Shipments
-
-Current responsibilities:
-
-- Create shipment placeholders
-- Assign order item quantities to shipments
-- Add or update tracking details
-- Mark shipments shipped
-- Mark shipments delivered
-- Mark shipments returned
-- Recalculate the parent order `fulfillmentStatus` when shipment state changes
-- Queue a pending delivered notification event when a shipment is delivered
-
-Current routes:
-
-- `POST /admin/orders/:id/shipments`
-- `PATCH /admin/shipments/:id/tracking`
-- `POST /admin/shipments/:id/ship`
-- `POST /admin/shipments/:id/deliver`
-- `POST /admin/shipments/:id/return`
-
-Main service functions:
-
-- `createShipment`
-- `addTrackingNumber`
-- `markShipmentShipped`
-- `markShipmentDelivered`
-- `markShipmentReturned`
-
-Shipment status changes happen in a Prisma transaction with the parent order update. Parent order fulfillment status is calculated from shipped, delivered, and returned `shipment_items`.
-
-Shipment creation plus shipped/delivered transitions are guarded by payment status. The backend only allows fulfillment when the order is `PAID` or `AUTHORIZED`; existing shipments can still be marked returned.
-
-Shipment creation and status changes write `shipment_status_events` rows for admin history.
-
-Tracking creation and edits write `shipment_tracking_events` rows when carrier or tracking number values are present and actually change.
-
-Delivered shipment changes also create or update one pending `SHIPMENT_DELIVERED` `notification_events` row for the shipment. If `EMAIL_PROVIDER=ses` is configured, the backend sends the email through SES and marks the event `SENT` or `FAILED`. See [Notifications](notifications.md).
-
-See [Fulfillment](fulfillment.md) for the full shipment workflow and tracking-link behavior.
-
-### Notifications
-
-Current responsibilities:
-
-- Store notification intent/audit records in `notification_events`
-- Create or update delivered-shipment notification events from shipment delivery
-- Send pending notification events through SES when `EMAIL_PROVIDER=ses`
-- Mark notification events `SENT` or `FAILED`
-- Retry pending and failed notification events from a script
-
-Current routes:
-
-- None
-
-Main service functions:
-
-- `sendPendingNotificationEvent`
-- `retryNotificationEvents`
-
-Notifications are triggered by backend business events, not direct HTTP requests. Retry is run with `npm run notifications:retry` or `make notifications-retry`.
+- [Backend Modules](backend-modules.md): module ownership, route inventory, and main service functions.
+- [Catalog](catalog.md): public catalog and admin product/category/variant/image/inventory behavior.
+- [Orders](orders.md): customer order lookup, admin search, order notes, cancellation, and timeline behavior.
+- [Payments](payments.md): Stripe Checkout, webhooks, admin sync, disputes, and refunds.
+- [Fulfillment](fulfillment.md): shipments, tracking, fulfillment guardrails, and tracking links.
+- [Notifications](notifications.md): notification events, SES sending, and retry behavior.
