@@ -28,6 +28,7 @@ This directory holds the working documentation for `health`.
 
 - [Deployment](runbooks/deploy.md): deploy backend and frontend images, run migrations, manage public AWS services, and verify AWS dev.
 - [Runbooks](runbooks/README.md): common step-by-step commands for local and AWS operations.
+- [Docs TODO](TODO.md): documentation audits and follow-up cleanup.
 
 ## Current Environment
 

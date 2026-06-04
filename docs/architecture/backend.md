@@ -22,6 +22,12 @@ Schema files own input validation. They should also export TypeScript types infe
 
 Shared error handling lives in `apps/backend/src/server.ts`.
 
+The server also owns the process-level endpoints and cross-cutting hooks:
+
+- `GET /health`: lightweight process health response.
+- `GET /ready`: database readiness check using Prisma.
+- `/admin/*` pre-handler: verifies the caller is in the Cognito `admin` group before any admin route runs.
+
 ## Module Convention
 
 Backend modules live in `apps/backend/src/modules`.
@@ -44,6 +50,17 @@ File responsibilities:
 Route-backed modules should keep all three files even when the module is small. `notifications` is service-only because notifications are created from business events and retried from a script instead of exposed through public routes.
 
 Avoid adding a repository layer until there is a real repeated data-access pattern to extract.
+
+## Admin Surface
+
+Admin routes are spread across the owning business modules instead of a separate `admin` module:
+
+- Catalog admin routes live in `catalog`.
+- Order admin routes live in `orders`.
+- Payment admin routes live in `payments`.
+- Shipment admin routes live in `shipments`.
+
+This keeps admin behavior near the service code that owns the state transition. Exact request and response shapes belong in [API](../reference/api.md); this doc should stay focused on module ownership, route inventory, and where business rules live.
 
 ## Current Modules
 
@@ -89,6 +106,15 @@ Current routes:
 - `PATCH /me/addresses/:id`
 - `DELETE /me/addresses/:id`
 
+Main service functions:
+
+- `listUsers`
+- `createUser`
+- `listUserAddresses`
+- `createUserAddress`
+- `updateUserAddress`
+- `deleteUserAddress`
+
 ### Catalog
 
 Current responsibilities:
@@ -102,6 +128,44 @@ Current responsibilities:
 - Set variant inventory
 - Add product images
 - Assign/remove categories
+
+Current public routes:
+
+- `GET /products`
+- `GET /products/:slug`
+- `GET /categories`
+
+Current admin routes:
+
+- `GET /admin/products`
+- `POST /admin/products`
+- `PATCH /admin/products/:id`
+- `POST /admin/products/:id/publish`
+- `POST /admin/products/:id/archive`
+- `POST /admin/products/:id/categories`
+- `DELETE /admin/products/:id/categories/:categoryId`
+- `POST /admin/products/:id/images`
+- `POST /admin/products/:id/variants`
+- `PATCH /admin/variants/:id`
+- `PATCH /admin/variants/:id/inventory`
+- `POST /admin/categories`
+
+Main service functions:
+
+- `listProducts`
+- `listAdminProducts`
+- `getProductBySlug`
+- `listCategories`
+- `createCategory`
+- `createProduct`
+- `updateProduct`
+- `setProductStatus`
+- `assignProductCategory`
+- `removeProductCategory`
+- `addProductImage`
+- `createProductVariant`
+- `updateProductVariant`
+- `setVariantInventory`
 
 Catalog services are the foundation for cart and checkout. Cart items should reference `product_variants`, not `products`.
 
