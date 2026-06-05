@@ -5,17 +5,10 @@ Use this when adding or moving docs so each doc has one job.
 ## Where Content Belongs
 
 - `docs/start/*`: how to start working in an environment.
-- `docs/architecture/backend-conventions.md`: backend request flow, module shape, server hooks, admin/auth flow, transaction patterns, and external event patterns.
-- `docs/architecture/backend-flows.md`: backend module collaboration across auth, checkout, admin, Stripe, fulfillment, and notifications.
-- `docs/architecture/backend-modules.md`: module ownership, route inventory, and main service functions.
-- `docs/architecture/users.md`: user records, saved addresses, and default address behavior.
-- `docs/architecture/carts.md`: anonymous/user carts, cart ownership, item operations, and totals.
-- `docs/architecture/checkout.md`: cart-to-order conversion, inventory decrement, and Stripe checkout handoff.
-- `docs/architecture/catalog.md`: catalog behavior and admin catalog operations.
-- `docs/architecture/orders.md`: order and admin-order behavior.
-- `docs/architecture/payments.md`: Stripe and local payment behavior.
-- `docs/architecture/fulfillment.md`: shipment and fulfillment behavior.
-- `docs/architecture/notifications.md`: notification events, SES, and retry behavior.
+- `docs/architecture/backend-modules.md`: backend module inventory. Use it to find the owner doc for module-specific behavior.
+- `docs/architecture/backend-conventions.md`: backend implementation conventions and cross-cutting request patterns.
+- `docs/architecture/backend-flows.md`: backend module collaboration across major application flows.
+- `docs/architecture/*`: system design, module behavior, and implementation notes that are not exact endpoint contracts.
 - `docs/architecture/database.md`: Prisma models, migrations, and database design decisions.
 - `docs/architecture/infrastructure.md`: AWS resource shape, Terraform state, network, RDS, ECR, ECS, and cost notes.
 - `docs/reference/api.md`: exact endpoint contracts, request shapes, response shapes, query params, and status behavior.
