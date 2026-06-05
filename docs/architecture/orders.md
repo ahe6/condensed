@@ -79,7 +79,9 @@ The Stripe Checkout reconciliation job uses the same inventory-release guard and
 
 ## Key Functions
 
+- `getOrderByNumberForUser(orderNumber, userId)`: customer order-detail lookup that requires the order number and local user ID to match, so users cannot fetch another customer's order by guessing an order number.
 - `listOrders(query)`: admin-only SQL-backed search/filter/sort/page query. The raw SQL returns IDs first, then Prisma loads full order relations with `adminOrderInclude`.
+- `createOrderNote(orderId, input, authorEmail)`: creates an internal admin note and reloads the admin order response. Notes are not included in customer order responses.
 - `cancelOrder(orderId)`: retrieves live Stripe Checkout Sessions before the DB transaction; it refuses to cancel if Stripe says a session is complete/paid. Inside the transaction it cancels the order and releases inventory only for unfulfilled unpaid/failed/expired orders that have not already released inventory.
 - `cancelUnpaidOrderAndReleaseInventory(orderId, releasedAt)`: idempotent unpaid-order cancellation path used by payment reconciliation and expiry jobs. It only affects unfulfilled pending/placed unpaid/failed/expired orders with `inventoryReleasedAt = null`.
 - `expireUnpaidOrders(options)`: batch job entry point that finds old unpaid orders, checks/optionally expires open Stripe Checkout Sessions, and releases inventory only when Stripe does not report a completed payment.

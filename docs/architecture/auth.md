@@ -123,6 +123,7 @@ make dev-auth-delete-user EMAIL=user@example.com
 
 - `getCurrentUser(authorization)`: verifies a Cognito ID token, links the token subject to a local user, and can attach an existing local user by matching email. It rejects emails already linked to another Cognito subject.
 - `getOptionalCurrentUser(authorization)`: returns `null` without a header but otherwise behaves like `getCurrentUser`; callers should only use it where anonymous access is valid.
+- `listCurrentUserOrders(authorization)`: resolves the current Cognito user first, then returns only orders owned by that local user.
 - `requireAdmin(authorization)` / `getAdminIdentity(authorization)`: verifies the Cognito ID token and requires the `admin` group. `server.ts` runs this guard for every `/admin/*` route.
 
 ## Production Notes
