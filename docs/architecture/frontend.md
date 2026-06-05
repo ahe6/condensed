@@ -2,10 +2,13 @@
 
 The frontend is a single Next.js app in `apps/frontend`. It serves both the public shop and the admin order tools.
 
+Last verified against the frontend source and deployment scripts on 2026-06-05.
+
 ## App Structure
 
 Important files:
 
+- `app/layout.tsx`: root Next.js shell, metadata, and global CSS import
 - `app/page.tsx`: public product catalog and add-to-cart flow
 - `app/products/[slug]/page.tsx`: public product detail page with variant selection and add-to-cart
 - `app/cart/page.tsx`: cart review, signed-in checkout, and Stripe Checkout Elements
@@ -31,7 +34,7 @@ The app currently keeps shop and admin in one Next app. Customer pages use a pla
 
 ## Environment
 
-Frontend env is read from `apps/frontend/.env.local`.
+Frontend env is read from `apps/frontend/.env.local`. `apps/frontend/.env.example` documents the browser-exposed keys.
 
 Important variables:
 
@@ -160,7 +163,7 @@ Main admin capabilities:
 - Create manual payments and mark payments authorized, paid, failed, or refunded.
 - Sync Stripe payment status for Stripe payments.
 - Create shipments with remaining line item quantities prefilled, save carrier/tracking edits, and mark shipments shipped, delivered, or returned.
-- Show pending delivered-notification records in the expanded order notification section and combined timeline.
+- Show delivered-shipment notification records in the expanded order notification section and combined timeline.
 - Open public carrier tracking links for UPS, USPS, FedEx, and DHL.
 - Search/filter admin products.
 - Create products and categories.
@@ -215,7 +218,7 @@ npm run frontend:dev:aws
 
 Run the app locally at `http://localhost:3001`.
 
-Use `npm run frontend:dev:aws` for frontend/design iteration against AWS dev. It starts the local Next.js dev server with hot reload, points `NEXT_PUBLIC_API_URL` at the deployed AWS dev backend, and uses the dev Cognito/Stripe public config from Terraform or local env fallbacks.
+Use `npm run frontend:dev:aws` for frontend/design iteration against AWS dev. It starts the local Next.js dev server with hot reload, points `NEXT_PUBLIC_API_URL` at the deployed AWS dev backend, and uses the dev Cognito config from Terraform or local env fallbacks. It reads the Stripe publishable key from the environment, `apps/frontend/.env.local`, or `.env.test`, in that order.
 
 Deploy the frontend to AWS dev when the public frontend service is enabled:
 
