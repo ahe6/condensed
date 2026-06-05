@@ -76,3 +76,11 @@ Cancelling an unpaid, failed, or expired unfulfilled order can release inventory
 Admin cancellation still marks the order `CANCELLED` even when inventory is not eligible for release. Before cancelling, the backend checks non-paid/non-refunded local Stripe Checkout Session records against Stripe; if Stripe reports one is complete or paid, cancellation is blocked.
 
 The Stripe Checkout reconciliation job uses the same inventory-release guard and only expires/cancels local orders when Stripe reports the Checkout Session as expired.
+
+## Key Functions
+
+- `listOrders(query)`: admin-only SQL-backed search/filter/sort/page query. The raw SQL returns IDs first, then Prisma loads full order relations with `adminOrderInclude`.
+- `cancelOrder(orderId)`: retrieves live Stripe Checkout Sessions before the DB transaction; it refuses to cancel if Stripe says a session is complete/paid. Inside the transaction it cancels the order and releases inventory only for unfulfilled unpaid/failed/expired orders that have not already released inventory.
+- `cancelUnpaidOrderAndReleaseInventory(orderId, releasedAt)`: idempotent unpaid-order cancellation path used by payment reconciliation and expiry jobs. It only affects unfulfilled pending/placed unpaid/failed/expired orders with `inventoryReleasedAt = null`.
+- `expireUnpaidOrders(options)`: batch job entry point that finds old unpaid orders, checks/optionally expires open Stripe Checkout Sessions, and releases inventory only when Stripe does not report a completed payment.
+- `markOrderPlaced(orderId)`, `updatePaymentStatus(orderId, paymentStatus)`, and `updateFulfillmentStatus(orderId, fulfillmentStatus)`: low-level state writers. Prefer higher-level payment and shipment functions when an action should also create audit events or recalculate aggregate status.

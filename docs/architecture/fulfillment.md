@@ -111,6 +111,14 @@ Detailed shipment status and tracking events remain available behind folded `His
 
 Delivered notification records appear in the expanded admin notification section and the combined timeline.
 
+## Key Functions
+
+- `createShipment(orderId, input)`: transactionally validates payment status, allocates only remaining unfulfilled order-item quantities, creates shipment line items, and records initial shipment status/tracking events.
+- `addTrackingNumber(shipmentId, input)`: updates carrier/tracking fields and records a tracking event only when tracking values exist and changed.
+- `markShipmentShipped(shipmentId)`, `markShipmentDelivered(shipmentId)`, and `markShipmentReturned(shipmentId)`: transition shipment status, recalculate order fulfillment status from all non-returned shipments, and record shipment status events. Non-returned transitions require paid or authorized payment status.
+- `markShipmentDelivered(shipmentId)`: additionally upserts a `SHIPMENT_DELIVERED` notification event inside the shipment transaction, then sends it after commit through `sendPendingNotificationEvent`.
+- `resolveShipmentItems(order, requestedItems)`: private allocation guard that defaults to all remaining quantities when no item list is provided, merges duplicate requested rows, rejects items from other orders, and rejects over-allocation.
+
 ## Known Limits
 
 - No carrier API integration yet.

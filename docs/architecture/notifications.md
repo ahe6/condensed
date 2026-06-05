@@ -114,6 +114,11 @@ NOTIFICATION_RETRY_BATCH_SIZE=50
 
 This can run manually in local dev. AWS scheduling can be added later if notification retry needs to run continuously.
 
+## Key Functions
+
+- `sendPendingNotificationEvent(notificationEventId)`: sends only `PENDING` events. It skips without DB mutation when email is disabled, fails when SES is configured but `EMAIL_FROM` is missing, skips unsupported event types, and marks SES success/failure on the notification record.
+- `retryNotificationEvents(options)`: batch job entry point for `PENDING` and `FAILED` notifications. It resets failed events to pending before calling `sendPendingNotificationEvent`.
+
 ## Email Content Rules
 
 Keep customer emails minimal.

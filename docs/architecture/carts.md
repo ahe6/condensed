@@ -59,3 +59,10 @@ Returned totals include:
 - `total`
 
 Cart totals are previews. Checkout recalculates and snapshots authoritative order totals.
+
+## Key Functions
+
+- `getOrCreateUserCart(userId, input)`: loads the latest user cart, creates one when needed, or adopts/merges the provided browser-local cart ID into the signed-in user's cart.
+- `addCartItem(cartId, input, actorUserId)` / `updateCartItemQuantity(...)`: enforce cart ownership when the cart has a user, require the product to be active, and reject quantities above current inventory.
+- `clearCart(cartId, actorUserId)`: deletes cart items only after the same cart access check used by item operations.
+- `adoptCartForUser(userId, cartId)`: private helper that validates source cart access, validates merged quantities against current inventory, merges duplicate variants into the user's existing cart when present, and deletes the source cart after a successful merge.

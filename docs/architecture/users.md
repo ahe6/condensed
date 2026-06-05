@@ -32,6 +32,12 @@ When creating the first saved address for a user, the backend makes it the defau
 
 When an address is created or updated with `isDefaultShipping=true`, the backend clears the previous default shipping address for that user in the same transaction. `isDefaultBilling=true` does the same for billing.
 
+## Key Functions
+
+- `createUserAddress(userId, input)`: creates an address in a transaction and automatically makes the first address the default shipping and billing address unless the input overrides that behavior.
+- `updateUserAddress(userId, addressId, input)`: first proves the address belongs to the user, then clears any previous default shipping or billing address when the update makes this address default.
+- `deleteUserAddress(userId, addressId)`: first proves ownership, then deletes the address. It does not currently promote a replacement default address.
+
 ## Relationship To Checkout
 
 Checkout snapshots address fields into `order_addresses` instead of linking orders to saved `addresses`. This means later address edits do not rewrite historical orders.

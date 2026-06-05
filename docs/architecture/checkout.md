@@ -57,6 +57,11 @@ The response includes both:
 
 This lets the frontend render Stripe Checkout Elements for the newly created order.
 
+## Key Functions
+
+- `checkoutCart(input, options)`: single transaction that validates cart ownership, rejects empty carts, rejects inactive products and mixed currencies, decrements inventory with `updateMany` guards, creates the placed order and addresses/items, then clears the cart. This is the inventory reservation point for customer checkout.
+- `POST /checkout/stripe`: route-level flow that calls `checkoutCart` first, then calls `createStripeCheckoutSession` from the payments module for the newly created order. If Stripe session creation fails after the order transaction commits, the order exists with reserved inventory and needs normal unpaid-order reconciliation/cancellation handling.
+
 ## Inventory And Expiry
 
 Checkout decrements inventory when the order is created, before Stripe payment completes.

@@ -119,6 +119,12 @@ Delete a throwaway dev user:
 make dev-auth-delete-user EMAIL=user@example.com
 ```
 
+## Key Functions
+
+- `getCurrentUser(authorization)`: verifies a Cognito ID token, links the token subject to a local user, and can attach an existing local user by matching email. It rejects emails already linked to another Cognito subject.
+- `getOptionalCurrentUser(authorization)`: returns `null` without a header but otherwise behaves like `getCurrentUser`; callers should only use it where anonymous access is valid.
+- `requireAdmin(authorization)` / `getAdminIdentity(authorization)`: verifies the Cognito ID token and requires the `admin` group. `server.ts` runs this guard for every `/admin/*` route.
+
 ## Production Notes
 
 Cognito is HIPAA eligible, but HIPAA use still requires the right AWS BAA, configuration, logging, operational controls, and application behavior.

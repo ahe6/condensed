@@ -70,6 +70,13 @@ Cart updates reject quantities above current inventory. Checkout revalidates inv
 
 There is no inventory movement ledger yet. The current record is the variant's live sellable quantity.
 
+## Key Functions
+
+- `listProducts()` / `getProductBySlug(slug)`: public catalog reads only return `ACTIVE` products.
+- `listAdminProducts()`: admin catalog reads include draft, active, and archived products.
+- `setProductStatus(productId, status)`: controls public visibility through product status. It does not change cart contents or already-created orders.
+- `setVariantInventory(variantId, input)`: directly sets inventory for a variant. Checkout still performs transactional stock decrement checks before creating orders.
+
 ## Relationships To Other Flows
 
 Catalog services are upstream of cart and checkout:

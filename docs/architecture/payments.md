@@ -116,6 +116,14 @@ Sync does not replace webhooks. Webhooks are still the normal source of truth fo
 
 When sync changes payment status, it writes a `payment_status_events` row with source `ADMIN_SYNC`.
 
+## Key Functions
+
+- `createStripeCheckoutSession(orderId, input)`: creates or reuses an open Stripe Checkout Session for an unpaid order, records a local `payment` and `paymentAttempt`, stores Stripe metadata, and records an initial payment status event. It rejects already-paid/refunded orders and orders without items.
+- `handleStripeWebhook(rawBody, signature)`: verifies the Stripe signature against `STRIPE_WEBHOOK_SECRET`, handles Checkout Session, PaymentIntent, and dispute events, and updates local payment/order state through the same internal Stripe update helpers used by sync/reconciliation.
+- `syncStripePayment(paymentId)`: admin-triggered Stripe read. It only supports Stripe payments, retrieves either a Checkout Session or PaymentIntent, records a same-status sync event when useful, and updates attempts/payment/order state from Stripe rather than browser state.
+- `reconcileStripeCheckoutSessions(options)`: batch job entry point for stale open Stripe Checkout attempts. It retrieves Stripe state, updates attempts/payment/order status, and cancels/releases inventory for expired attempts through the orders module.
+- `createPayment(orderId, input)` and manual status functions: admin/manual payment path. They update the payment and aggregate order payment status and record `ADMIN_MANUAL` status events; they do not contact Stripe.
+
 ## Disputes
 
 Disputes are represented as `DISPUTED` locally.
