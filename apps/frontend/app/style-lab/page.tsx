@@ -1,68 +1,169 @@
-const products = [
+"use client";
+
+import { useMemo, useState } from "react";
+
+const outcomes = [
   {
-    initials: "DM",
-    name: "Daily Mug",
-    detail: "Ceramic desk companion",
-    price: "$21.50",
-    image: "/style-lab/daily-mug.png",
-    color: "sage"
+    title: "Daily health basics",
+    detail: "Simple, recurring essentials for staying stocked without overthinking it.",
+    keywords: ["daily", "routine", "essentials", "vitamins", "basics"],
+    action: "Build a routine"
   },
   {
-    initials: "NB",
-    name: "Notebook Set",
-    detail: "Three-pack, dot grid",
-    price: "$18.00",
-    image: "/style-lab/notebook-set.png",
-    color: "clay"
+    title: "Sleep and recovery",
+    detail: "Low-friction support for winding down, restocking, and tracking your order.",
+    keywords: ["sleep", "recovery", "rest", "night", "stress"],
+    action: "Explore night support"
   },
   {
-    initials: "TC",
-    name: "Cable Kit",
-    detail: "Compact travel organizer",
-    price: "$32.00",
-    image: "/style-lab/cable-kit.png",
-    color: "ink"
+    title: "Skin and personal care",
+    detail: "Focused products for repeatable care, clear instructions, and easy reorders.",
+    keywords: ["skin", "care", "personal", "clear", "routine"],
+    action: "See care options"
+  },
+  {
+    title: "Travel and on-the-go",
+    detail: "Compact essentials for keeping the same routine when your week gets messy.",
+    keywords: ["travel", "kit", "work", "commute", "portable"],
+    action: "Pack a kit"
   }
 ];
 
+const products = [
+  {
+    name: "Daily Foundation",
+    detail: "A lightweight starter set for everyday care.",
+    price: "$28",
+    image: "/style-lab/daily-mug.png",
+    color: "sage",
+    keywords: ["daily", "routine", "essentials", "starter", "basics"]
+  },
+  {
+    name: "Night Reset",
+    detail: "A calm evening routine in one restockable kit.",
+    price: "$34",
+    image: "/style-lab/notebook-set.png",
+    color: "blue",
+    keywords: ["sleep", "night", "recovery", "rest", "stress"]
+  },
+  {
+    name: "Care Carry Kit",
+    detail: "Compact personal-care essentials for travel days.",
+    price: "$32",
+    image: "/style-lab/cable-kit.png",
+    color: "coral",
+    keywords: ["travel", "kit", "portable", "care", "commute"]
+  }
+];
+
+const suggestions = [
+  "Sleep support",
+  "I need daily basics",
+  "Skin support",
+  "Travel kit"
+];
+
+function matchesQuery(item: { title?: string; name?: string; detail: string; keywords: string[] }, query: string) {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  if (!normalizedQuery) {
+    return true;
+  }
+
+  const haystack = [item.title, item.name, item.detail, ...item.keywords].filter(Boolean).join(" ").toLowerCase();
+
+  return normalizedQuery
+    .split(/\s+/)
+    .filter(Boolean)
+    .some((term) => haystack.includes(term));
+}
+
 export default function StyleLabPage() {
+  const [query, setQuery] = useState("");
+
+  const matchedOutcomes = useMemo(
+    () => outcomes.filter((outcome) => matchesQuery(outcome, query)),
+    [query]
+  );
+  const matchedProducts = useMemo(
+    () => products.filter((product) => matchesQuery(product, query)),
+    [query]
+  );
+  const visibleOutcomes = matchedOutcomes.length > 0 ? matchedOutcomes : outcomes;
+  const visibleProducts = matchedProducts.length > 0 ? matchedProducts : products;
+
   return (
     <main className="style-lab-shell">
       <section className="style-lab-hero" aria-label="Storefront concept">
         <div className="style-lab-hero-brand" aria-label="Storefront brand">
           <strong>health</strong>
-          <span>Small catalog / reliable shipping</span>
+          <span>Care essentials / simple restock</span>
         </div>
+
         <div className="style-lab-hero-copy">
-          <p className="style-lab-eyebrow">Desk and daily carry</p>
-          <h1>Useful goods for better everyday routines.</h1>
+          <p className="style-lab-eyebrow">Personal care, guided gently</p>
+          <h1>Start with what you want support for.</h1>
           <p>
-            Durable accessories for work, home, and travel. Live inventory, secure checkout, and
-            tracked delivery on every order.
+            Browse by goal, compare a few focused options, and keep checkout simple once you know
+            what fits your routine.
           </p>
-          <div className="style-lab-actions">
-            <a className="style-lab-button primary" href="#products">
-              Shop arrivals
-            </a>
-            <a className="style-lab-button" href="#detail">
-              See daily mug
-            </a>
+
+          <form className="style-lab-search" role="search" onSubmit={(event) => event.preventDefault()}>
+            <label htmlFor="style-lab-search">Search by goal, need, or routine</label>
+            <div className="style-lab-search-box">
+              <input
+                id="style-lab-search"
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Sleep, daily basics, skin..."
+              />
+              <a className="style-lab-button primary" href="#matches">
+                Find options
+              </a>
+            </div>
+          </form>
+
+          <div className="style-lab-suggestion-row" aria-label="Suggested searches">
+            {suggestions.map((suggestion) => (
+              <button key={suggestion} type="button" onClick={() => setQuery(suggestion)}>
+                {suggestion}
+              </button>
+            ))}
           </div>
         </div>
+
         <div className="style-lab-hero-proof" aria-label="Storefront promises">
-          <span>edited essentials</span>
-          <span>live stock</span>
+          <span>guided by goal</span>
+          <span>clear pricing</span>
           <span>tracked delivery</span>
         </div>
       </section>
 
-      <section className="style-lab-section" id="products" aria-label="Product card concepts">
+      <section className="style-lab-section" id="matches" aria-label="Matched care goals">
         <div className="style-lab-section-heading">
-          <p className="style-lab-eyebrow">Popular right now</p>
-          <h2>Ready-to-ship essentials for the desk and bag.</h2>
+          <p className="style-lab-eyebrow">Start with the outcome</p>
+          <h2>{query ? `Options related to "${query}"` : "Choose the kind of support you are looking for."}</h2>
+        </div>
+
+        <div className="style-lab-outcome-grid">
+          {visibleOutcomes.map((outcome) => (
+            <article className="style-lab-outcome-card" key={outcome.title}>
+              <span>{outcome.title}</span>
+              <p>{outcome.detail}</p>
+              <a href="#products">{outcome.action}</a>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="style-lab-product-section" id="products" aria-label="Product card concepts">
+        <div className="style-lab-section-heading">
+          <p className="style-lab-eyebrow">Then compare products</p>
+          <h2>Focused options once you know where you want to start.</h2>
         </div>
         <div className="style-lab-product-grid">
-          {products.map((product) => (
+          {visibleProducts.map((product) => (
             <article className="style-lab-product-card" key={product.name}>
               <div className={`style-lab-product-art style-lab-product-${product.color}`}>
                 <img src={product.image} alt={`${product.name} mock product`} />
@@ -85,30 +186,31 @@ export default function StyleLabPage() {
       <div className="style-lab-detail-band">
         <section className="style-lab-detail" id="detail" aria-label="Product detail concept">
           <div className="style-lab-detail-art">
-            <img src="/style-lab/daily-mug.png" alt="Daily Mug mock product detail" />
+            <img src="/style-lab/daily-mug.png" alt="Daily Foundation mock product detail" />
           </div>
           <article>
-            <p className="style-lab-eyebrow">In stock today</p>
-            <h2>Daily Mug</h2>
+            <p className="style-lab-eyebrow">Recommended starting point</p>
+            <h2>Daily Foundation</h2>
             <p>
-              Stoneware weight, soft-touch glaze, and a stable base for long desk days.
+              A small, repeatable care routine with clear reorder timing, simple checkout, and
+              account-based order tracking.
             </p>
             <div className="style-lab-pills">
-              <span>live stock</span>
+              <span>simple routine</span>
+              <span>easy reorder</span>
               <span>tracked delivery</span>
-              <span>secure checkout</span>
             </div>
             <label>
-              <span>variant</span>
-              <select defaultValue="default">
-                <option value="default">Default Variant - $21.50</option>
-                <option value="gift">Gift Set - $36.00</option>
+              <span>option</span>
+              <select defaultValue="starter">
+                <option value="starter">Starter Kit - $28</option>
+                <option value="refill">Monthly Refill - $22</option>
               </select>
             </label>
             <div className="style-lab-detail-buy">
               <div>
-                <strong>$21.50</strong>
-                <span>98 in stock</span>
+                <strong>$28</strong>
+                <span>Ships from current inventory</span>
               </div>
               <button type="button">Add to cart</button>
             </div>
@@ -119,8 +221,8 @@ export default function StyleLabPage() {
       <div className="style-lab-cart-band">
         <section className="style-lab-cart" id="cart" aria-label="Cart concept">
           <div>
-            <p className="style-lab-eyebrow">Secure checkout</p>
-            <h2>Review, pay, and track it from your account.</h2>
+            <p className="style-lab-eyebrow">Checkout stays direct</p>
+            <h2>Review, pay, and track your order without extra steps.</h2>
           </div>
           <div className="style-lab-cart-summary">
             <article>
@@ -129,7 +231,7 @@ export default function StyleLabPage() {
             </article>
             <article>
               <span>total</span>
-              <strong>$39.50</strong>
+              <strong>$50</strong>
             </article>
             <button type="button">Continue</button>
           </div>
