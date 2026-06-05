@@ -5,7 +5,8 @@ Use this when adding or moving docs so each doc has one job.
 ## Where Content Belongs
 
 - `docs/start/*`: how to start working in an environment.
-- `docs/architecture/backend.md`: backend request flow, module shape, server hooks, admin/auth flow, transaction patterns, and external event patterns.
+- `docs/architecture/backend-conventions.md`: backend request flow, module shape, server hooks, admin/auth flow, transaction patterns, and external event patterns.
+- `docs/architecture/backend-flows.md`: backend module collaboration across auth, checkout, admin, Stripe, fulfillment, and notifications.
 - `docs/architecture/backend-modules.md`: module ownership, route inventory, and main service functions.
 - `docs/architecture/users.md`: user records, saved addresses, and default address behavior.
 - `docs/architecture/carts.md`: anonymous/user carts, cart ownership, item operations, and totals.
@@ -18,14 +19,14 @@ Use this when adding or moving docs so each doc has one job.
 - `docs/architecture/database.md`: Prisma models, migrations, and database design decisions.
 - `docs/architecture/infrastructure.md`: AWS resource shape, Terraform state, network, RDS, ECR, ECS, and cost notes.
 - `docs/reference/api.md`: exact endpoint contracts, request shapes, response shapes, query params, and status behavior.
-- `docs/reference/flows.md`: end-to-end business flows across modules.
+- `docs/reference/flows.md`: high-level product and business flows.
 - `docs/runbooks/*`: step-by-step commands for operations, deployment, resets, smoke checks, and debugging.
 
 ## Rules
 
 - Do not duplicate exact route request/response shapes outside `reference/api.md`.
 - Do not put deployment commands inside architecture docs; link to runbooks.
-- Keep `backend.md` as an overview, not module inventory.
+- Keep `backend-conventions.md` focused on implementation conventions, not module inventory.
 - Keep `backend-modules.md` as inventory. Module-specific behavior belongs in the module's architecture doc when one exists.
 - Functional docs can mention routes, but should link to [API](reference/api.md) for exact contracts.
 - When code changes add, remove, or rename routes, update [Backend Modules](architecture/backend-modules.md) and [API](reference/api.md).

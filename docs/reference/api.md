@@ -2,7 +2,7 @@
 
 The backend is a Fastify app in `apps/backend`.
 
-Backend module conventions live in [Backend](../architecture/backend.md), and module route inventory lives in [Backend Modules](../architecture/backend-modules.md). User/address behavior lives in [Users](../architecture/users.md), cart behavior lives in [Carts](../architecture/carts.md), and checkout behavior lives in [Checkout](../architecture/checkout.md). Business flows live in [Flows](flows.md). Fulfillment workflow details live in [Fulfillment](../architecture/fulfillment.md).
+Backend module conventions live in [Backend Conventions](../architecture/backend-conventions.md), module collaboration lives in [Backend Flows](../architecture/backend-flows.md), and module route inventory lives in [Backend Modules](../architecture/backend-modules.md). User/address behavior lives in [Users](../architecture/users.md), cart behavior lives in [Carts](../architecture/carts.md), and checkout behavior lives in [Checkout](../architecture/checkout.md). Business flows live in [Flows](flows.md). Fulfillment workflow details live in [Fulfillment](../architecture/fulfillment.md).
 
 ## Structure
 

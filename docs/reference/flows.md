@@ -1,143 +1,89 @@
 # Flows
 
-This doc describes how ecommerce information moves through the backend. Code organization lives in [Backend](../architecture/backend.md), endpoint details live in [API](api.md), fulfillment details live in [Fulfillment](../architecture/fulfillment.md), and database table details live in [Database](../architecture/database.md).
+This doc describes product and business flows at a high level. Backend module collaboration lives in [Backend Flows](../architecture/backend-flows.md), endpoint contracts live in [API](api.md), and data shape lives in [Database](../architecture/database.md).
 
-Last verified against the backend services on 2026-06-04.
+Last verified against the backend behavior docs on 2026-06-05.
 
-## Catalog Management
+## Catalog
 
-```text
-admin creates category
-admin creates product as DRAFT or ACTIVE
-admin creates variants and images
-admin assigns categories
-admin publishes product
-```
+Admins create products, variants, images, and categories. Public shoppers browse active products, choose a variant, and add that variant to a cart.
 
-Public product lists should only show `ACTIVE` products. Admin product lists show every status.
+Product records describe the merchandised item. Variants are the purchasable SKUs with price, currency, and inventory.
 
-## Product Browsing
+Read:
 
-```text
-client lists products
-client opens product by slug
-client selects variant
-client adds variant to cart
-```
+- [Catalog](../architecture/catalog.md)
+- [API](api.md)
 
-The frontend should treat variants as purchasable items. Product records are for display and grouping.
+## Cart
 
-## Cart Management
+Shoppers build a cart from selected variants. Anonymous carts can exist before sign-in, and signed-in users can adopt or merge a browser-local cart into their account cart.
 
-```text
-client creates or resumes cart
-signed-in client loads /me/cart and may pass browser-local cartId for adoption or merge
-client adds variant
-client updates quantities
-backend rejects inactive variants or quantities above current inventory
-backend recalculates totals from current variant prices
-```
+Cart totals are previews based on current variant prices. Checkout recalculates and snapshots final order totals.
 
-Anonymous carts are browser-local by cart ID. Signed-in carts are attached to the current user, and user-owned carts can only be changed by that user. Cart totals are previews. Order totals become authoritative at checkout.
+Read:
+
+- [Carts](../architecture/carts.md)
+- [Catalog](../architecture/catalog.md)
 
 ## Checkout
 
-```text
-client submits cart, email, and addresses
-  -> optionally select saved account addresses or enter custom address fields
-  -> validate cart has items
-  -> validate every variant still exists
-  -> validate requested quantities are available
-  -> calculate subtotal, shipping, tax, and total
-  -> create order
-  -> copy item details into order_items
-  -> copy address details into order_addresses
-  -> decrement inventory
-  -> clear cart
-  -> create Stripe Checkout Session when using Stripe checkout
-  -> return order number
-```
+Checkout turns a mutable cart into a durable order. The customer submits contact email plus shipping and billing addresses. The backend validates product status and inventory, snapshots order data, decrements inventory, and clears the cart.
 
-Order creation is the boundary where mutable cart data becomes durable purchase data. Inventory changes and order creation happen in a Prisma transaction.
+When Stripe is configured, checkout also starts a Stripe Checkout Session so the customer can pay through Checkout Elements.
 
-Unpaid order expiry:
+Read:
 
-```text
-scheduled/manual job scans old open local Stripe Checkout attempts
-  -> retrieve Checkout Session state from Stripe
-  -> leave locally open attempts open when Stripe still reports open
-  -> mark expired attempts/orders only when Stripe reports expired
-  -> restore order item quantities to variants
-  -> set inventoryReleasedAt so release is not repeated
-```
+- [Checkout](../architecture/checkout.md)
+- [Payments](../architecture/payments.md)
 
-## Order Lookup
+## Orders
 
-```text
-client requests order by order number
-  -> fetch order with addresses, items, payments, and shipments
-  -> return order detail
-```
+Customers can view their own orders by order number. Admins can search, filter, sort, and review orders across customers.
 
-Admin order status changes should use explicit service functions and routes, not arbitrary patch objects.
+Admin order detail brings together order records, notes, payments, shipments, tracking changes, and notification events so operators can understand what happened without manually joining tables.
 
-The admin order list is queried through SQL-backed search, filters, sorting, and pagination. Admin search covers order fields, customer names, line items, SKUs, status text, and internal notes.
+Read:
 
-Expanded admin orders include an internal timeline built from order creation/placement, admin notes, payment status events, shipment status events, and shipment tracking changes. Detailed payment and fulfillment histories stay folded until an admin opens the relevant history control.
+- [Orders](../architecture/orders.md)
+- [API](api.md)
 
-## Payment Update
+## Payments
 
-```text
-Stripe Checkout Session webhook, Stripe-compatible PaymentIntent event, admin sync, or admin action updates payment
-backend records provider attempt and payment state
-backend writes payment status history
-backend updates order payment status in the same transaction
-```
+Payment state is owned by the backend and reconciled with Stripe. A payment can move through states such as unpaid, paid, failed, expired, refunded, or disputed.
 
-Do not mark an order paid only from the frontend. Payment state should come from backend-controlled Stripe webhook confirmation or an admin path.
+Stripe webhooks are the normal source of truth for automatic payment updates. Admin sync exists for manual reconciliation when webhook delivery or local development setup gets out of step.
 
-Current payment status changes update the payment and parent order in the same Prisma transaction.
+Read:
 
-## Shipment Update
+- [Payments](../architecture/payments.md)
+- [Backend Flows](../architecture/backend-flows.md)
 
-```text
-admin creates shipment
-admin assigns order item quantities
-admin adds tracking
-admin marks shipment shipped, delivered, or returned
-backend recalculates order fulfillment status
-backend queues notification event when delivered
-```
+## Fulfillment
 
-Shipments contain `shipment_items`, so one order can be split across multiple packages. Marking shipments shipped or delivered recalculates the parent order as `UNFULFILLED`, `PARTIAL`, or `FULFILLED` based on shipped quantity. Returned shipments are excluded from shipped quantity and can mark the order `RETURNED` when returned quantity covers the full order.
+Admins create shipments, assign order item quantities, add tracking, and mark shipments shipped, delivered, or returned.
 
-Fulfillment actions are blocked unless payment is `PAID` or `AUTHORIZED`. Orders with `UNPAID`, `FAILED`, `EXPIRED`, `DISPUTED`, or `REFUNDED` payment status should not be shipped.
+The order fulfillment status summarizes shipment progress. Fulfillment is blocked for unpaid, failed, expired, disputed, or refunded orders.
 
-Shipment creation and status changes are recorded in `shipment_status_events` so admin can see the fulfillment timeline. Carrier and tracking number changes are recorded in `shipment_tracking_events` so corrected labels remain auditable.
+Read:
 
-When a shipment is marked delivered, the backend records one pending `SHIPMENT_DELIVERED` notification event for the order email. The unique shipment/type constraint prevents duplicate delivered notification records.
+- [Fulfillment](../architecture/fulfillment.md)
+- [Orders](../architecture/orders.md)
 
-When a shipment has a supported carrier and tracking number, the frontend builds a public tracking link. Supported carrier names currently include UPS, USPS, FedEx, and DHL. This is a link-out only; the app does not call carrier APIs for live tracking updates.
+## Notifications
 
-See [Fulfillment](../architecture/fulfillment.md) for the full shipment and tracking behavior. See [Notifications](../architecture/notifications.md) for delivered email records and SES sending.
+Delivered shipments create customer notification records. When SES email is configured, the backend sends the delivered email and records the provider result. Pending or failed notification events can be retried.
 
-## Design Rules
+Customer emails should stay minimal and link back to authenticated order detail for sensitive information.
 
-Admin routes require a Cognito ID token with membership in the `admin` group.
+Read:
 
-Order items snapshot product name, variant title, SKU, unit price, quantity, and total.
+- [Notifications](../architecture/notifications.md)
+- [Fulfillment](../architecture/fulfillment.md)
 
-Order addresses snapshot shipping and billing fields.
+## Operational Priorities
 
-Prices enter the API as decimal strings. This avoids accidental JSON floating point precision issues at the boundary.
-
-Prisma migrations own database shape. Do not manually edit local databases to add schema.
-
-Local database records are disposable during early development unless we add seed scripts or backups.
-
-## Next Implementation Order
-
-Recommended sequence:
+Recommended next implementation priorities:
 
 1. Keep scheduled Stripe Checkout reconciliation enabled and observable in AWS.
 2. Add carrier label purchase or live carrier status sync when fulfillment leaves manual operations.

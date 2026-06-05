@@ -1,6 +1,6 @@
-# Backend
+# Backend Conventions
 
-This doc describes how backend code should be organized and how backend requests move through the system. Module inventory lives in [Backend Modules](backend-modules.md). User/address behavior lives in [Users](users.md). Cart behavior lives in [Carts](carts.md). Checkout behavior lives in [Checkout](checkout.md). Catalog behavior lives in [Catalog](catalog.md). Order/admin-order behavior lives in [Orders](orders.md). Endpoint contracts live in [API](../reference/api.md), ecommerce process context lives in [Flows](../reference/flows.md), and database table details live in [Database](database.md).
+This doc defines backend implementation conventions and cross-cutting request patterns. Backend module collaboration lives in [Backend Flows](backend-flows.md), module inventory lives in [Backend Modules](backend-modules.md), endpoint contracts live in [API](../reference/api.md), and product/business flows live in [Flows](../reference/flows.md).
 
 Last verified against backend routes and services on 2026-06-05.
 
@@ -95,6 +95,7 @@ Scheduled jobs should call service functions instead of reimplementing business 
 
 ## Related Docs
 
+- [Backend Flows](backend-flows.md): how backend modules cooperate across user, checkout, admin, Stripe, fulfillment, and notification flows.
 - [Backend Modules](backend-modules.md): module ownership, route inventory, and main service functions.
 - [Users](users.md): user records, saved addresses, and default address behavior.
 - [Carts](carts.md): anonymous/user carts, cart ownership, item operations, and totals.

@@ -1,6 +1,6 @@
 # Backend Modules
 
-This doc inventories the backend modules in `apps/backend/src/modules`. Backend architecture and request flow live in [Backend](backend.md). Exact route contracts live in [API](../reference/api.md).
+This doc inventories the backend modules in `apps/backend/src/modules`. Backend conventions and request flow live in [Backend Conventions](backend-conventions.md). Backend module collaboration lives in [Backend Flows](backend-flows.md). Exact route contracts live in [API](../reference/api.md).
 
 Last verified against backend route and service exports on 2026-06-05.
 
