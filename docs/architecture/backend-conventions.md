@@ -71,7 +71,7 @@ Admin routes are spread across the owning business modules instead of a separate
 
 All `/admin/*` routes pass through the global Fastify pre-handler in `server.ts`. That hook requires a Cognito ID token whose user belongs to the `admin` group before the module route handler runs.
 
-This keeps admin behavior near the service code that owns the state transition. Exact request and response shapes belong in [API](../reference/api.md).
+This keeps admin behavior near the service code that owns the state transition. The operator/workspace map lives in [Admin](admin.md). Exact request and response shapes belong in [API](../reference/api.md).
 
 ## Transaction Flow
 
@@ -97,6 +97,7 @@ Scheduled jobs should call service functions instead of reimplementing business 
 
 - [Backend Flows](backend-flows.md): how backend modules cooperate across user, checkout, admin, Stripe, fulfillment, and notification flows.
 - [Backend Modules](backend-modules.md): module ownership, route inventory, and main service functions.
+- [Admin](admin.md): admin workspace, order operations, payment/fulfillment/catalog actions, and guardrails.
 - [Users](users.md): user records, saved addresses, and default address behavior.
 - [Carts](carts.md): anonymous/user carts, cart ownership, item operations, and totals.
 - [Checkout](checkout.md): cart-to-order conversion, inventory decrement, and Stripe checkout handoff.

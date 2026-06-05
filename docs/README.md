@@ -13,6 +13,7 @@ Use [Docs Conventions](CONVENTIONS.md) when adding or moving documentation.
 ## Architecture
 
 - [Frontend](architecture/frontend.md): Next.js app structure, shop flow, admin UI, auth, Stripe Elements, and UI conventions.
+- [Admin](architecture/admin.md): admin workspace, order operations, payment/fulfillment/catalog actions, and guardrails.
 - [Backend Conventions](architecture/backend-conventions.md): request flow, module conventions, server hooks, admin flow, transactions, and external events.
 - [Backend Flows](architecture/backend-flows.md): backend module collaboration across auth, checkout, admin, Stripe, fulfillment, and notifications.
 - [Backend Modules](architecture/backend-modules.md): current backend module ownership, route inventory, and main service functions.

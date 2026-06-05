@@ -149,45 +149,7 @@ Payment state should not be trusted from the browser alone. Stripe webhooks or a
 
 `app/admin/page.tsx` is a single-page admin workspace with order and catalog tabs.
 
-Main admin capabilities:
-
-- Switch between order operations and catalog management.
-- Search/filter/sort/page admin orders through SQL-backed `GET /admin/orders`.
-- Search across order fields, customer names, line items, SKUs, statuses, note bodies, and note authors.
-- Filter by payment status, fulfillment status, event date range, and page size.
-- Sort by created, edited, placed, shipped, delivered, or total.
-- Expand one order row inline.
-- Keep notes visible on expanded orders and open the activity/actions accordion for payments, fulfillment, and timeline.
-- Add internal admin-only notes.
-- Show a combined order timeline.
-- Create manual payments and mark payments authorized, paid, failed, or refunded.
-- Sync Stripe payment status for Stripe payments.
-- Create shipments with remaining line item quantities prefilled, save carrier/tracking edits, and mark shipments shipped, delivered, or returned.
-- Show delivered-shipment notification records in the expanded order notification section and combined timeline.
-- Open public carrier tracking links for UPS, USPS, FedEx, and DHL.
-- Search/filter admin products.
-- Create products and categories.
-- Edit product name, slug, description, and status.
-- Publish or archive products.
-- Assign and remove product categories.
-- Add product images.
-- Add and edit product variants, prices, currencies, and inventory.
-
-The expanded order row is the main work surface. It includes:
-
-- Order timestamps, customer, line items, and shipment summary
-- Notes composer and note list
-- Payments and payment actions
-- Fulfillment line item allocation and shipment actions
-- Notification records created by delivered shipment events
-- Chronological timeline built from order events, notes, payment events, shipment events, tracking changes, and notification events
-
-Detailed payment and shipment audit history is folded behind per-record `History` buttons so the current operational controls stay visible.
-Notes stay visible on expanded orders. The activity and actions accordion starts collapsed per order so admins can scan orders first, then open the operational workspace when needed.
-
-The expanded catalog row is the main product work surface. It includes product fields, category chips, variant editing, inventory controls, and image links.
-
-See [Fulfillment](fulfillment.md) for shipment guardrails and tracking-link behavior.
+See [Admin](admin.md) for the admin workspace, order operations, payment/fulfillment/catalog actions, and guardrails.
 
 ## Styling
 

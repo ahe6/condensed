@@ -125,6 +125,7 @@ Admin order timelines are assembled from order state, notes, payment events, shi
 
 Read:
 
+- [Admin](admin.md)
 - [Orders](orders.md)
 - [Payments](payments.md)
 - [Fulfillment](fulfillment.md)
