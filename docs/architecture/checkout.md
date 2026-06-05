@@ -2,6 +2,8 @@
 
 This doc covers the `checkout` backend module. Cart behavior lives in [Carts](carts.md), payment behavior lives in [Payments](payments.md), order behavior lives in [Orders](orders.md), and route contracts live in [API](../reference/api.md).
 
+Last verified against backend checkout routes and services on 2026-06-05.
+
 ## Responsibilities
 
 The `checkout` module owns the cart-to-order boundary:

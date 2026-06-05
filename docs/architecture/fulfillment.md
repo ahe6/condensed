@@ -2,7 +2,7 @@
 
 This doc covers order shipment handling, tracking updates, and fulfillment history. Route details live in [API](../reference/api.md), notification behavior lives in [Notifications](notifications.md), table details live in [Database](database.md), and end-to-end process context lives in [Flows](../reference/flows.md).
 
-Last verified against the backend shipment service and admin UI on 2026-06-04.
+Last verified against the backend shipment routes/services and admin UI on 2026-06-05.
 
 ## Current Model
 
@@ -63,7 +63,7 @@ Status actions update the shipment and parent order in one transaction:
 - `deliver`: shipment becomes `DELIVERED`, `deliveredAt` is set, and order fulfillment is recalculated.
 - `return`: shipment becomes `RETURNED`, and order fulfillment is recalculated.
 
-When `deliver` runs, the backend also creates a `SHIPMENT_DELIVERED` notification event for the order email. The event is idempotent per shipment, so repeated delivered actions do not create duplicate notification records.
+When `deliver` runs, the backend also creates or updates a `SHIPMENT_DELIVERED` notification event for the order email. The event is idempotent per shipment, so repeated delivered actions do not create duplicate notification records.
 
 ## Fulfillment Math
 

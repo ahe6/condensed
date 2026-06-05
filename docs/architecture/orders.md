@@ -2,6 +2,8 @@
 
 This doc covers backend order behavior, customer order lookup, and admin order operations. Route contracts live in [API](../reference/api.md), module inventory lives in [Backend Modules](backend-modules.md), payment behavior lives in [Payments](payments.md), and fulfillment behavior lives in [Fulfillment](fulfillment.md).
 
+Last verified against backend order routes and services on 2026-06-05.
+
 ## Customer Orders
 
 Customer order detail is fetched by order number:
@@ -70,5 +72,7 @@ Detailed payment, shipment, and notification histories remain available behind f
 ## Cancellation And Inventory
 
 Cancelling an unpaid, failed, or expired unfulfilled order can release inventory back to variants. The backend uses `orders.inventoryReleasedAt` to make release idempotent.
+
+Admin cancellation still marks the order `CANCELLED` even when inventory is not eligible for release. Before cancelling, the backend checks non-paid/non-refunded local Stripe Checkout Session records against Stripe; if Stripe reports one is complete or paid, cancellation is blocked.
 
 The Stripe Checkout reconciliation job uses the same inventory-release guard and only expires/cancels local orders when Stripe reports the Checkout Session as expired.

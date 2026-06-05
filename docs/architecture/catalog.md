@@ -2,6 +2,8 @@
 
 This doc covers public catalog behavior and admin catalog management. Route contracts live in [API](../reference/api.md), module inventory lives in [Backend Modules](backend-modules.md), and table details live in [Database](database.md).
 
+Last verified against backend catalog routes and services on 2026-06-05.
+
 ## Model
 
 Catalog data is split across:
@@ -16,13 +18,16 @@ Cart items and order items reference variants. Products are for display, groupin
 
 ## Public Catalog
 
-Public routes expose only active sellable catalog records:
+Public product routes expose only active products:
 
 - `GET /products`
 - `GET /products/:slug`
+
+The category route returns all categories ordered by name:
+
 - `GET /categories`
 
-Product list/detail responses include variants and images so the frontend can render product cards, product detail, and variant selection without separate calls.
+Product list/detail responses include variants, images, and category joins so the frontend can render product cards, product detail, and variant selection without separate calls.
 
 Public product browsing should treat variants as the purchasable unit. A product without a usable active variant is not enough to sell on its own.
 

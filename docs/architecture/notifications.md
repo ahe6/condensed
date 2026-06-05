@@ -2,7 +2,7 @@
 
 This doc covers customer notification records and email sending. Fulfillment behavior lives in [Fulfillment](fulfillment.md), table details live in [Database](database.md), and AWS deployment details live in [Deployment](../runbooks/deploy.md).
 
-Last verified against the backend notification service on 2026-06-04.
+Last verified against the backend notification service on 2026-06-05.
 
 ## Current Model
 

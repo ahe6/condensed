@@ -2,6 +2,8 @@
 
 This doc covers the `carts` backend module. Product/variant behavior lives in [Catalog](catalog.md), checkout behavior lives in [Checkout](checkout.md), and route contracts live in [API](../reference/api.md).
 
+Last verified against backend cart routes and services on 2026-06-05.
+
 ## Responsibilities
 
 The `carts` module owns:

@@ -2,6 +2,8 @@
 
 This doc describes how backend code should be organized and how backend requests move through the system. Module inventory lives in [Backend Modules](backend-modules.md). User/address behavior lives in [Users](users.md). Cart behavior lives in [Carts](carts.md). Checkout behavior lives in [Checkout](checkout.md). Catalog behavior lives in [Catalog](catalog.md). Order/admin-order behavior lives in [Orders](orders.md). Endpoint contracts live in [API](../reference/api.md), ecommerce process context lives in [Flows](../reference/flows.md), and database table details live in [Database](database.md).
 
+Last verified against backend routes and services on 2026-06-05.
+
 ## Request Flow
 
 All HTTP requests should follow this path:

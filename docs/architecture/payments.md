@@ -2,7 +2,7 @@
 
 Payments are modeled locally, with Stripe used as the external payment processor. The backend owns the local order and payment state; Stripe webhooks and admin sync keep that state aligned with Stripe.
 
-Last verified against the backend payment service and admin UI on 2026-06-04.
+Last verified against the backend payment routes/services and admin UI on 2026-06-05.
 
 ## Local Model
 

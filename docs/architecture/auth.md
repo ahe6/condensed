@@ -2,6 +2,8 @@
 
 Authentication uses Amazon Cognito. The app stack can stay local while Cognito runs in AWS.
 
+Last verified against backend auth routes and services on 2026-06-05.
+
 ## Current State
 
 - Cognito is deployed as part of the `health-dev` AWS dev stack.
