@@ -95,6 +95,7 @@ Local URLs:
 - [Infrastructure](docs/architecture/infrastructure.md)
 - [Deployment](docs/runbooks/deploy.md)
 - [Runbooks](docs/runbooks/README.md)
+- [Docs Conventions](docs/CONVENTIONS.md)
 
 ## Common Commands
 

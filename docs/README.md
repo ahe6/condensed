@@ -2,6 +2,8 @@
 
 This directory holds the working documentation for `health`.
 
+Use [Docs Conventions](CONVENTIONS.md) when adding or moving documentation.
+
 ## Start Here
 
 - [Local Development](start/local-development.md): run Postgres, backend, and frontend locally.
@@ -31,6 +33,7 @@ This directory holds the working documentation for `health`.
 
 - [Deployment](runbooks/deploy.md): deploy backend and frontend images, run migrations, manage public AWS services, and verify AWS dev.
 - [Runbooks](runbooks/README.md): common step-by-step commands for local and AWS operations.
+- [Docs Conventions](CONVENTIONS.md): where each kind of documentation belongs and how to verify changes.
 - [Docs TODO](TODO.md): documentation audits and follow-up cleanup.
 
 ## Current Environment
