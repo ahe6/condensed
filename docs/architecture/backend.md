@@ -1,6 +1,6 @@
 # Backend
 
-This doc describes how backend code should be organized and how backend requests move through the system. Module inventory lives in [Backend Modules](backend-modules.md). Catalog behavior lives in [Catalog](catalog.md). Order/admin-order behavior lives in [Orders](orders.md). Endpoint contracts live in [API](../reference/api.md), ecommerce process context lives in [Flows](../reference/flows.md), and database table details live in [Database](database.md).
+This doc describes how backend code should be organized and how backend requests move through the system. Module inventory lives in [Backend Modules](backend-modules.md). User/address behavior lives in [Users](users.md). Cart behavior lives in [Carts](carts.md). Checkout behavior lives in [Checkout](checkout.md). Catalog behavior lives in [Catalog](catalog.md). Order/admin-order behavior lives in [Orders](orders.md). Endpoint contracts live in [API](../reference/api.md), ecommerce process context lives in [Flows](../reference/flows.md), and database table details live in [Database](database.md).
 
 ## Request Flow
 
@@ -94,6 +94,9 @@ Scheduled jobs should call service functions instead of reimplementing business 
 ## Related Docs
 
 - [Backend Modules](backend-modules.md): module ownership, route inventory, and main service functions.
+- [Users](users.md): user records, saved addresses, and default address behavior.
+- [Carts](carts.md): anonymous/user carts, cart ownership, item operations, and totals.
+- [Checkout](checkout.md): cart-to-order conversion, inventory decrement, and Stripe checkout handoff.
 - [Catalog](catalog.md): public catalog and admin product/category/variant/image/inventory behavior.
 - [Orders](orders.md): customer order lookup, admin search, order notes, cancellation, and timeline behavior.
 - [Payments](payments.md): Stripe Checkout, webhooks, admin sync, disputes, and refunds.

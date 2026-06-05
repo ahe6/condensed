@@ -15,6 +15,9 @@ Use [Docs Conventions](CONVENTIONS.md) when adding or moving documentation.
 - [Frontend](architecture/frontend.md): Next.js app structure, shop flow, admin UI, auth, Stripe Elements, and UI conventions.
 - [Backend](architecture/backend.md): request flow, module conventions, server hooks, admin flow, transactions, and external events.
 - [Backend Modules](architecture/backend-modules.md): current backend module ownership, route inventory, and main service functions.
+- [Users](architecture/users.md): user records, saved addresses, and default address behavior.
+- [Carts](architecture/carts.md): anonymous/user carts, cart ownership, item operations, and totals.
+- [Checkout](architecture/checkout.md): cart-to-order conversion, inventory decrement, and Stripe checkout handoff.
 - [Catalog](architecture/catalog.md): public catalog and admin product/category/variant/image/inventory behavior.
 - [Orders](architecture/orders.md): customer order lookup, admin order search, notes, timeline, and cancellation behavior.
 - [Auth](architecture/auth.md): Cognito login, local auth setup, user linking, and admin group access.

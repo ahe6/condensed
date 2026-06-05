@@ -7,6 +7,9 @@ Use this when adding or moving docs so each doc has one job.
 - `docs/start/*`: how to start working in an environment.
 - `docs/architecture/backend.md`: backend request flow, module shape, server hooks, admin/auth flow, transaction patterns, and external event patterns.
 - `docs/architecture/backend-modules.md`: module ownership, route inventory, and main service functions.
+- `docs/architecture/users.md`: user records, saved addresses, and default address behavior.
+- `docs/architecture/carts.md`: anonymous/user carts, cart ownership, item operations, and totals.
+- `docs/architecture/checkout.md`: cart-to-order conversion, inventory decrement, and Stripe checkout handoff.
 - `docs/architecture/catalog.md`: catalog behavior and admin catalog operations.
 - `docs/architecture/orders.md`: order and admin-order behavior.
 - `docs/architecture/payments.md`: Stripe and local payment behavior.
@@ -23,7 +26,7 @@ Use this when adding or moving docs so each doc has one job.
 - Do not duplicate exact route request/response shapes outside `reference/api.md`.
 - Do not put deployment commands inside architecture docs; link to runbooks.
 - Keep `backend.md` as an overview, not module inventory.
-- Keep `backend-modules.md` as inventory. Split a module into its own architecture doc only when it needs behavior, rules, or workflow detail beyond route and service lists.
+- Keep `backend-modules.md` as inventory. Module-specific behavior belongs in the module's architecture doc when one exists.
 - Functional docs can mention routes, but should link to [API](reference/api.md) for exact contracts.
 - When code changes add, remove, or rename routes, update [Backend Modules](architecture/backend-modules.md) and [API](reference/api.md).
 - When schema changes, update [Database](architecture/database.md).
