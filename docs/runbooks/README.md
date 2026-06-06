@@ -125,7 +125,7 @@ The check verifies:
 
 - backend `/health` and `/ready`
 - frontend `/cart`
-- seeded `dev-mug` catalog data
+- seeded demo catalog data, including `dev-mug` for checkout smoke tests
 - backend/frontend ECS service stability
 - backend and scheduled task Stripe secret injection
 - Cognito deployed callback/logout URLs
@@ -347,11 +347,13 @@ make dev-db-reset-data CONFIRM=health-dev
 
 This truncates app tables only. It does not destroy Terraform resources and does not delete Cognito users.
 
-Seed the AWS dev catalog with the demo `dev-mug` product:
+Seed the AWS dev catalog with the demo product set:
 
 ```sh
 make dev-db-seed
 ```
+
+The seed creates a small health-style catalog across hair, skin, sexual wellness, weight management, mental wellness, labs, supplements, daily care, and drinkware. It keeps `dev-mug` available because the checkout smoke test uses it.
 
 Reset and seed in one step:
 

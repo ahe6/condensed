@@ -368,6 +368,8 @@ Seed the demo catalog:
 make dev-db-seed
 ```
 
+The seed creates a small health-style catalog across hair, skin, sexual wellness, weight management, mental wellness, labs, supplements, daily care, and drinkware. It keeps `dev-mug` available because the checkout smoke test uses it.
+
 Reset and seed together:
 
 ```sh

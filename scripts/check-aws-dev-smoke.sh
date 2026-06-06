@@ -62,8 +62,10 @@ frontend_status="$(curl -sS -o /dev/null -w '%{http_code}' "$frontend_url/cart")
 pass "Frontend /cart returns 200"
 
 products_json="$(curl -fsS "$backend_url/products")"
+seeded_product_count="$(jq '[.[] | select(.status == "ACTIVE")] | length' <<<"$products_json")"
 dev_mug_count="$(jq '[.[] | select(.slug == "dev-mug" and .status == "ACTIVE")] | length' <<<"$products_json")"
 dev_mug_inventory="$(jq '[.[] | select(.slug == "dev-mug") | .variants[] | select(.sku == "DEV-MUG-001") | .inventoryQuantity] | first // 0' <<<"$products_json")"
+[[ "$seeded_product_count" -ge 10 ]] || fail "expected at least 10 active seeded products, found $seeded_product_count"
 [[ "$dev_mug_count" == "1" ]] || fail "dev-mug active product not found"
 [[ "$dev_mug_inventory" -gt 0 ]] || fail "DEV-MUG-001 inventory is not positive"
 pass "Seeded dev catalog is available"
