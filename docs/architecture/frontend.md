@@ -114,7 +114,7 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 
 - Loads one active product from `GET /products/:slug`.
 - Loads assessment questions from `GET /products/:slug/assessment` for care-program products.
-- Renders backend-owned question definitions as a small questionnaire.
+- Renders backend-owned question definitions as a one-question-at-a-time stepper.
 - Starts required selects blank so untouched assessments cannot be submitted.
 - Requires sign-in after answers are complete and before saving the submission.
 - Stores a browser-local assessment draft under `health.assessmentDraft.<slug>` so answers survive the Cognito redirect.

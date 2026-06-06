@@ -51,6 +51,6 @@ Answer values are stored as JSON so text, number, boolean, single-select, and mu
 
 ## Relationships
 
-The frontend intake route loads the product first, then loads this assessment template when `product.purchaseMode` is `ASSESSMENT_REQUIRED`. Required selects start blank so an untouched form cannot be submitted. If the customer is not signed in after answering, the page stores a local draft, sends the customer through Cognito, returns to the same intake URL, and then submits the saved answers. On submit, the page posts the answer map to `POST /products/:slug/assessment/submissions` and shows the returned submission state.
+The frontend intake route loads the product first, then loads this assessment template when `product.purchaseMode` is `ASSESSMENT_REQUIRED`. It renders one question at a time with progress controls. Required selects start blank so an untouched form cannot be submitted. If the customer is not signed in after answering, the page stores a local draft, sends the customer through Cognito, returns to the same intake URL, and then submits the saved answers. On submit, the page posts the answer map to `POST /products/:slug/assessment/submissions` and shows the returned submission state.
 
 Cart and checkout services still reject assessment-required products. Completing the current intake flow does not make a product checkout-eligible.

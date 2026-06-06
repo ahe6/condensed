@@ -941,7 +941,34 @@ h3 {
 
 .intake-form {
   display: grid;
-  gap: 14px;
+  gap: 18px;
+}
+
+.intake-progress {
+  display: grid;
+  gap: 8px;
+}
+
+.intake-progress > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.intake-progress > div {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-strong);
+}
+
+.intake-progress > div > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 180ms ease;
 }
 
 .intake-question {
@@ -970,6 +997,17 @@ h3 {
 .intake-choice-list {
   display: grid;
   gap: 8px;
+}
+
+.intake-step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.intake-step-actions button {
+  min-width: 128px;
 }
 
 .intake-next-step {

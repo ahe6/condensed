@@ -21,6 +21,7 @@ import { isAssessmentProduct } from "../../../src/lib/productDisplay";
 type AssessmentAnswer = string | string[] | boolean;
 type AssessmentDraft = {
   answers: Record<string, AssessmentAnswer>;
+  currentQuestionIndex?: number;
   pendingSubmit: boolean;
   updatedAt: string;
 };
@@ -53,6 +54,7 @@ export default function IntakePage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [assessment, setAssessment] = useState<AssessmentTemplate | null>(null);
   const [answers, setAnswers] = useState<Record<string, AssessmentAnswer>>({});
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [submission, setSubmission] = useState<AssessmentSubmission | null>(null);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -86,13 +88,22 @@ export default function IntakePage() {
           const savedDraft = nextAssessment
             ? readAssessmentDraft(slug, defaultAnswers)
             : null;
+          const restoredAnswers = savedDraft?.answers ?? defaultAnswers;
+          const restoredQuestionIndex = nextAssessment
+            ? getRestoredQuestionIndex(nextAssessment.questions, restoredAnswers, savedDraft)
+            : 0;
+          const restoredQuestionsComplete =
+            nextAssessment?.questions.every((question) =>
+              isAnswered(question, restoredAnswers[question.key])
+            ) ?? false;
 
           setProduct(nextProduct);
           setAssessment(nextAssessment);
-          setAnswers(savedDraft?.answers ?? defaultAnswers);
+          setAnswers(restoredAnswers);
+          setCurrentQuestionIndex(restoredQuestionIndex);
           setSubmission(null);
-          setShowAuthGate(Boolean(savedDraft?.pendingSubmit && !getSession()));
-          setShouldSubmitAfterLogin(Boolean(savedDraft?.pendingSubmit && getSession()));
+          setShowAuthGate(Boolean(savedDraft?.pendingSubmit && restoredQuestionsComplete && !getSession()));
+          setShouldSubmitAfterLogin(Boolean(savedDraft?.pendingSubmit && restoredQuestionsComplete && getSession()));
           setSubmitError(null);
         }
       } catch (caught) {
@@ -114,25 +125,31 @@ export default function IntakePage() {
   }, [slug]);
 
   const isProgram = product ? isAssessmentProduct(product) : false;
+  const questions = assessment?.questions ?? [];
+  const currentQuestion = questions[currentQuestionIndex] ?? null;
+  const currentQuestionAnswered = currentQuestion
+    ? isAnswered(currentQuestion, answers[currentQuestion.key])
+    : false;
+  const isLastQuestion = currentQuestionIndex === questions.length - 1;
   const requiredQuestionsComplete =
     !assessment ||
-    assessment.questions.every((question) => isAnswered(question, answers[question.key]));
+    questions.every((question) => isAnswered(question, answers[question.key]));
 
   function updateAnswer(question: AssessmentQuestion, value: AssessmentAnswer) {
-    setAnswers((current) => ({
-      ...current,
-      [question.key]: value
-    }));
+    setAnswers((current) => {
+      const nextAnswers = {
+        ...current,
+        [question.key]: value
+      };
+
+      saveAssessmentDraft(slug, nextAnswers, false, currentQuestionIndex);
+
+      return nextAnswers;
+    });
     setSubmission(null);
     setShowAuthGate(false);
     setShouldSubmitAfterLogin(false);
     setSubmitError(null);
-
-    const nextAnswers = {
-      ...answers,
-      [question.key]: value
-    };
-    saveAssessmentDraft(slug, nextAnswers, false);
   }
 
   function toggleMultiSelectAnswer(question: AssessmentQuestion, value: string) {
@@ -143,6 +160,32 @@ export default function IntakePage() {
       : [...currentValues, value];
 
     updateAnswer(question, nextValues);
+  }
+
+  function goToPreviousQuestion() {
+    setCurrentQuestionIndex((current) => {
+      const nextIndex = Math.max(0, current - 1);
+      saveAssessmentDraft(slug, answers, false, nextIndex);
+
+      return nextIndex;
+    });
+    setShowAuthGate(false);
+    setSubmitError(null);
+  }
+
+  function goToNextQuestion() {
+    if (!currentQuestionAnswered) {
+      return;
+    }
+
+    setCurrentQuestionIndex((current) => {
+      const nextIndex = Math.min(questions.length - 1, current + 1);
+      saveAssessmentDraft(slug, answers, false, nextIndex);
+
+      return nextIndex;
+    });
+    setShowAuthGate(false);
+    setSubmitError(null);
   }
 
   async function submitAssessment() {
@@ -156,7 +199,7 @@ export default function IntakePage() {
     }
 
     if (!getSession()) {
-      saveAssessmentDraft(slug, answers, true);
+      saveAssessmentDraft(slug, answers, true, currentQuestionIndex);
       setShowAuthGate(true);
       setSubmitError(null);
       return;
@@ -187,7 +230,7 @@ export default function IntakePage() {
 
     setIsStartingLogin(true);
     setSubmitError(null);
-    saveAssessmentDraft(slug, answers, true);
+    saveAssessmentDraft(slug, answers, true, currentQuestionIndex);
 
     try {
       await startLogin({
@@ -213,6 +256,15 @@ export default function IntakePage() {
     setShouldSubmitAfterLogin(false);
     void submitAssessment();
   }, [isLoading, isSubmitting, requiredQuestionsComplete, shouldSubmitAfterLogin, submission]);
+
+  useEffect(() => {
+    if (!questions.length) {
+      setCurrentQuestionIndex(0);
+      return;
+    }
+
+    setCurrentQuestionIndex((current) => Math.min(current, questions.length - 1));
+  }, [questions.length]);
 
   return (
     <main className="shell narrow-shell">
@@ -244,30 +296,65 @@ export default function IntakePage() {
             {assessment.description ? <p>{assessment.description}</p> : null}
           </div>
 
-          <form
-            className="intake-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void submitAssessment();
-            }}
-          >
-            {assessment.questions.map((question) => (
-              <AssessmentQuestionField
-                answer={answers[question.key]}
-                key={question.id}
-                question={question}
-                onChange={(value) => updateAnswer(question, value)}
-                onToggle={(value) => toggleMultiSelectAnswer(question, value)}
-              />
-            ))}
+          {currentQuestion ? (
+            <form
+              className="intake-form"
+              onSubmit={(event) => {
+                event.preventDefault();
 
-            <button
-              type="submit"
-              disabled={!requiredQuestionsComplete || isSubmitting || Boolean(submission)}
+                if (isLastQuestion) {
+                  void submitAssessment();
+                  return;
+                }
+
+                goToNextQuestion();
+              }}
             >
-              {isSubmitting ? "Submitting" : submission ? "Assessment Submitted" : "Submit Assessment"}
-            </button>
-          </form>
+              <div className="intake-progress" aria-label="Assessment progress">
+                <span>
+                  Question {currentQuestionIndex + 1} of {questions.length}
+                </span>
+                <div aria-hidden="true">
+                  <span style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }} />
+                </div>
+              </div>
+
+              <AssessmentQuestionField
+                answer={answers[currentQuestion.key]}
+                key={currentQuestion.id}
+                question={currentQuestion}
+                onChange={(value) => updateAnswer(currentQuestion, value)}
+                onToggle={(value) => toggleMultiSelectAnswer(currentQuestion, value)}
+              />
+
+              <div className="intake-step-actions">
+                <button
+                  className="secondary"
+                  type="button"
+                  disabled={currentQuestionIndex === 0 || isSubmitting}
+                  onClick={goToPreviousQuestion}
+                >
+                  Back
+                </button>
+                {isLastQuestion ? (
+                  <button
+                    type="submit"
+                    disabled={!requiredQuestionsComplete || isSubmitting || Boolean(submission)}
+                  >
+                    {isSubmitting
+                      ? "Submitting"
+                      : submission
+                        ? "Assessment Submitted"
+                        : "Submit Assessment"}
+                  </button>
+                ) : (
+                  <button type="submit" disabled={!currentQuestionAnswered || isSubmitting}>
+                    Continue
+                  </button>
+                )}
+              </div>
+            </form>
+          ) : null}
 
           {submitError ? <p className="error">{submitError}</p> : null}
 
@@ -379,7 +466,9 @@ function AssessmentQuestionField({
         <select
           required={question.required}
           value={typeof answer === "boolean" ? String(answer) : ""}
-          onChange={(event) => onChange(event.target.value === "true")}
+          onChange={(event) =>
+            onChange(event.target.value === "" ? "" : event.target.value === "true")
+          }
         >
           <option value="">Choose one</option>
           <option value="true">Yes</option>
@@ -450,10 +539,39 @@ function readAssessmentDraft(slug: string, defaultAnswers: Record<string, Assess
   }
 }
 
+function getRestoredQuestionIndex(
+  questions: AssessmentQuestion[],
+  answers: Record<string, AssessmentAnswer>,
+  draft: AssessmentDraft | null
+) {
+  if (!questions.length) {
+    return 0;
+  }
+
+  if (
+    draft?.currentQuestionIndex !== undefined &&
+    draft.currentQuestionIndex >= 0 &&
+    draft.currentQuestionIndex < questions.length
+  ) {
+    return draft.currentQuestionIndex;
+  }
+
+  const firstUnansweredIndex = questions.findIndex(
+    (question) => !isAnswered(question, answers[question.key])
+  );
+
+  if (firstUnansweredIndex >= 0) {
+    return firstUnansweredIndex;
+  }
+
+  return questions.length - 1;
+}
+
 function saveAssessmentDraft(
   slug: string,
   answers: Record<string, AssessmentAnswer>,
-  pendingSubmit: boolean
+  pendingSubmit: boolean,
+  currentQuestionIndex = 0
 ) {
   if (typeof window === "undefined") {
     return;
@@ -461,6 +579,7 @@ function saveAssessmentDraft(
 
   const draft: AssessmentDraft = {
     answers,
+    currentQuestionIndex,
     pendingSubmit,
     updatedAt: new Date().toISOString()
   };
