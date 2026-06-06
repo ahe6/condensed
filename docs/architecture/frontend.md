@@ -11,6 +11,7 @@ Important files:
 - `app/layout.tsx`: root Next.js shell, metadata, and global CSS import
 - `app/page.tsx`: outcome-first public storefront landing page
 - `app/catalog/page.tsx`: public product catalog and add-to-cart flow
+- `app/intake/[slug]/page.tsx`: assessment entry flow for care-program products
 - `app/products/[slug]/page.tsx`: public product detail page with variant selection and add-to-cart
 - `app/cart/page.tsx`: cart review, signed-in checkout, and Stripe Checkout Elements
 - `app/account/page.tsx`: signed-in customer profile, account actions, and sign out
@@ -94,6 +95,8 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 - Lists active products from `GET /products`.
 - Shows a catalog intro with a featured active product.
 - Links product cards to `/products/[slug]`.
+- Links care-program product cards to `/intake/[slug]`.
+- Shows assessment-first CTAs for care-program products and add-to-cart controls for direct-purchase products.
 - Stores the active cart ID in browser local storage under `health.cartId`.
 - Uses `POST /me/cart` when signed in to load the account cart and adopt or merge the browser-local cart.
 - Creates or resumes carts and adds variants to the cart.
@@ -103,8 +106,16 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 
 - Loads one active product from `GET /products/:slug`.
 - Shows the product image, description, categories, variants, price, and stock.
-- Uses the same browser-local or signed-in account cart behavior as the catalog page.
-- Adds the selected variant to the active cart and updates the shared cart-count badge.
+- Uses the same browser-local or signed-in account cart behavior as the catalog page for direct-purchase products.
+- Adds the selected variant to the active cart and updates the shared cart-count badge for direct-purchase products.
+- Shows an assessment-first CTA instead of cart controls for care-program products.
+
+`app/intake/[slug]/page.tsx` owns the current assessment entry prototype:
+
+- Loads one active product from `GET /products/:slug`.
+- Shows a small non-submitting questionnaire for care-program products.
+- Sends direct-purchase products back to their product detail page.
+- Does not create orders, carts, prescriptions, or provider review records yet.
 
 `app/cart/page.tsx` owns cart review and checkout:
 

@@ -18,6 +18,7 @@ import {
 } from "../../src/lib/api";
 import { getSession, isAuthConfigured, startLogin } from "../../src/lib/auth";
 import { formatMoney } from "../../src/lib/format";
+import { isAssessmentProduct } from "../../src/lib/productDisplay";
 
 const cartStorageKey = "health.cartId";
 
@@ -194,7 +195,8 @@ export default function CatalogPage() {
           <p className="eyebrow">Full catalog</p>
           <h1>Browse the full catalog.</h1>
           <p>
-            All active products with current variants, inventory, and add-to-cart controls.
+            Shop direct-purchase products, or start an assessment for care programs that need more
+            context before checkout.
           </p>
           <div className="shop-hero-actions">
             <a className="nav-link primary-link" href="#products">
@@ -253,7 +255,10 @@ export default function CatalogPage() {
                   product.variants.find((variant) => variant.id === selectedVariants[product.id]) ??
                   product.variants[0];
                 const image = product.images[0];
-                const productHref = `/products/${product.slug}`;
+                const requiresAssessment = isAssessmentProduct(product);
+                const productHref = requiresAssessment
+                  ? `/intake/${product.slug}`
+                  : `/products/${product.slug}`;
 
                 return (
                   <article className="product-card" key={product.id}>
@@ -285,26 +290,38 @@ export default function CatalogPage() {
                         ))}
                       </div>
 
-                      <label>
-                        <span>Variant</span>
-                        <select
-                          value={selectedVariant?.id ?? ""}
-                          onChange={(event) =>
-                            setSelectedVariants((current) => ({
-                              ...current,
-                              [product.id]: event.target.value
-                            }))
-                          }
-                        >
-                          {product.variants.map((variant) => (
-                            <option key={variant.id} value={variant.id}>
-                              {variant.title} - {formatMoney(variant.price, variant.currency)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                      {requiresAssessment ? (
+                        <div className="program-card-action">
+                          <div>
+                            <strong>Assessment first</strong>
+                            <span>Review the program before checkout</span>
+                          </div>
+                          <Link className="nav-link primary-link" href={productHref}>
+                            Start Assessment
+                          </Link>
+                        </div>
+                      ) : (
+                        <label>
+                          <span>Variant</span>
+                          <select
+                            value={selectedVariant?.id ?? ""}
+                            onChange={(event) =>
+                              setSelectedVariants((current) => ({
+                                ...current,
+                                [product.id]: event.target.value
+                              }))
+                            }
+                          >
+                            {product.variants.map((variant) => (
+                              <option key={variant.id} value={variant.id}>
+                                {variant.title} - {formatMoney(variant.price, variant.currency)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
 
-                      {selectedVariant ? (
+                      {!requiresAssessment && selectedVariant ? (
                         <div className="product-action">
                           <div>
                             <strong>{formatMoney(selectedVariant.price, selectedVariant.currency)}</strong>

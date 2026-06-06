@@ -19,6 +19,7 @@ import {
 } from "../../../src/lib/api";
 import { getSession, isAuthConfigured, startLogin } from "../../../src/lib/auth";
 import { formatMoney } from "../../../src/lib/format";
+import { isAssessmentProduct, productDisplayLabel } from "../../../src/lib/productDisplay";
 
 const cartStorageKey = "health.cartId";
 
@@ -50,6 +51,7 @@ export default function ProductDetailPage() {
     ? selectedCartQuantity >= selectedVariant.inventoryQuantity
     : false;
   const image = product?.images[0];
+  const requiresAssessment = product ? isAssessmentProduct(product) : false;
 
   useEffect(() => {
     let isMounted = true;
@@ -209,11 +211,11 @@ export default function ProductDetailPage() {
 
           <article className="panel product-detail-panel">
             <div className="product-detail-copy">
-              <Link className="text-link" href="/">
-                Back to products
+              <Link className="text-link" href="/catalog">
+                Back to catalog
               </Link>
               <div>
-                <p className="eyebrow">Product</p>
+                <p className="eyebrow">{productDisplayLabel(product)}</p>
                 <h1>{product.name}</h1>
                 {product.description ? <p>{product.description}</p> : null}
               </div>
@@ -223,28 +225,53 @@ export default function ProductDetailPage() {
                 ))}
               </div>
               <div className="product-detail-highlights" aria-label="Product highlights">
-                <span>Secure checkout</span>
-                <span>Tracked delivery</span>
-                <span>Inventory checked live</span>
+                {requiresAssessment ? (
+                  <>
+                    <span>Assessment first</span>
+                    <span>Eligibility review</span>
+                    <span>Checkout later</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Secure checkout</span>
+                    <span>Tracked delivery</span>
+                    <span>Inventory checked live</span>
+                  </>
+                )}
               </div>
             </div>
 
             <div className="product-detail-actions">
-              <label>
-                <span>Variant</span>
-                <select
-                  value={selectedVariant?.id ?? ""}
-                  onChange={(event) => setSelectedVariantId(event.target.value)}
-                >
-                  {product.variants.map((variant) => (
-                    <option key={variant.id} value={variant.id}>
-                      {variant.title} - {formatMoney(variant.price, variant.currency)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {requiresAssessment ? (
+                <div className="program-detail-action">
+                  <div>
+                    <strong>Start with a short assessment.</strong>
+                    <p>
+                      Program checkout should happen after intake and review, not from a standard
+                      shopping cart.
+                    </p>
+                  </div>
+                  <Link className="nav-link primary-link" href={`/intake/${product.slug}`}>
+                    Start Assessment
+                  </Link>
+                </div>
+              ) : (
+                <label>
+                  <span>Variant</span>
+                  <select
+                    value={selectedVariant?.id ?? ""}
+                    onChange={(event) => setSelectedVariantId(event.target.value)}
+                  >
+                    {product.variants.map((variant) => (
+                      <option key={variant.id} value={variant.id}>
+                        {variant.title} - {formatMoney(variant.price, variant.currency)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
 
-              {selectedVariant ? (
+              {!requiresAssessment && selectedVariant ? (
                 <div className="product-action detail-action">
                   <div>
                     <strong>{formatMoney(selectedVariant.price, selectedVariant.currency)}</strong>
