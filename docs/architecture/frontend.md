@@ -2,14 +2,15 @@
 
 The frontend is a single Next.js app in `apps/frontend`. It serves both the public shop and the admin order tools.
 
-Last verified against the frontend source and deployment scripts on 2026-06-05.
+Last verified against the frontend source and deployment scripts on 2026-06-06.
 
 ## App Structure
 
 Important files:
 
 - `app/layout.tsx`: root Next.js shell, metadata, and global CSS import
-- `app/page.tsx`: public product catalog and add-to-cart flow
+- `app/page.tsx`: outcome-first public storefront landing page
+- `app/catalog/page.tsx`: public product catalog and add-to-cart flow
 - `app/products/[slug]/page.tsx`: public product detail page with variant selection and add-to-cart
 - `app/cart/page.tsx`: cart review, signed-in checkout, and Stripe Checkout Elements
 - `app/account/page.tsx`: signed-in customer profile, account actions, and sign out
@@ -80,11 +81,18 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 
 ## Public Shop
 
-`app/page.tsx` owns the public catalog flow:
+`app/page.tsx` owns the public storefront entry flow:
+
+- Shows customer-facing goal and routine prompts before exposing the full SKU list.
+- Filters static outcome cards from the in-page search input.
+- Links customers into `/catalog`, `/cart`, and product detail routes.
+- Avoids loading the product catalog directly on the home page, so an empty catalog or API issue does not turn the first page into a raw product dump or backend error.
+
+`app/catalog/page.tsx` owns the public catalog flow:
 
 - Checks backend readiness with `GET /ready`.
 - Lists active products from `GET /products`.
-- Shows a storefront intro with a featured active product.
+- Shows a catalog intro with a featured active product.
 - Links product cards to `/products/[slug]`.
 - Stores the active cart ID in browser local storage under `health.cartId`.
 - Uses `POST /me/cart` when signed in to load the account cart and adopt or merge the browser-local cart.
