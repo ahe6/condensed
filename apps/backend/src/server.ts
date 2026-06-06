@@ -5,6 +5,7 @@ import { ZodError } from "zod";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { AuthError, requireAdmin } from "./modules/auth/auth.service.js";
 import { assessmentsRoutes } from "./modules/assessments/assessments.routes.js";
+import { AssessmentError } from "./modules/assessments/assessments.service.js";
 import { cartsRoutes } from "./modules/carts/carts.routes.js";
 import { CartError } from "./modules/carts/carts.service.js";
 import { catalogRoutes } from "./modules/catalog/catalog.routes.js";
@@ -61,6 +62,12 @@ export function buildServer() {
     }
 
     if (error instanceof AuthError) {
+      return reply.code(error.statusCode).send({
+        error: error.message
+      });
+    }
+
+    if (error instanceof AssessmentError) {
       return reply.code(error.statusCode).send({
         error: error.message
       });

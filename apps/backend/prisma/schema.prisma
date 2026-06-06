@@ -32,6 +32,13 @@ enum AssessmentQuestionType {
   BOOLEAN
 }
 
+enum AssessmentSubmissionStatus {
+  SUBMITTED
+  REVIEW_REQUIRED
+  APPROVED
+  REJECTED
+}
+
 enum OrderStatus {
   PENDING
   PLACED
@@ -105,16 +112,17 @@ enum ShipmentStatus {
 }
 
 model User {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  externalAuthId String?   @unique
-  email          String    @unique
-  name           String?
-  phone          String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  addresses      Address[]
-  carts          Cart[]
-  orders         Order[]
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  externalAuthId        String?                @unique
+  email                 String                 @unique
+  name                  String?
+  phone                 String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  addresses             Address[]
+  assessmentSubmissions AssessmentSubmission[]
+  carts                 Cart[]
+  orders                Order[]
 
   @@map("users")
 }
@@ -142,19 +150,20 @@ model Address {
 }
 
 model Product {
-  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  slug                String               @unique
-  name                String
-  description         String?
-  status              ProductStatus        @default(DRAFT)
-  purchaseMode        ProductPurchaseMode  @default(DIRECT)
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  variants            ProductVariant[]
-  images              ProductImage[]
-  categories          ProductCategory[]
-  orderItems          OrderItem[]
-  assessmentTemplates AssessmentTemplate[]
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug                  String                 @unique
+  name                  String
+  description           String?
+  status                ProductStatus          @default(DRAFT)
+  purchaseMode          ProductPurchaseMode    @default(DIRECT)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  variants              ProductVariant[]
+  images                ProductImage[]
+  categories            ProductCategory[]
+  orderItems            OrderItem[]
+  assessmentTemplates   AssessmentTemplate[]
+  assessmentSubmissions AssessmentSubmission[]
 
   @@index([status])
   @@map("products")
@@ -172,6 +181,7 @@ model AssessmentTemplate {
   updatedAt   DateTime                 @updatedAt
   product     Product                  @relation(fields: [productId], references: [id], onDelete: Cascade)
   questions   AssessmentQuestion[]
+  submissions AssessmentSubmission[]
 
   @@unique([slug, version])
   @@index([productId, status, version])
@@ -191,10 +201,49 @@ model AssessmentQuestion {
   createdAt  DateTime               @default(now())
   updatedAt  DateTime               @updatedAt
   template   AssessmentTemplate     @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  answers    AssessmentAnswer[]
 
   @@unique([templateId, key])
   @@index([templateId, sortOrder])
   @@map("assessment_questions")
+}
+
+model AssessmentSubmission {
+  id          String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  templateId  String                     @db.Uuid
+  productId   String                     @db.Uuid
+  userId      String?                    @db.Uuid
+  email       String?
+  status      AssessmentSubmissionStatus @default(SUBMITTED)
+  submittedAt DateTime                   @default(now())
+  createdAt   DateTime                   @default(now())
+  updatedAt   DateTime                   @updatedAt
+  template    AssessmentTemplate         @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  product     Product                    @relation(fields: [productId], references: [id], onDelete: Restrict)
+  user        User?                      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  answers     AssessmentAnswer[]
+
+  @@index([templateId, submittedAt])
+  @@index([productId, submittedAt])
+  @@index([userId, submittedAt])
+  @@index([status, submittedAt])
+  @@map("assessment_submissions")
+}
+
+model AssessmentAnswer {
+  id           String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  submissionId String               @db.Uuid
+  questionId   String               @db.Uuid
+  questionKey  String
+  value        Json
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  submission   AssessmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  question     AssessmentQuestion   @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  @@unique([submissionId, questionKey])
+  @@index([questionId])
+  @@map("assessment_answers")
 }
 
 model ProductVariant {

@@ -7,11 +7,13 @@ import { CustomerBrand } from "../../../src/components/CustomerBrand";
 import { CustomerNav } from "../../../src/components/CustomerNav";
 import {
   AssessmentQuestion,
+  AssessmentSubmission,
   AssessmentTemplate,
   Product,
   getProduct,
   getProductAssessment,
-  getReadiness
+  getReadiness,
+  submitProductAssessment
 } from "../../../src/lib/api";
 import { isAssessmentProduct } from "../../../src/lib/productDisplay";
 
@@ -47,9 +49,11 @@ export default function IntakePage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [assessment, setAssessment] = useState<AssessmentTemplate | null>(null);
   const [answers, setAnswers] = useState<Record<string, AssessmentAnswer>>({});
-  const [isComplete, setIsComplete] = useState(false);
+  const [submission, setSubmission] = useState<AssessmentSubmission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -76,7 +80,8 @@ export default function IntakePage() {
               ])
             )
           );
-          setIsComplete(false);
+          setSubmission(null);
+          setSubmitError(null);
         }
       } catch (caught) {
         if (isMounted) {
@@ -106,7 +111,8 @@ export default function IntakePage() {
       ...current,
       [question.key]: value
     }));
-    setIsComplete(false);
+    setSubmission(null);
+    setSubmitError(null);
   }
 
   function toggleMultiSelectAnswer(question: AssessmentQuestion, value: string) {
@@ -117,6 +123,26 @@ export default function IntakePage() {
       : [...currentValues, value];
 
     updateAnswer(question, nextValues);
+  }
+
+  async function submitAssessment() {
+    if (!requiredQuestionsComplete || isSubmitting || submission) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const nextSubmission = await submitProductAssessment(slug, {
+        answers
+      });
+      setSubmission(nextSubmission);
+    } catch (caught) {
+      setSubmitError(caught instanceof Error ? caught.message : "Assessment could not be submitted");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -149,7 +175,13 @@ export default function IntakePage() {
             {assessment.description ? <p>{assessment.description}</p> : null}
           </div>
 
-          <form className="intake-form" onSubmit={(event) => event.preventDefault()}>
+          <form
+            className="intake-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submitAssessment();
+            }}
+          >
             {assessment.questions.map((question) => (
               <AssessmentQuestionField
                 answer={answers[question.key]}
@@ -161,21 +193,23 @@ export default function IntakePage() {
             ))}
 
             <button
-              type="button"
-              disabled={!requiredQuestionsComplete}
-              onClick={() => setIsComplete(true)}
+              type="submit"
+              disabled={!requiredQuestionsComplete || isSubmitting || Boolean(submission)}
             >
-              Review Next Steps
+              {isSubmitting ? "Submitting" : submission ? "Assessment Submitted" : "Submit Assessment"}
             </button>
           </form>
 
-          {isComplete ? (
+          {submitError ? <p className="error">{submitError}</p> : null}
+
+          {submission ? (
             <div className="success intake-next-step">
-              <strong>Next step</strong>
+              <strong>Assessment submitted</strong>
               <p>
-                Your assessment basics are ready. Checkout should stay locked until this flow is
-                connected to review.
+                Your answers were saved. Checkout stays locked until this flow is connected to
+                review.
               </p>
+              <p>Submission {submission.id.slice(0, 8)}</p>
             </div>
           ) : null}
         </section>

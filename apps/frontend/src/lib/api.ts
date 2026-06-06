@@ -104,6 +104,35 @@ export type AssessmentTemplate = {
   questions: AssessmentQuestion[];
 };
 
+export type AssessmentAnswerValue = string | number | boolean | string[];
+
+export type AssessmentSubmissionStatus = "SUBMITTED" | "REVIEW_REQUIRED" | "APPROVED" | "REJECTED";
+
+export type AssessmentSubmissionAnswer = {
+  id: string;
+  submissionId: string;
+  questionId: string;
+  questionKey: string;
+  value: AssessmentAnswerValue;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AssessmentSubmission = {
+  id: string;
+  templateId: string;
+  productId: string;
+  userId: string | null;
+  email: string | null;
+  status: AssessmentSubmissionStatus;
+  submittedAt: string;
+  createdAt: string;
+  updatedAt: string;
+  product: Product;
+  template: Omit<AssessmentTemplate, "product" | "questions">;
+  answers: AssessmentSubmissionAnswer[];
+};
+
 export type CreateCategoryInput = {
   slug: string;
   name: string;
@@ -546,6 +575,19 @@ export async function getProduct(slug: string) {
 
 export async function getProductAssessment(slug: string) {
   return request<AssessmentTemplate>(`/products/${encodeURIComponent(slug)}/assessment`);
+}
+
+export async function submitProductAssessment(
+  slug: string,
+  input: { answers: Record<string, AssessmentAnswerValue>; email?: string }
+) {
+  return request<AssessmentSubmission>(
+    `/products/${encodeURIComponent(slug)}/assessment/submissions`,
+    {
+      method: "POST",
+      body: JSON.stringify(input)
+    }
+  );
 }
 
 export async function listCategories() {

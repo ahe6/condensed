@@ -1,6 +1,13 @@
 import type { FastifyPluginAsync } from "fastify";
-import { assessmentProductSlugParamsSchema } from "./assessments.schemas.js";
-import { getActiveAssessmentForProductSlug } from "./assessments.service.js";
+import { getOptionalCurrentUser } from "../auth/auth.service.js";
+import {
+  assessmentProductSlugParamsSchema,
+  submitAssessmentSchema
+} from "./assessments.schemas.js";
+import {
+  getActiveAssessmentForProductSlug,
+  submitAssessmentForProductSlug
+} from "./assessments.service.js";
 
 export const assessmentsRoutes: FastifyPluginAsync = async (server) => {
   server.get("/products/:slug/assessment", async (request, reply) => {
@@ -14,5 +21,17 @@ export const assessmentsRoutes: FastifyPluginAsync = async (server) => {
     }
 
     return assessment;
+  });
+
+  server.post("/products/:slug/assessment/submissions", async (request, reply) => {
+    const currentUser = await getOptionalCurrentUser(request.headers.authorization);
+    const { slug } = assessmentProductSlugParamsSchema.parse(request.params);
+    const input = submitAssessmentSchema.parse(request.body ?? {});
+    const submission = await submitAssessmentForProductSlug(slug, input, {
+      email: currentUser?.email,
+      userId: currentUser?.id
+    });
+
+    return reply.code(201).send(submission);
   });
 };

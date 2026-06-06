@@ -10,6 +10,7 @@ The schema covers a practical ecommerce core:
 
 - Identity: users and addresses
 - Catalog: products, variants, images, and categories
+- Assessments: templates, questions, submissions, and answers
 - Shopping: carts and cart items
 - Checkout: orders, order addresses, order items, and admin order notes
 - Money movement: payments, payment attempts, and payment status events
@@ -55,7 +56,7 @@ Important fields:
 - `status`: `DRAFT`, `ACTIVE`, or `ARCHIVED`
 - `purchaseMode`: `DIRECT` or `ASSESSMENT_REQUIRED`
 
-Products have variants, images, and categories.
+Products have variants, images, categories, assessment templates, and assessment submissions.
 
 `purchaseMode` controls checkout eligibility. `DIRECT` products can be added to carts and checked out. `ASSESSMENT_REQUIRED` products are visible as active care-program entries, but cart and checkout services reject their variants until an assessment/review flow exists.
 
@@ -89,7 +90,33 @@ Important fields:
 - `options`: JSON option list for select-style questions
 - `sortOrder`
 
-Assessment questions are definitions only. User submissions are not persisted yet.
+### `assessment_submissions`
+
+Submitted assessment instance for an assessment-required product.
+
+Important fields:
+
+- `templateId`: assessment template version the answers were submitted against
+- `productId`: product the assessment belongs to
+- `userId`: optional local user when the request includes a valid Cognito bearer token
+- `email`: optional contact email, currently populated from the signed-in user when available
+- `status`: `SUBMITTED`, `REVIEW_REQUIRED`, `APPROVED`, or `REJECTED`
+- `submittedAt`
+
+The current public submit route creates submissions with `SUBMITTED` status. Review status transitions are not implemented yet.
+
+### `assessment_answers`
+
+Submitted answer value for one question in an assessment submission.
+
+Important fields:
+
+- `submissionId`
+- `questionId`
+- `questionKey`: copied from the template question for stable lookup
+- `value`: JSON value, currently string, number, boolean, or string array depending on question type
+
+The pair `submissionId + questionKey` is unique, so one submission cannot have duplicate answers for a template key.
 
 ### `product_variants`
 

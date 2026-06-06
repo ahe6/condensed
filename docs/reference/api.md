@@ -141,6 +141,7 @@ Public catalog routes:
 GET /products
 GET /products/:slug
 GET /products/:slug/assessment
+POST /products/:slug/assessment/submissions
 GET /categories
 ```
 
@@ -171,6 +172,24 @@ Question definitions include:
 - `required`
 - `options`: JSON options for select-style questions
 - `sortOrder`
+
+`POST /products/:slug/assessment/submissions` accepts an answer map keyed by assessment question `key`:
+
+```json
+{
+  "answers": {
+    "main_goal": "explore-options",
+    "prior_experience": "new",
+    "timeframe": "this-week",
+    "preferred_follow_up": "online-follow-up",
+    "notes": "Customer-entered text"
+  }
+}
+```
+
+The route validates required questions and answer types against the active assessment template before saving. It returns `201` with the created submission, product, template, and saved answers. If the request includes a valid Cognito bearer token, the submission is linked to the current local user.
+
+Direct-purchase products and products without an active assessment return `404`.
 
 `GET /categories` returns categories ordered by name.
 
