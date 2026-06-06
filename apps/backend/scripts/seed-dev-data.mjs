@@ -9,7 +9,9 @@ const categories = [
   { slug: "skin", name: "Skin" },
   { slug: "sexual-wellness", name: "Sexual Wellness" },
   { slug: "weight-management", name: "Weight Management" },
+  { slug: "glp1", name: "GLP-1" },
   { slug: "hormone-health", name: "Hormone Health" },
+  { slug: "testosterone", name: "Testosterone" },
   { slug: "womens-health", name: "Women's Health" },
   { slug: "mens-health", name: "Men's Health" },
   { slug: "heart-health", name: "Heart Health" },
@@ -18,6 +20,7 @@ const categories = [
   { slug: "smoking-cessation", name: "Smoking Cessation" },
   { slug: "mental-wellness", name: "Mental Wellness" },
   { slug: "labs", name: "Labs" },
+  { slug: "health-checks", name: "Health Checks" },
   { slug: "supplements", name: "Supplements" },
   { slug: "drinkware", name: "Drinkware" }
 ];
@@ -340,6 +343,82 @@ const products = [
     ]
   },
   {
+    slug: "glp1-weight-care-consult",
+    name: "GLP-1 Weight Care Consult",
+    description: "An assessment-first weight-care placeholder for GLP-1 access and follow-up workflows.",
+    purchaseMode: "ASSESSMENT_REQUIRED",
+    categorySlugs: ["weight-management", "glp1"],
+    image: {
+      url: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80",
+      altText: "Wellness path and planning"
+    },
+    variants: [
+      {
+        sku: "GLP1-WEIGHT-CONSULT",
+        title: "Consult",
+        price: "49.00",
+        inventoryQuantity: 18
+      }
+    ]
+  },
+  {
+    slug: "glp1-injection-support-program",
+    name: "GLP-1 Injection Support Program",
+    description: "A gated program placeholder for injection training, check-ins, and weight-care support.",
+    purchaseMode: "ASSESSMENT_REQUIRED",
+    categorySlugs: ["weight-management", "glp1"],
+    image: {
+      url: "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=1200&q=80",
+      altText: "Clinical support supplies on a desk"
+    },
+    variants: [
+      {
+        sku: "GLP1-INJECTION-SUPPORT",
+        title: "Program Intake",
+        price: "59.00",
+        inventoryQuantity: 16
+      }
+    ]
+  },
+  {
+    slug: "oral-weight-loss-consult",
+    name: "Oral Weight Loss Consult",
+    description: "An assessment-first consult placeholder for non-injectable weight-care options.",
+    purchaseMode: "ASSESSMENT_REQUIRED",
+    categorySlugs: ["weight-management"],
+    image: {
+      url: "https://images.unsplash.com/photo-1494390248081-4e521a5940db?auto=format&fit=crop&w=1200&q=80",
+      altText: "Nutrition planning table"
+    },
+    variants: [
+      {
+        sku: "ORAL-WEIGHT-LOSS-CONSULT",
+        title: "Consult",
+        price: "35.00",
+        inventoryQuantity: 24
+      }
+    ]
+  },
+  {
+    slug: "weight-loss-labs-panel",
+    name: "Weight Loss Labs Panel",
+    description: "A gated lab-panel placeholder for weight-care baseline and follow-up workflows.",
+    purchaseMode: "ASSESSMENT_REQUIRED",
+    categorySlugs: ["weight-management", "glp1", "labs"],
+    image: {
+      url: "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1200&q=80",
+      altText: "Lab sample tubes on a tray"
+    },
+    variants: [
+      {
+        sku: "WEIGHT-LOSS-LABS-PANEL",
+        title: "Baseline Panel",
+        price: "89.00",
+        inventoryQuantity: 14
+      }
+    ]
+  },
+  {
     slug: "sleep-stress-support-kit",
     name: "Sleep & Stress Support Kit",
     description: "A gentle evening routine placeholder for mental wellness merchandising.",
@@ -504,6 +583,44 @@ const products = [
     ]
   },
   {
+    slug: "testosterone-health-check-in",
+    name: "Testosterone Health Check-In",
+    description: "A guided men's hormone health check-in placeholder for symptom and lab workflows.",
+    purchaseMode: "ASSESSMENT_REQUIRED",
+    categorySlugs: ["testosterone", "mens-health", "hormone-health"],
+    image: {
+      url: "https://images.unsplash.com/photo-1581093458791-9d15482442f6?auto=format&fit=crop&w=1200&q=80",
+      altText: "Lab testing supplies"
+    },
+    variants: [
+      {
+        sku: "TESTOSTERONE-CHECK-IN",
+        title: "Check-In",
+        price: "49.00",
+        inventoryQuantity: 18
+      }
+    ]
+  },
+  {
+    slug: "testosterone-labs-panel",
+    name: "Testosterone Labs Panel",
+    description: "A gated lab-panel placeholder for testosterone and hormone health follow-up.",
+    purchaseMode: "ASSESSMENT_REQUIRED",
+    categorySlugs: ["testosterone", "hormone-health", "labs"],
+    image: {
+      url: "https://images.unsplash.com/photo-1614935151651-0bea6508db6b?auto=format&fit=crop&w=1200&q=80",
+      altText: "Clinical lab testing vials"
+    },
+    variants: [
+      {
+        sku: "TESTOSTERONE-LABS-PANEL",
+        title: "Lab Panel",
+        price: "99.00",
+        inventoryQuantity: 14
+      }
+    ]
+  },
+  {
     slug: "menopause-support-consult",
     name: "Menopause Support Consult",
     description: "An assessment-first consult placeholder for symptom tracking and care preferences.",
@@ -576,6 +693,82 @@ const products = [
         title: "Check-In",
         price: "35.00",
         inventoryQuantity: 20
+      }
+    ]
+  },
+  {
+    slug: "metabolic-labs-panel",
+    name: "Metabolic Labs Panel",
+    description: "A gated lab-panel placeholder for metabolic markers and care-plan follow-up.",
+    purchaseMode: "ASSESSMENT_REQUIRED",
+    categorySlugs: ["labs", "health-checks", "heart-health", "weight-management"],
+    image: {
+      url: "https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&w=1200&q=80",
+      altText: "Laboratory testing equipment"
+    },
+    variants: [
+      {
+        sku: "METABOLIC-LABS-PANEL",
+        title: "Metabolic Panel",
+        price: "89.00",
+        inventoryQuantity: 15
+      }
+    ]
+  },
+  {
+    slug: "thyroid-labs-panel",
+    name: "Thyroid Labs Panel",
+    description: "A gated lab-panel placeholder for thyroid health screening and support workflows.",
+    purchaseMode: "ASSESSMENT_REQUIRED",
+    categorySlugs: ["labs", "health-checks", "hormone-health"],
+    image: {
+      url: "https://images.unsplash.com/photo-1582719471384-894fbb16e074?auto=format&fit=crop&w=1200&q=80",
+      altText: "Clinical lab sample analysis"
+    },
+    variants: [
+      {
+        sku: "THYROID-LABS-PANEL",
+        title: "Thyroid Panel",
+        price: "79.00",
+        inventoryQuantity: 18
+      }
+    ]
+  },
+  {
+    slug: "sexual-health-screening-kit",
+    name: "Sexual Health Screening Kit",
+    description: "A gated lab-kit placeholder for sexual health screening and follow-up flows.",
+    purchaseMode: "ASSESSMENT_REQUIRED",
+    categorySlugs: ["sexual-wellness", "labs", "health-checks"],
+    image: {
+      url: "https://images.unsplash.com/photo-1579154341098-e4e158cc7f55?auto=format&fit=crop&w=1200&q=80",
+      altText: "At-home health testing package"
+    },
+    variants: [
+      {
+        sku: "SEXUAL-HEALTH-SCREENING",
+        title: "Screening Kit",
+        price: "99.00",
+        inventoryQuantity: 16
+      }
+    ]
+  },
+  {
+    slug: "general-health-check-labs",
+    name: "General Health Check Labs",
+    description: "A gated health-check lab placeholder for broad screening and result-review workflows.",
+    purchaseMode: "ASSESSMENT_REQUIRED",
+    categorySlugs: ["labs", "health-checks"],
+    image: {
+      url: "https://images.unsplash.com/photo-1581093588401-fbb62a02f120?auto=format&fit=crop&w=1200&q=80",
+      altText: "Health testing kit on a desk"
+    },
+    variants: [
+      {
+        sku: "GENERAL-HEALTH-CHECK-LABS",
+        title: "Core Health Check",
+        price: "119.00",
+        inventoryQuantity: 14
       }
     ]
   },
@@ -798,15 +991,55 @@ const assessmentTemplates = [
     "metabolic health"
   ),
   assessmentTemplate("weight-care-program", "weight-care-program", "Weight Care Assessment", "weight care"),
+  assessmentTemplate("glp1-weight-care-consult", "glp1-weight-care", "GLP-1 Weight Care Assessment", "GLP-1 weight care"),
+  assessmentTemplate(
+    "glp1-injection-support-program",
+    "glp1-injection-support",
+    "GLP-1 Injection Support Assessment",
+    "GLP-1 injection support"
+  ),
+  assessmentTemplate(
+    "oral-weight-loss-consult",
+    "oral-weight-loss-support",
+    "Oral Weight Loss Assessment",
+    "oral weight loss support"
+  ),
+  assessmentTemplate(
+    "weight-loss-labs-panel",
+    "weight-loss-labs",
+    "Weight Loss Labs Assessment",
+    "weight loss labs"
+  ),
   assessmentTemplate("sleep-stress-support-kit", "sleep-stress-support", "Sleep & Stress Assessment", "sleep and stress support"),
   assessmentTemplate("anxiety-support-consult", "anxiety-support", "Anxiety Support Assessment", "anxiety support"),
   assessmentTemplate("focus-energy-consult", "focus-energy-support", "Focus & Energy Assessment", "focus and energy support"),
   assessmentTemplate("at-home-wellness-labs-kit", "wellness-labs-support", "Wellness Labs Assessment", "wellness labs"),
   assessmentTemplate("hormone-health-check-in", "hormone-health-check-in", "Hormone Health Assessment", "hormone health"),
+  assessmentTemplate(
+    "testosterone-health-check-in",
+    "testosterone-health-check-in",
+    "Testosterone Health Assessment",
+    "testosterone health"
+  ),
+  assessmentTemplate("testosterone-labs-panel", "testosterone-labs", "Testosterone Labs Assessment", "testosterone labs"),
   assessmentTemplate("menopause-support-consult", "menopause-support", "Menopause Support Assessment", "menopause support"),
   assessmentTemplate("cycle-support-consult", "cycle-support", "Cycle Support Assessment", "cycle support"),
   assessmentTemplate("fertility-planning-consult", "fertility-planning", "Fertility Planning Assessment", "fertility planning"),
   assessmentTemplate("heart-health-check-in", "heart-health-check-in", "Heart Health Assessment", "heart health"),
+  assessmentTemplate("metabolic-labs-panel", "metabolic-labs", "Metabolic Labs Assessment", "metabolic labs"),
+  assessmentTemplate("thyroid-labs-panel", "thyroid-labs", "Thyroid Labs Assessment", "thyroid labs"),
+  assessmentTemplate(
+    "sexual-health-screening-kit",
+    "sexual-health-screening",
+    "Sexual Health Screening Assessment",
+    "sexual health screening"
+  ),
+  assessmentTemplate(
+    "general-health-check-labs",
+    "general-health-check-labs",
+    "General Health Check Assessment",
+    "general health checks"
+  ),
   assessmentTemplate("gut-health-consult", "gut-health-support", "Gut Health Assessment", "gut health"),
   assessmentTemplate("allergy-relief-consult", "allergy-relief-support", "Allergy Relief Assessment", "allergy support"),
   assessmentTemplate(
