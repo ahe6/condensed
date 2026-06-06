@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { completeLogin } from "../../../src/lib/auth";
+import { completeLogin, consumeLoginReturnTo } from "../../../src/lib/auth";
 
 export default function AuthCallbackPage() {
   const [error, setError] = useState<string | null>(null);
@@ -17,7 +17,7 @@ export default function AuthCallbackPage() {
     async function finishLogin() {
       try {
         await completeLogin(new URLSearchParams(window.location.search));
-        window.location.replace("/");
+        window.location.replace(consumeLoginReturnTo());
       } catch (caught) {
         setError(caught instanceof Error ? caught.message : "Could not complete login");
       }

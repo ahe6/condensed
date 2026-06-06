@@ -1,5 +1,6 @@
 const authStorageKey = "health.auth";
 const codeVerifierKey = "health.auth.codeVerifier";
+const returnToKey = "health.auth.returnTo";
 const stateKey = "health.auth.state";
 
 type TokenResponse = {
@@ -53,10 +54,11 @@ export function getSession() {
 export function clearSession() {
   window.localStorage.removeItem(authStorageKey);
   window.sessionStorage.removeItem(codeVerifierKey);
+  window.sessionStorage.removeItem(returnToKey);
   window.sessionStorage.removeItem(stateKey);
 }
 
-export async function startLogin() {
+export async function startLogin(options: { returnTo?: string } = {}) {
   ensureConfigured();
 
   const codeVerifier = randomString(64);
@@ -64,6 +66,7 @@ export async function startLogin() {
   const codeChallenge = await createCodeChallenge(codeVerifier);
 
   window.sessionStorage.setItem(codeVerifierKey, codeVerifier);
+  window.sessionStorage.setItem(returnToKey, normalizeReturnTo(options.returnTo));
   window.sessionStorage.setItem(stateKey, state);
 
   const params = new URLSearchParams({
@@ -136,6 +139,17 @@ export async function completeLogin(searchParams: URLSearchParams) {
   return session;
 }
 
+export function consumeLoginReturnTo() {
+  if (typeof window === "undefined") {
+    return "/";
+  }
+
+  const returnTo = normalizeReturnTo(window.sessionStorage.getItem(returnToKey));
+  window.sessionStorage.removeItem(returnToKey);
+
+  return returnTo;
+}
+
 export async function confirmSignUp(username: string, confirmationCode: string) {
   ensureCognitoApiConfigured();
 
@@ -161,6 +175,24 @@ function getRedirectUri() {
 
 function getLogoutUri() {
   return window.location.origin;
+}
+
+function normalizeReturnTo(returnTo: string | null | undefined) {
+  if (!returnTo) {
+    return `${window.location.pathname}${window.location.search}`;
+  }
+
+  try {
+    const url = new URL(returnTo, window.location.origin);
+
+    if (url.origin !== window.location.origin) {
+      return "/";
+    }
+
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return "/";
+  }
 }
 
 function ensureConfigured() {

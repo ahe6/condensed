@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
-import { getOptionalCurrentUser } from "../auth/auth.service.js";
+import { getCurrentUser } from "../auth/auth.service.js";
 import {
   assessmentProductSlugParamsSchema,
   submitAssessmentSchema
@@ -24,7 +24,7 @@ export const assessmentsRoutes: FastifyPluginAsync = async (server) => {
   });
 
   server.post("/products/:slug/assessment/submissions", async (request, reply) => {
-    const currentUser = await getOptionalCurrentUser(request.headers.authorization);
+    const currentUser = await getCurrentUser(request.headers.authorization);
     const { slug } = assessmentProductSlugParamsSchema.parse(request.params);
     const input = submitAssessmentSchema.parse(request.body ?? {});
     const submission = await submitAssessmentForProductSlug(slug, input, {

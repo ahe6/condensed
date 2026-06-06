@@ -98,12 +98,12 @@ Important fields:
 
 - `templateId`: assessment template version the answers were submitted against
 - `productId`: product the assessment belongs to
-- `userId`: optional local user when the request includes a valid Cognito bearer token
-- `email`: optional contact email, currently populated from the signed-in user when available
+- `userId`: local user for the signed-in customer that submitted the assessment
+- `email`: contact email copied from the signed-in user
 - `status`: `SUBMITTED`, `REVIEW_REQUIRED`, `APPROVED`, or `REJECTED`
 - `submittedAt`
 
-The current public submit route creates submissions with `SUBMITTED` status. Review status transitions are not implemented yet.
+The current public submit route requires sign-in and creates submissions with `SUBMITTED` status. Review status transitions are not implemented yet.
 
 ### `assessment_answers`
 

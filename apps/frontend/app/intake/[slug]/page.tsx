@@ -15,20 +15,24 @@ import {
   getReadiness,
   submitProductAssessment
 } from "../../../src/lib/api";
+import { getSession, isAuthConfigured, startLogin } from "../../../src/lib/auth";
 import { isAssessmentProduct } from "../../../src/lib/productDisplay";
 
 type AssessmentAnswer = string | string[] | boolean;
+type AssessmentDraft = {
+  answers: Record<string, AssessmentAnswer>;
+  pendingSubmit: boolean;
+  updatedAt: string;
+};
+
+const assessmentDraftStoragePrefix = "health.assessmentDraft.";
 
 function defaultAnswer(question: AssessmentQuestion): AssessmentAnswer {
   if (question.type === "MULTI_SELECT") {
     return [];
   }
 
-  if (question.type === "BOOLEAN") {
-    return "";
-  }
-
-  return question.options?.[0]?.value ?? "";
+  return "";
 }
 
 function isAnswered(question: AssessmentQuestion, answer: AssessmentAnswer | undefined) {
@@ -50,8 +54,11 @@ export default function IntakePage() {
   const [assessment, setAssessment] = useState<AssessmentTemplate | null>(null);
   const [answers, setAnswers] = useState<Record<string, AssessmentAnswer>>({});
   const [submission, setSubmission] = useState<AssessmentSubmission | null>(null);
+  const [showAuthGate, setShowAuthGate] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isStartingLogin, setIsStartingLogin] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [shouldSubmitAfterLogin, setShouldSubmitAfterLogin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -70,17 +77,22 @@ export default function IntakePage() {
           : null;
 
         if (isMounted) {
+          const defaultAnswers = Object.fromEntries(
+            (nextAssessment?.questions ?? []).map((question) => [
+              question.key,
+              defaultAnswer(question)
+            ])
+          );
+          const savedDraft = nextAssessment
+            ? readAssessmentDraft(slug, defaultAnswers)
+            : null;
+
           setProduct(nextProduct);
           setAssessment(nextAssessment);
-          setAnswers(
-            Object.fromEntries(
-              (nextAssessment?.questions ?? []).map((question) => [
-                question.key,
-                defaultAnswer(question)
-              ])
-            )
-          );
+          setAnswers(savedDraft?.answers ?? defaultAnswers);
           setSubmission(null);
+          setShowAuthGate(Boolean(savedDraft?.pendingSubmit && !getSession()));
+          setShouldSubmitAfterLogin(Boolean(savedDraft?.pendingSubmit && getSession()));
           setSubmitError(null);
         }
       } catch (caught) {
@@ -112,7 +124,15 @@ export default function IntakePage() {
       [question.key]: value
     }));
     setSubmission(null);
+    setShowAuthGate(false);
+    setShouldSubmitAfterLogin(false);
     setSubmitError(null);
+
+    const nextAnswers = {
+      ...answers,
+      [question.key]: value
+    };
+    saveAssessmentDraft(slug, nextAnswers, false);
   }
 
   function toggleMultiSelectAnswer(question: AssessmentQuestion, value: string) {
@@ -130,7 +150,20 @@ export default function IntakePage() {
       return;
     }
 
+    if (!isAuthConfigured()) {
+      setSubmitError("Sign in is not configured for this environment");
+      return;
+    }
+
+    if (!getSession()) {
+      saveAssessmentDraft(slug, answers, true);
+      setShowAuthGate(true);
+      setSubmitError(null);
+      return;
+    }
+
     setIsSubmitting(true);
+    setShowAuthGate(false);
     setSubmitError(null);
 
     try {
@@ -138,12 +171,48 @@ export default function IntakePage() {
         answers
       });
       setSubmission(nextSubmission);
+      setShouldSubmitAfterLogin(false);
+      clearAssessmentDraft(slug);
     } catch (caught) {
       setSubmitError(caught instanceof Error ? caught.message : "Assessment could not be submitted");
     } finally {
       setIsSubmitting(false);
     }
   }
+
+  async function handleAuthStart() {
+    if (!requiredQuestionsComplete) {
+      return;
+    }
+
+    setIsStartingLogin(true);
+    setSubmitError(null);
+    saveAssessmentDraft(slug, answers, true);
+
+    try {
+      await startLogin({
+        returnTo: `${window.location.pathname}${window.location.search}`
+      });
+    } catch (caught) {
+      setSubmitError(caught instanceof Error ? caught.message : "Could not start sign in");
+      setIsStartingLogin(false);
+    }
+  }
+
+  useEffect(() => {
+    if (
+      !shouldSubmitAfterLogin ||
+      isLoading ||
+      !requiredQuestionsComplete ||
+      isSubmitting ||
+      submission
+    ) {
+      return;
+    }
+
+    setShouldSubmitAfterLogin(false);
+    void submitAssessment();
+  }, [isLoading, isSubmitting, requiredQuestionsComplete, shouldSubmitAfterLogin, submission]);
 
   return (
     <main className="shell narrow-shell">
@@ -201,6 +270,24 @@ export default function IntakePage() {
           </form>
 
           {submitError ? <p className="error">{submitError}</p> : null}
+
+          {showAuthGate && !submission ? (
+            <section className="panel account-sign-in" aria-label="Sign in to submit assessment">
+              <div>
+                <p className="eyebrow">Account required</p>
+                <h2>Save your assessment</h2>
+                <p>Your answers are ready. Sign in or create an account to submit them.</p>
+              </div>
+              <div className="auth-actions">
+                <button type="button" disabled={isStartingLogin} onClick={() => void handleAuthStart()}>
+                  {isStartingLogin ? "Opening Sign In" : "Sign In / Create Account"}
+                </button>
+                <Link className="nav-link" href="/auth/confirm">
+                  Confirm Account
+                </Link>
+              </div>
+            </section>
+          ) : null}
 
           {submission ? (
             <div className="success intake-next-step">
@@ -311,6 +398,7 @@ function AssessmentQuestionField({
         value={typeof answer === "string" ? answer : ""}
         onChange={(event) => onChange(event.target.value)}
       >
+        <option value="">{question.required ? "Choose one" : "No selection"}</option>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -319,4 +407,71 @@ function AssessmentQuestionField({
       </select>
     </label>
   );
+}
+
+function getAssessmentDraftStorageKey(slug: string) {
+  return `${assessmentDraftStoragePrefix}${slug}`;
+}
+
+function readAssessmentDraft(slug: string, defaultAnswers: Record<string, AssessmentAnswer>) {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const raw = window.localStorage.getItem(getAssessmentDraftStorageKey(slug));
+
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const draft = JSON.parse(raw) as AssessmentDraft;
+    const answers = { ...defaultAnswers };
+
+    for (const key of Object.keys(defaultAnswers)) {
+      const value = draft.answers[key];
+
+      if (
+        typeof value === "string" ||
+        typeof value === "boolean" ||
+        (Array.isArray(value) && value.every((item) => typeof item === "string"))
+      ) {
+        answers[key] = value;
+      }
+    }
+
+    return {
+      ...draft,
+      answers
+    };
+  } catch {
+    clearAssessmentDraft(slug);
+    return null;
+  }
+}
+
+function saveAssessmentDraft(
+  slug: string,
+  answers: Record<string, AssessmentAnswer>,
+  pendingSubmit: boolean
+) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const draft: AssessmentDraft = {
+    answers,
+    pendingSubmit,
+    updatedAt: new Date().toISOString()
+  };
+
+  window.localStorage.setItem(getAssessmentDraftStorageKey(slug), JSON.stringify(draft));
+}
+
+function clearAssessmentDraft(slug: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(getAssessmentDraftStorageKey(slug));
 }

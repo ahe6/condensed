@@ -19,9 +19,9 @@ POST /products/:slug/assessment/submissions
 
 `GET /products/:slug/assessment` returns the latest active assessment template for an active product whose `purchaseMode` is `ASSESSMENT_REQUIRED`.
 
-`POST /products/:slug/assessment/submissions` validates submitted answers against the same active template, creates an `assessment_submissions` row, and creates one `assessment_answers` row per template question. Signed-in submissions are linked to the local user automatically through the optional bearer token path.
+`POST /products/:slug/assessment/submissions` requires a Cognito bearer token. It validates submitted answers against the same active template, creates an `assessment_submissions` row linked to the current local user, and creates one `assessment_answers` row per template question.
 
-Direct-purchase products return `404` for these routes.
+Anonymous submission requests return `401`. Direct-purchase products return `404` for these routes.
 
 ## Model
 
@@ -29,7 +29,7 @@ Assessment data is split across:
 
 - `assessment_templates`: versioned templates tied to a product
 - `assessment_questions`: ordered questions tied to a template
-- `assessment_submissions`: submitted intake instance tied to the active template, product, and optional user/email
+- `assessment_submissions`: submitted intake instance tied to the active template, product, user, and email
 - `assessment_answers`: JSON answer values tied to a submission and question
 
 Question types:
@@ -51,6 +51,6 @@ Answer values are stored as JSON so text, number, boolean, single-select, and mu
 
 ## Relationships
 
-The frontend intake route loads the product first, then loads this assessment template when `product.purchaseMode` is `ASSESSMENT_REQUIRED`. On submit, the page posts the answer map to `POST /products/:slug/assessment/submissions` and shows the returned submission state.
+The frontend intake route loads the product first, then loads this assessment template when `product.purchaseMode` is `ASSESSMENT_REQUIRED`. Required selects start blank so an untouched form cannot be submitted. If the customer is not signed in after answering, the page stores a local draft, sends the customer through Cognito, returns to the same intake URL, and then submits the saved answers. On submit, the page posts the answer map to `POST /products/:slug/assessment/submissions` and shows the returned submission state.
 
 Cart and checkout services still reject assessment-required products. Completing the current intake flow does not make a product checkout-eligible.

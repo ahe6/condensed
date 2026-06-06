@@ -40,7 +40,8 @@ Flow:
 ```text
 catalog exposes active products and variants
   -> assessments exposes active intake questions for assessment-required products
-  -> assessments persists submitted intake answers
+  -> auth verifies the customer before assessment submit
+  -> assessments persists submitted intake answers for that user
   -> client adds selected variant to cart
   -> carts validates product status, purchase mode, and inventory
   -> carts returns live totals from current variant prices

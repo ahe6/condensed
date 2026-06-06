@@ -173,7 +173,7 @@ Question definitions include:
 - `options`: JSON options for select-style questions
 - `sortOrder`
 
-`POST /products/:slug/assessment/submissions` accepts an answer map keyed by assessment question `key`:
+`POST /products/:slug/assessment/submissions` requires a Cognito bearer token and accepts an answer map keyed by assessment question `key`:
 
 ```json
 {
@@ -187,9 +187,9 @@ Question definitions include:
 }
 ```
 
-The route validates required questions and answer types against the active assessment template before saving. It returns `201` with the created submission, product, template, and saved answers. If the request includes a valid Cognito bearer token, the submission is linked to the current local user.
+The route validates required questions, unknown keys, option values, and answer types against the active assessment template before saving. It returns `201` with the created submission, product, template, and saved answers linked to the current local user.
 
-Direct-purchase products and products without an active assessment return `404`.
+Anonymous requests return `401`. Direct-purchase products and products without an active assessment return `404`.
 
 `GET /categories` returns categories ordered by name.
 
