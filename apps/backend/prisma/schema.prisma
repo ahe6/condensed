@@ -13,6 +13,11 @@ enum ProductStatus {
   ARCHIVED
 }
 
+enum ProductPurchaseMode {
+  DIRECT
+  ASSESSMENT_REQUIRED
+}
+
 enum OrderStatus {
   PENDING
   PLACED
@@ -123,17 +128,18 @@ model Address {
 }
 
 model Product {
-  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  slug        String            @unique
-  name        String
-  description String?
-  status      ProductStatus     @default(DRAFT)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  variants    ProductVariant[]
-  images      ProductImage[]
-  categories  ProductCategory[]
-  orderItems  OrderItem[]
+  id           String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug         String              @unique
+  name         String
+  description  String?
+  status       ProductStatus       @default(DRAFT)
+  purchaseMode ProductPurchaseMode @default(DIRECT)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  variants     ProductVariant[]
+  images       ProductImage[]
+  categories   ProductCategory[]
+  orderItems   OrderItem[]
 
   @@index([status])
   @@map("products")

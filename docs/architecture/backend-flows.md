@@ -39,11 +39,11 @@ Flow:
 ```text
 catalog exposes active products and variants
   -> client adds selected variant to cart
-  -> carts validates product status and inventory
+  -> carts validates product status, purchase mode, and inventory
   -> carts returns live totals from current variant prices
 ```
 
-The `catalog` module owns product, category, variant, image, and inventory records. The `carts` module owns mutable cart rows and rejects inactive or over-inventory variants.
+The `catalog` module owns product, category, variant, image, purchase mode, and inventory records. The `carts` module owns mutable cart rows and rejects inactive, assessment-required, or over-inventory variants.
 
 Read:
 

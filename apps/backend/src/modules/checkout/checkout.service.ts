@@ -1,5 +1,5 @@
 import { randomInt } from "node:crypto";
-import { AddressType, OrderStatus, Prisma, ProductStatus } from "@prisma/client";
+import { AddressType, OrderStatus, Prisma, ProductPurchaseMode, ProductStatus } from "@prisma/client";
 import { prisma } from "../../prisma.js";
 import type { CheckoutCartInput } from "./checkout.schemas.js";
 
@@ -54,6 +54,12 @@ export async function checkoutCart(input: CheckoutCartInput, options: { userId?:
 
       if (item.variant.product.status !== ProductStatus.ACTIVE) {
         throw new CheckoutError(`Product is not active: ${item.variant.product.slug}`);
+      }
+
+      if (item.variant.product.purchaseMode !== ProductPurchaseMode.DIRECT) {
+        throw new CheckoutError(
+          `Product requires assessment before checkout: ${item.variant.product.slug}`
+        );
       }
 
       if (item.variant.inventoryQuantity < item.quantity) {

@@ -20,6 +20,7 @@ const products = [
     slug: "hair-density-support-kit",
     name: "Hair Density Support Kit",
     description: "A demo hair routine with simple daily-use essentials for catalog testing.",
+    purchaseMode: "ASSESSMENT_REQUIRED",
     categorySlugs: ["hair", "daily-care"],
     image: {
       url: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1200&q=80",
@@ -44,6 +45,7 @@ const products = [
     slug: "scalp-care-shampoo",
     name: "Scalp Care Shampoo",
     description: "A lightweight shampoo placeholder for hair and scalp care merchandising.",
+    purchaseMode: "DIRECT",
     categorySlugs: ["hair"],
     image: {
       url: "https://images.unsplash.com/photo-1626784215021-2e39ccf971cd?auto=format&fit=crop&w=1200&q=80",
@@ -62,6 +64,7 @@ const products = [
     slug: "skin-clarity-routine",
     name: "Skin Clarity Routine",
     description: "A sample cleanser and moisturizer routine for skin care storefront flows.",
+    purchaseMode: "ASSESSMENT_REQUIRED",
     categorySlugs: ["skin", "daily-care"],
     image: {
       url: "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&w=1200&q=80",
@@ -86,6 +89,7 @@ const products = [
     slug: "daily-face-moisturizer",
     name: "Daily Face Moisturizer",
     description: "A simple daily moisturizer demo product for customer catalog testing.",
+    purchaseMode: "DIRECT",
     categorySlugs: ["skin", "daily-care"],
     image: {
       url: "https://images.unsplash.com/photo-1570194065650-d99fb4bedf0a?auto=format&fit=crop&w=1200&q=80",
@@ -104,6 +108,7 @@ const products = [
     slug: "bedroom-basics-kit",
     name: "Bedroom Basics Kit",
     description: "A non-prescription sexual wellness kit for testing product browsing and checkout.",
+    purchaseMode: "ASSESSMENT_REQUIRED",
     categorySlugs: ["sexual-wellness"],
     image: {
       url: "https://images.unsplash.com/photo-1583947215259-38e31be8751f?auto=format&fit=crop&w=1200&q=80",
@@ -122,6 +127,7 @@ const products = [
     slug: "weight-management-starter-kit",
     name: "Weight Management Starter Kit",
     description: "A demo lifestyle kit with tracking tools and routine basics, no medication included.",
+    purchaseMode: "ASSESSMENT_REQUIRED",
     categorySlugs: ["weight-management", "daily-care"],
     image: {
       url: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=80",
@@ -140,6 +146,7 @@ const products = [
     slug: "sleep-stress-support-kit",
     name: "Sleep & Stress Support Kit",
     description: "A gentle evening routine placeholder for mental wellness merchandising.",
+    purchaseMode: "ASSESSMENT_REQUIRED",
     categorySlugs: ["mental-wellness", "supplements"],
     image: {
       url: "https://images.unsplash.com/photo-1511295742362-92c96b1cf484?auto=format&fit=crop&w=1200&q=80",
@@ -158,6 +165,7 @@ const products = [
     slug: "daily-multivitamin-pack",
     name: "Daily Multivitamin Pack",
     description: "A daily supplement placeholder with simple monthly pack variants.",
+    purchaseMode: "DIRECT",
     categorySlugs: ["supplements", "daily-care"],
     image: {
       url: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=1200&q=80",
@@ -182,6 +190,7 @@ const products = [
     slug: "at-home-wellness-labs-kit",
     name: "At-Home Wellness Labs Kit",
     description: "A sample lab-kit product for testing nonstandard catalog items and fulfillment.",
+    purchaseMode: "ASSESSMENT_REQUIRED",
     categorySlugs: ["labs"],
     image: {
       url: "https://images.unsplash.com/photo-1581093458791-9d15482442f6?auto=format&fit=crop&w=1200&q=80",
@@ -206,6 +215,7 @@ const products = [
     slug: "dev-mug",
     name: "Dev Mug",
     description: "A sturdy mug for checkout and fulfillment testing.",
+    purchaseMode: "DIRECT",
     categorySlugs: ["drinkware"],
     image: {
       url: "https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?auto=format&fit=crop&w=1200&q=80",
@@ -250,12 +260,14 @@ try {
         slug: productInput.slug,
         name: productInput.name,
         description: productInput.description,
-        status: "ACTIVE"
+        status: "ACTIVE",
+        purchaseMode: productInput.purchaseMode
       },
       update: {
         name: productInput.name,
         description: productInput.description,
-        status: "ACTIVE"
+        status: "ACTIVE",
+        purchaseMode: productInput.purchaseMode
       }
     });
 

@@ -1,4 +1,4 @@
-import { Prisma, ProductStatus } from "@prisma/client";
+import { Prisma, ProductPurchaseMode, ProductStatus } from "@prisma/client";
 import { prisma } from "../../prisma.js";
 import type {
   AddCartItemInput,
@@ -119,6 +119,7 @@ export async function addCartItem(
       product: {
         select: {
           slug: true,
+          purchaseMode: true,
           status: true
         }
       },
@@ -182,6 +183,7 @@ export async function updateCartItemQuantity(
           product: {
             select: {
               slug: true,
+              purchaseMode: true,
               status: true
             }
           },
@@ -367,6 +369,7 @@ async function getCartItemVariantsById(variantIds: string[]) {
       product: {
         select: {
           slug: true,
+          purchaseMode: true,
           status: true
         }
       },
@@ -395,6 +398,7 @@ function assertVariantCanBeInCart(
     inventoryQuantity: number;
     product: {
       slug: string;
+      purchaseMode: ProductPurchaseMode;
       status: ProductStatus;
     };
     sku: string;
@@ -403,6 +407,10 @@ function assertVariantCanBeInCart(
 ) {
   if (variant.product.status !== ProductStatus.ACTIVE) {
     throw new CartError(`Product is not active: ${variant.product.slug}`);
+  }
+
+  if (variant.product.purchaseMode !== ProductPurchaseMode.DIRECT) {
+    throw new CartError(`Product requires assessment before checkout: ${variant.product.slug}`);
   }
 
   if (requestedQuantity > variant.inventoryQuantity) {

@@ -12,6 +12,7 @@ import {
   PaymentStatus,
   PaymentWithOrder,
   Product,
+  ProductPurchaseMode,
   ProductStatus,
   ProductVariant,
   UpdateProductInput,
@@ -93,6 +94,7 @@ const orderSortOptions = [
 ] as const;
 const orderPageSizeOptions = [5, 10, 20];
 const productStatusOptions: ProductStatus[] = ["DRAFT", "ACTIVE", "ARCHIVED"];
+const productPurchaseModeOptions: ProductPurchaseMode[] = ["DIRECT", "ASSESSMENT_REQUIRED"];
 type DateFilterField = (typeof dateFilterOptions)[number]["value"];
 type OrderSortField = (typeof orderSortOptions)[number]["value"];
 type AdminView = "orders" | "catalog";
@@ -102,6 +104,7 @@ const emptyProductDraft = {
   name: "",
   description: "",
   status: "DRAFT" as ProductStatus,
+  purchaseMode: "DIRECT" as ProductPurchaseMode,
   categoryId: ""
 };
 
@@ -872,6 +875,7 @@ export default function AdminPage() {
           name: product.name,
           description: product.description ?? "",
           status: product.status,
+          purchaseMode: product.purchaseMode,
           categoryId: next[product.id]?.categoryId ?? ""
         };
       }
@@ -1030,6 +1034,7 @@ export default function AdminPage() {
       name: productDraft.name.trim(),
       description: productDraft.description.trim() || undefined,
       status: productDraft.status,
+      purchaseMode: productDraft.purchaseMode,
       categoryIds: productDraft.categoryId ? [productDraft.categoryId] : []
     };
   }
@@ -1074,14 +1079,16 @@ export default function AdminPage() {
       slug: product.slug,
       name: product.name,
       description: product.description ?? "",
-      status: product.status
+      status: product.status,
+      purchaseMode: product.purchaseMode
     };
 
     return {
       slug: draft.slug.trim(),
       name: draft.name.trim(),
       description: draft.description.trim() || null,
-      status: draft.status
+      status: draft.status,
+      purchaseMode: draft.purchaseMode
     };
   }
 
@@ -1634,6 +1641,24 @@ export default function AdminPage() {
                 </select>
               </label>
               <label>
+                <span>Purchase Mode</span>
+                <select
+                  value={productDraft.purchaseMode}
+                  onChange={(event) =>
+                    setProductDraft((current) => ({
+                      ...current,
+                      purchaseMode: event.target.value as ProductPurchaseMode
+                    }))
+                  }
+                >
+                  {productPurchaseModeOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
                 <span>Category</span>
                 <select
                   value={productDraft.categoryId}
@@ -1741,7 +1766,8 @@ export default function AdminPage() {
                 slug: product.slug,
                 name: product.name,
                 description: product.description ?? "",
-                status: product.status
+                status: product.status,
+                purchaseMode: product.purchaseMode
               };
               const variantDraft = variantDrafts[product.id] ?? emptyVariantDraft;
               const imageDraft = imageDrafts[product.id] ?? emptyImageDraft;
@@ -1769,6 +1795,7 @@ export default function AdminPage() {
                     </div>
                     <div className="status-row">
                       <span className={`pill ${statusClass(product.status)}`}>{product.status}</span>
+                      <span className="pill">{product.purchaseMode}</span>
                     </div>
                   </button>
 
@@ -1827,6 +1854,21 @@ export default function AdminPage() {
                               }
                             >
                               {productStatusOptions.map((option) => (
+                                <option key={option} value={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label>
+                            <span>Purchase Mode</span>
+                            <select
+                              value={editDraft.purchaseMode}
+                              onChange={(event) =>
+                                updateProductEditDraft(product.id, "purchaseMode", event.target.value)
+                              }
+                            >
+                              {productPurchaseModeOptions.map((option) => (
                                 <option key={option} value={option}>
                                   {option}
                                 </option>

@@ -96,7 +96,7 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 - Shows a catalog intro with a featured active product.
 - Links product cards to `/products/[slug]`.
 - Links care-program product cards to `/intake/[slug]`.
-- Shows assessment-first CTAs for care-program products and add-to-cart controls for direct-purchase products.
+- Uses `product.purchaseMode` to show assessment-first CTAs for care-program products and add-to-cart controls for direct-purchase products.
 - Stores the active cart ID in browser local storage under `health.cartId`.
 - Uses `POST /me/cart` when signed in to load the account cart and adopt or merge the browser-local cart.
 - Creates or resumes carts and adds variants to the cart.
@@ -108,7 +108,7 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 - Shows the product image, description, categories, variants, price, and stock.
 - Uses the same browser-local or signed-in account cart behavior as the catalog page for direct-purchase products.
 - Adds the selected variant to the active cart and updates the shared cart-count badge for direct-purchase products.
-- Shows an assessment-first CTA instead of cart controls for care-program products.
+- Shows an assessment-first CTA instead of cart controls for products with `purchaseMode=ASSESSMENT_REQUIRED`.
 
 `app/intake/[slug]/page.tsx` owns the current assessment entry prototype:
 

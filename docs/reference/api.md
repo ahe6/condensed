@@ -147,6 +147,7 @@ GET /categories
 
 Product responses include:
 
+- `purchaseMode`: `DIRECT` or `ASSESSMENT_REQUIRED`
 - `variants`
 - `images`
 - `categories` with nested `category`
@@ -180,6 +181,7 @@ POST   /admin/categories
   "name": "Dev Mug",
   "description": "A mug for local testing",
   "status": "ACTIVE",
+  "purchaseMode": "DIRECT",
   "categoryIds": [],
   "images": [
     {
@@ -200,7 +202,7 @@ POST   /admin/categories
 }
 ```
 
-`slug` must be lowercase URL-safe text. Prices are accepted as decimal strings with up to two cents.
+`slug` must be lowercase URL-safe text. `purchaseMode` is optional and defaults to `DIRECT`; use `ASSESSMENT_REQUIRED` for care-program products that should not enter normal cart checkout. Prices are accepted as decimal strings with up to two cents.
 
 `GET /admin/products` returns all products, including drafts and archived products.
 
@@ -213,7 +215,8 @@ The admin frontend uses these routes for the catalog tab in `/admin`. Product ro
   "slug": "updated-dev-mug",
   "name": "Updated Dev Mug",
   "description": "Updated description",
-  "status": "ACTIVE"
+  "status": "ACTIVE",
+  "purchaseMode": "DIRECT"
 }
 ```
 

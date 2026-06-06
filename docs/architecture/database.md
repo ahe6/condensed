@@ -53,8 +53,11 @@ Important fields:
 - `name`
 - `description`
 - `status`: `DRAFT`, `ACTIVE`, or `ARCHIVED`
+- `purchaseMode`: `DIRECT` or `ASSESSMENT_REQUIRED`
 
 Products have variants, images, and categories.
+
+`purchaseMode` controls checkout eligibility. `DIRECT` products can be added to carts and checked out. `ASSESSMENT_REQUIRED` products are visible as active care-program entries, but cart and checkout services reject their variants until an assessment/review flow exists.
 
 ### `product_variants`
 

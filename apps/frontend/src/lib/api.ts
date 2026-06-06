@@ -53,6 +53,7 @@ export type Product = {
   name: string;
   description: string | null;
   status: "DRAFT" | "ACTIVE" | "ARCHIVED";
+  purchaseMode: "DIRECT" | "ASSESSMENT_REQUIRED";
   createdAt: string;
   updatedAt: string;
   variants: ProductVariant[];
@@ -66,6 +67,7 @@ export type Product = {
 };
 
 export type ProductStatus = Product["status"];
+export type ProductPurchaseMode = Product["purchaseMode"];
 
 export type CreateCategoryInput = {
   slug: string;
@@ -78,6 +80,7 @@ export type CreateProductInput = {
   name: string;
   description?: string;
   status?: ProductStatus;
+  purchaseMode?: ProductPurchaseMode;
   categoryIds?: string[];
   images?: Array<{
     url: string;
@@ -98,6 +101,7 @@ export type UpdateProductInput = Partial<{
   name: string;
   description: string | null;
   status: ProductStatus;
+  purchaseMode: ProductPurchaseMode;
 }>;
 
 export type CreateProductVariantInput = {

@@ -14,7 +14,7 @@ Catalog data is split across:
 - `categories`: navigation taxonomy
 - `product_categories`: product/category join table
 
-Cart items and order items reference variants. Products are for display, grouping, and status.
+Cart items and order items reference variants. Products are for display, grouping, status, and purchase mode.
 
 ## Public Catalog
 
@@ -30,6 +30,8 @@ The category route returns all categories ordered by name:
 Product list/detail responses include variants, images, and category joins so the frontend can render product cards, product detail, and variant selection without separate calls.
 
 Public product browsing should treat variants as the purchasable unit. A product without a usable active variant is not enough to sell on its own.
+
+`purchaseMode` controls whether the frontend should show direct add-to-cart controls or an assessment-first CTA. The backend still owns the rule: carts and checkout only allow `DIRECT` products.
 
 ## Admin Catalog
 
@@ -62,6 +64,15 @@ Product status controls public visibility:
 
 The backend uses explicit publish/archive routes instead of generic status patching.
 
+## Purchase Mode
+
+Product purchase mode controls checkout eligibility:
+
+- `DIRECT`: variants can be added to carts and checked out.
+- `ASSESSMENT_REQUIRED`: public product data can be displayed, but variants cannot be added to carts or checked out.
+
+This is enforced in the cart and checkout services, not only in the frontend. The frontend uses the same `purchaseMode` field to route care-program products into `/intake/[slug]`.
+
 ## Inventory
 
 Variant inventory is stored on `product_variants.inventoryQuantity`.
@@ -82,7 +93,9 @@ There is no inventory movement ledger yet. The current record is the variant's l
 Catalog services are upstream of cart and checkout:
 
 - carts reject inactive products and invalid variants
+- carts reject variants whose product `purchaseMode` is `ASSESSMENT_REQUIRED`
 - checkout snapshots product/variant names, SKU, unit price, and quantity into order items
+- checkout revalidates product status, purchase mode, and inventory before creating orders
 - order history remains readable if product names, variants, or images change later
 
 Catalog data should stay operationally simple until product options, inventory movement history, or supplier/vendor workflows become real requirements.

@@ -1,4 +1,4 @@
-import { ProductStatus } from "@prisma/client";
+import { ProductPurchaseMode, ProductStatus } from "@prisma/client";
 import { z } from "zod";
 
 const slugSchema = z
@@ -58,6 +58,7 @@ export const createProductSchema = z.object({
   name: z.string().trim().min(1),
   description: z.string().trim().min(1).optional(),
   status: z.nativeEnum(ProductStatus).optional(),
+  purchaseMode: z.nativeEnum(ProductPurchaseMode).optional(),
   categoryIds: z.array(z.string().uuid()).default([]),
   images: z.array(productImageSchema).default([]),
   variants: z.array(productVariantSchema).default([])
@@ -68,7 +69,8 @@ export const updateProductSchema = z
     slug: slugSchema.optional(),
     name: z.string().trim().min(1).optional(),
     description: z.string().trim().min(1).nullable().optional(),
-    status: z.nativeEnum(ProductStatus).optional()
+    status: z.nativeEnum(ProductStatus).optional(),
+    purchaseMode: z.nativeEnum(ProductPurchaseMode).optional()
   })
   .refine((value) => Object.keys(value).length > 0, "At least one product field is required");
 

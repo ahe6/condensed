@@ -81,6 +81,7 @@ export function createProduct(input: CreateProductInput) {
       name: input.name,
       description: input.description,
       status: input.status,
+      purchaseMode: input.purchaseMode,
       variants: {
         create: input.variants
       },

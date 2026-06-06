@@ -81,13 +81,13 @@ Admins can:
 
 - Search/filter admin products.
 - Create products and categories.
-- Edit product name, slug, description, and status.
+- Edit product name, slug, description, status, and purchase mode.
 - Publish or archive products.
 - Assign and remove product categories.
 - Add product images.
 - Add and edit product variants, prices, currencies, and inventory.
 
-Product status controls public catalog visibility. Variant inventory edits are direct admin changes; checkout still performs transactional stock decrement checks before creating orders.
+Product status controls public catalog visibility. Product purchase mode controls whether variants are direct-checkout eligible or assessment-first. Variant inventory edits are direct admin changes; checkout still performs transactional purchase-mode and stock decrement checks before creating orders.
 
 ## Guardrails
 
