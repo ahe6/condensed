@@ -234,8 +234,117 @@ const products = [
 
 const legacyPlaceholderProductSlugs = ["test-product"];
 
+const standardOptions = {
+  goals: [
+    { label: "Explore options", value: "explore-options" },
+    { label: "Compare plans", value: "compare-plans" },
+    { label: "Start as soon as possible", value: "start-soon" }
+  ],
+  experience: [
+    { label: "New to this", value: "new" },
+    { label: "Used similar support before", value: "used-before" },
+    { label: "Currently using a routine", value: "current-routine" }
+  ],
+  followUp: [
+    { label: "Online follow-up", value: "online-follow-up" },
+    { label: "Review plan details", value: "review-plan-details" },
+    { label: "Talk to support first", value: "support-first" }
+  ],
+  timeframe: [
+    { label: "This week", value: "this-week" },
+    { label: "This month", value: "this-month" },
+    { label: "Just researching", value: "researching" }
+  ]
+};
+
+function assessmentQuestions(topic) {
+  return [
+    {
+      key: "main_goal",
+      label: `What brings you to ${topic}?`,
+      type: "SINGLE_SELECT",
+      options: standardOptions.goals,
+      sortOrder: 0
+    },
+    {
+      key: "prior_experience",
+      label: "Have you used similar support before?",
+      type: "SINGLE_SELECT",
+      options: standardOptions.experience,
+      sortOrder: 1
+    },
+    {
+      key: "timeframe",
+      label: "When would you like to take the next step?",
+      type: "SINGLE_SELECT",
+      options: standardOptions.timeframe,
+      sortOrder: 2
+    },
+    {
+      key: "preferred_follow_up",
+      label: "Preferred follow-up",
+      type: "SINGLE_SELECT",
+      options: standardOptions.followUp,
+      sortOrder: 3
+    },
+    {
+      key: "notes",
+      label: "Anything else you want to mention?",
+      type: "TEXT",
+      required: false,
+      sortOrder: 4
+    }
+  ];
+}
+
+const assessmentTemplates = [
+  {
+    productSlug: "hair-density-support-kit",
+    slug: "hair-density-support",
+    title: "Hair Support Assessment",
+    description: "A short intake for hair routine goals and next steps.",
+    questions: assessmentQuestions("hair support")
+  },
+  {
+    productSlug: "skin-clarity-routine",
+    slug: "skin-clarity-support",
+    title: "Skin Care Assessment",
+    description: "A short intake for skin goals and routine preferences.",
+    questions: assessmentQuestions("skin care")
+  },
+  {
+    productSlug: "bedroom-basics-kit",
+    slug: "sexual-wellness-support",
+    title: "Sexual Wellness Assessment",
+    description: "A short intake for sexual wellness goals and next steps.",
+    questions: assessmentQuestions("sexual wellness")
+  },
+  {
+    productSlug: "weight-management-starter-kit",
+    slug: "weight-management-support",
+    title: "Weight Management Assessment",
+    description: "A short intake for weight-management goals and support preferences.",
+    questions: assessmentQuestions("weight management")
+  },
+  {
+    productSlug: "sleep-stress-support-kit",
+    slug: "sleep-stress-support",
+    title: "Sleep & Stress Assessment",
+    description: "A short intake for evening routine goals and support preferences.",
+    questions: assessmentQuestions("sleep and stress support")
+  },
+  {
+    productSlug: "at-home-wellness-labs-kit",
+    slug: "wellness-labs-support",
+    title: "Wellness Labs Assessment",
+    description: "A short intake for lab-kit goals and follow-up preferences.",
+    questions: assessmentQuestions("wellness labs")
+  }
+];
+
 try {
   const categoryBySlug = new Map();
+  const productBySlug = new Map();
 
   for (const categoryInput of categories) {
     const category = await prisma.category.upsert({
@@ -270,6 +379,7 @@ try {
         purchaseMode: productInput.purchaseMode
       }
     });
+    productBySlug.set(product.slug, product);
 
     const categoryIds = [];
 
@@ -345,6 +455,56 @@ try {
     });
   }
 
+  for (const templateInput of assessmentTemplates) {
+    const product = productBySlug.get(templateInput.productSlug);
+
+    if (!product) {
+      throw new Error(`Missing assessment product: ${templateInput.productSlug}`);
+    }
+
+    const template = await prisma.assessmentTemplate.upsert({
+      where: {
+        slug_version: {
+          slug: templateInput.slug,
+          version: 1
+        }
+      },
+      create: {
+        productId: product.id,
+        slug: templateInput.slug,
+        title: templateInput.title,
+        description: templateInput.description,
+        status: "ACTIVE",
+        version: 1
+      },
+      update: {
+        productId: product.id,
+        title: templateInput.title,
+        description: templateInput.description,
+        status: "ACTIVE"
+      }
+    });
+
+    await prisma.assessmentQuestion.deleteMany({
+      where: {
+        templateId: template.id
+      }
+    });
+
+    await prisma.assessmentQuestion.createMany({
+      data: templateInput.questions.map((question) => ({
+        templateId: template.id,
+        key: question.key,
+        label: question.label,
+        helpText: question.helpText,
+        type: question.type,
+        required: question.required ?? true,
+        options: question.options,
+        sortOrder: question.sortOrder
+      }))
+    });
+  }
+
   const archivedLegacyProducts = await prisma.product.updateMany({
     where: {
       slug: {
@@ -357,6 +517,7 @@ try {
   });
 
   console.log(`Seeded dev catalog: ${products.length} products, ${categories.length} categories`);
+  console.log(`Seeded assessment templates: ${assessmentTemplates.length}`);
   if (archivedLegacyProducts.count > 0) {
     console.log(`Archived legacy placeholder products: ${archivedLegacyProducts.count}`);
   }

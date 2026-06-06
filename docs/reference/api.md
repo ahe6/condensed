@@ -140,6 +140,7 @@ Public catalog routes:
 ```text
 GET /products
 GET /products/:slug
+GET /products/:slug/assessment
 GET /categories
 ```
 
@@ -153,6 +154,23 @@ Product responses include:
 - `categories` with nested `category`
 
 `GET /products/:slug` returns one active product by slug for public product detail pages.
+
+`GET /products/:slug/assessment` returns the latest active assessment definition for an active product with `purchaseMode=ASSESSMENT_REQUIRED`. Direct-purchase products return `404`.
+
+Assessment responses include:
+
+- `product`: the product linked to the assessment template
+- `questions`: ordered question definitions
+
+Question definitions include:
+
+- `key`
+- `label`
+- `helpText`
+- `type`: `SINGLE_SELECT`, `MULTI_SELECT`, `TEXT`, `NUMBER`, or `BOOLEAN`
+- `required`
+- `options`: JSON options for select-style questions
+- `sortOrder`
 
 `GET /categories` returns categories ordered by name.
 

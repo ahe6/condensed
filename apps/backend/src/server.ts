@@ -4,6 +4,7 @@ import Fastify from "fastify";
 import { ZodError } from "zod";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { AuthError, requireAdmin } from "./modules/auth/auth.service.js";
+import { assessmentsRoutes } from "./modules/assessments/assessments.routes.js";
 import { cartsRoutes } from "./modules/carts/carts.routes.js";
 import { CartError } from "./modules/carts/carts.service.js";
 import { catalogRoutes } from "./modules/catalog/catalog.routes.js";
@@ -145,6 +146,7 @@ export function buildServer() {
 
   server.register(authRoutes);
   server.register(usersRoutes);
+  server.register(assessmentsRoutes);
   server.register(catalogRoutes);
   server.register(cartsRoutes);
   server.register(checkoutRoutes);

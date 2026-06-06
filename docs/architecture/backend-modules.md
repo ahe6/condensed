@@ -2,7 +2,7 @@
 
 This doc inventories the backend modules in `apps/backend/src/modules`. Backend conventions and request flow live in [Backend Conventions](backend-conventions.md). Backend module collaboration lives in [Backend Flows](backend-flows.md). Exact route contracts live in [API](../reference/api.md).
 
-Last verified against backend route and service exports on 2026-06-05.
+Last verified against backend route and service exports on 2026-06-06.
 
 ## Modules
 
@@ -11,6 +11,7 @@ Last verified against backend route and service exports on 2026-06-05.
 | `auth` | Cognito identity, current user profile, admin checks | `GET /me`, `PATCH /me`, `GET /me/orders` | [Auth](auth.md) |
 | `users` | basic users and saved addresses | `GET /users`, `POST /users`, `/me/addresses` routes | [Users](users.md) |
 | `catalog` | products, variants, images, categories, inventory edits | `/products`, `/categories`, `/admin/products`, `/admin/variants`, `/admin/categories` | [Catalog](catalog.md) |
+| `assessments` | assessment templates and questions for care-program intake | `GET /products/:slug/assessment` | [Assessments](assessments.md) |
 | `carts` | anonymous carts, user carts, cart item operations, cart totals | `/carts`, `/carts/:id/items`, `/me/cart` | [Carts](carts.md) |
 | `checkout` | cart-to-order conversion and customer Stripe checkout handoff | `POST /checkout`, `POST /checkout/stripe` | [Checkout](checkout.md) |
 | `orders` | customer order lookup, admin order search, placement, cancellation, notes | `GET /orders/:orderNumber`, `/admin/orders` routes | [Orders](orders.md) |
@@ -25,6 +26,7 @@ This section is an export inventory, not full function-level documentation. Key 
 - [Auth](auth.md#key-functions)
 - [Users](users.md#key-functions)
 - [Catalog](catalog.md#key-functions)
+- [Assessments](assessments.md#key-functions)
 - [Carts](carts.md#key-functions)
 - [Checkout](checkout.md#key-functions)
 - [Orders](orders.md#key-functions)
@@ -66,6 +68,10 @@ This section is an export inventory, not full function-level documentation. Key 
 - `createProductVariant`
 - `updateProductVariant`
 - `setVariantInventory`
+
+### Assessments
+
+- `getActiveAssessmentForProductSlug`
 
 ### Carts
 

@@ -32,22 +32,25 @@ Read:
 Modules:
 
 - `catalog`
+- `assessments`
 - `carts`
 
 Flow:
 
 ```text
 catalog exposes active products and variants
+  -> assessments exposes active intake questions for assessment-required products
   -> client adds selected variant to cart
   -> carts validates product status, purchase mode, and inventory
   -> carts returns live totals from current variant prices
 ```
 
-The `catalog` module owns product, category, variant, image, purchase mode, and inventory records. The `carts` module owns mutable cart rows and rejects inactive, assessment-required, or over-inventory variants.
+The `catalog` module owns product, category, variant, image, purchase mode, and inventory records. The `assessments` module owns intake templates and questions for assessment-required products. The `carts` module owns mutable cart rows and rejects inactive, assessment-required, or over-inventory variants.
 
 Read:
 
 - [Catalog](catalog.md)
+- [Assessments](assessments.md)
 - [Carts](carts.md)
 
 ## Cart To Checkout To Order

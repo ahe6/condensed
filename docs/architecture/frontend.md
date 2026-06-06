@@ -113,7 +113,8 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 `app/intake/[slug]/page.tsx` owns the current assessment entry prototype:
 
 - Loads one active product from `GET /products/:slug`.
-- Shows a small non-submitting questionnaire for care-program products.
+- Loads assessment questions from `GET /products/:slug/assessment` for care-program products.
+- Renders backend-owned question definitions as a small non-submitting questionnaire.
 - Sends direct-purchase products back to their product detail page.
 - Does not create orders, carts, prescriptions, or provider review records yet.
 

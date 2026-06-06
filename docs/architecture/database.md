@@ -2,7 +2,7 @@
 
 The Prisma schema lives at `apps/backend/prisma/schema.prisma`. Prisma migrations in `apps/backend/prisma/migrations` are the source of truth for database changes. Fulfillment workflow behavior lives in [Fulfillment](fulfillment.md).
 
-Last verified against the Prisma schema and migration history on 2026-06-04.
+Last verified against the Prisma schema and migration history on 2026-06-06.
 
 ## Current Scope
 
@@ -58,6 +58,38 @@ Important fields:
 Products have variants, images, and categories.
 
 `purchaseMode` controls checkout eligibility. `DIRECT` products can be added to carts and checked out. `ASSESSMENT_REQUIRED` products are visible as active care-program entries, but cart and checkout services reject their variants until an assessment/review flow exists.
+
+### `assessment_templates`
+
+Versioned assessment definition for an assessment-required product.
+
+Important fields:
+
+- `productId`
+- `slug`
+- `title`
+- `description`
+- `status`: `DRAFT`, `ACTIVE`, or `ARCHIVED`
+- `version`
+
+The current public assessment route returns the latest active template for a product.
+
+### `assessment_questions`
+
+Ordered question definitions for an assessment template.
+
+Important fields:
+
+- `templateId`
+- `key`: stable answer key within the template
+- `label`
+- `helpText`
+- `type`: `SINGLE_SELECT`, `MULTI_SELECT`, `TEXT`, `NUMBER`, or `BOOLEAN`
+- `required`
+- `options`: JSON option list for select-style questions
+- `sortOrder`
+
+Assessment questions are definitions only. User submissions are not persisted yet.
 
 ### `product_variants`
 

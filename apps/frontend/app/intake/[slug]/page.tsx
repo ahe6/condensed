@@ -5,16 +5,48 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CustomerBrand } from "../../../src/components/CustomerBrand";
 import { CustomerNav } from "../../../src/components/CustomerNav";
-import { Product, getProduct, getReadiness } from "../../../src/lib/api";
+import {
+  AssessmentQuestion,
+  AssessmentTemplate,
+  Product,
+  getProduct,
+  getProductAssessment,
+  getReadiness
+} from "../../../src/lib/api";
 import { isAssessmentProduct } from "../../../src/lib/productDisplay";
+
+type AssessmentAnswer = string | string[] | boolean;
+
+function defaultAnswer(question: AssessmentQuestion): AssessmentAnswer {
+  if (question.type === "MULTI_SELECT") {
+    return [];
+  }
+
+  if (question.type === "BOOLEAN") {
+    return "";
+  }
+
+  return question.options?.[0]?.value ?? "";
+}
+
+function isAnswered(question: AssessmentQuestion, answer: AssessmentAnswer | undefined) {
+  if (!question.required) {
+    return true;
+  }
+
+  if (Array.isArray(answer)) {
+    return answer.length > 0;
+  }
+
+  return answer !== undefined && answer !== "";
+}
 
 export default function IntakePage() {
   const params = useParams<{ slug: string }>();
   const slug = decodeURIComponent(params.slug);
   const [product, setProduct] = useState<Product | null>(null);
-  const [goal, setGoal] = useState("Explore options");
-  const [history, setHistory] = useState("New to this");
-  const [preference, setPreference] = useState("Online follow-up");
+  const [assessment, setAssessment] = useState<AssessmentTemplate | null>(null);
+  const [answers, setAnswers] = useState<Record<string, AssessmentAnswer>>({});
   const [isComplete, setIsComplete] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,9 +61,22 @@ export default function IntakePage() {
       try {
         await getReadiness();
         const nextProduct = await getProduct(slug);
+        const nextAssessment = isAssessmentProduct(nextProduct)
+          ? await getProductAssessment(slug)
+          : null;
 
         if (isMounted) {
           setProduct(nextProduct);
+          setAssessment(nextAssessment);
+          setAnswers(
+            Object.fromEntries(
+              (nextAssessment?.questions ?? []).map((question) => [
+                question.key,
+                defaultAnswer(question)
+              ])
+            )
+          );
+          setIsComplete(false);
         }
       } catch (caught) {
         if (isMounted) {
@@ -52,6 +97,27 @@ export default function IntakePage() {
   }, [slug]);
 
   const isProgram = product ? isAssessmentProduct(product) : false;
+  const requiredQuestionsComplete =
+    !assessment ||
+    assessment.questions.every((question) => isAnswered(question, answers[question.key]));
+
+  function updateAnswer(question: AssessmentQuestion, value: AssessmentAnswer) {
+    setAnswers((current) => ({
+      ...current,
+      [question.key]: value
+    }));
+    setIsComplete(false);
+  }
+
+  function toggleMultiSelectAnswer(question: AssessmentQuestion, value: string) {
+    const currentAnswer = answers[question.key];
+    const currentValues = Array.isArray(currentAnswer) ? currentAnswer : [];
+    const nextValues = currentValues.includes(value)
+      ? currentValues.filter((item) => item !== value)
+      : [...currentValues, value];
+
+    updateAnswer(question, nextValues);
+  }
 
   return (
     <main className="shell narrow-shell">
@@ -75,43 +141,30 @@ export default function IntakePage() {
         </section>
       ) : null}
 
-      {!isLoading && product && isProgram ? (
+      {!isLoading && product && isProgram && assessment ? (
         <section className="panel intake-panel" aria-label={`${product.name} assessment`}>
           <div className="intake-heading">
             <p className="eyebrow">Assessment</p>
-            <h1>{product.name}</h1>
-            {product.description ? <p>{product.description}</p> : null}
+            <h1>{assessment.title}</h1>
+            {assessment.description ? <p>{assessment.description}</p> : null}
           </div>
 
           <form className="intake-form" onSubmit={(event) => event.preventDefault()}>
-            <label>
-              <span>Main goal</span>
-              <select value={goal} onChange={(event) => setGoal(event.target.value)}>
-                <option>Explore options</option>
-                <option>Compare plans</option>
-                <option>Start as soon as possible</option>
-              </select>
-            </label>
+            {assessment.questions.map((question) => (
+              <AssessmentQuestionField
+                answer={answers[question.key]}
+                key={question.id}
+                question={question}
+                onChange={(value) => updateAnswer(question, value)}
+                onToggle={(value) => toggleMultiSelectAnswer(question, value)}
+              />
+            ))}
 
-            <label>
-              <span>Prior experience</span>
-              <select value={history} onChange={(event) => setHistory(event.target.value)}>
-                <option>New to this</option>
-                <option>Used similar support before</option>
-                <option>Currently using a routine</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Preferred next step</span>
-              <select value={preference} onChange={(event) => setPreference(event.target.value)}>
-                <option>Online follow-up</option>
-                <option>Review plan details</option>
-                <option>Talk to support first</option>
-              </select>
-            </label>
-
-            <button type="button" onClick={() => setIsComplete(true)}>
+            <button
+              type="button"
+              disabled={!requiredQuestionsComplete}
+              onClick={() => setIsComplete(true)}
+            >
               Review Next Steps
             </button>
           </form>
@@ -120,13 +173,116 @@ export default function IntakePage() {
             <div className="success intake-next-step">
               <strong>Next step</strong>
               <p>
-                We have the basics for {goal.toLowerCase()} with {preference.toLowerCase()}.
-                Checkout should stay locked until this flow is connected to review.
+                Your assessment basics are ready. Checkout should stay locked until this flow is
+                connected to review.
               </p>
             </div>
           ) : null}
         </section>
       ) : null}
     </main>
+  );
+}
+
+function AssessmentQuestionField({
+  answer,
+  question,
+  onChange,
+  onToggle
+}: {
+  answer: AssessmentAnswer | undefined;
+  question: AssessmentQuestion;
+  onChange: (value: AssessmentAnswer) => void;
+  onToggle: (value: string) => void;
+}) {
+  const options = question.options ?? [];
+
+  if (question.type === "MULTI_SELECT") {
+    const selectedValues = Array.isArray(answer) ? answer : [];
+
+    return (
+      <fieldset className="intake-question">
+        <legend>{question.label}</legend>
+        {question.helpText ? <p>{question.helpText}</p> : null}
+        <div className="intake-choice-list">
+          {options.map((option) => (
+            <label className="checkbox-row" key={option.value}>
+              <input
+                checked={selectedValues.includes(option.value)}
+                type="checkbox"
+                onChange={() => onToggle(option.value)}
+              />
+              <span>{option.label}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    );
+  }
+
+  if (question.type === "TEXT") {
+    return (
+      <label className="intake-question">
+        <span>{question.label}</span>
+        {question.helpText ? <p>{question.helpText}</p> : null}
+        <textarea
+          required={question.required}
+          value={typeof answer === "string" ? answer : ""}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </label>
+    );
+  }
+
+  if (question.type === "NUMBER") {
+    return (
+      <label className="intake-question">
+        <span>{question.label}</span>
+        {question.helpText ? <p>{question.helpText}</p> : null}
+        <input
+          inputMode="numeric"
+          required={question.required}
+          type="number"
+          value={typeof answer === "string" ? answer : ""}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </label>
+    );
+  }
+
+  if (question.type === "BOOLEAN") {
+    return (
+      <label className="intake-question">
+        <span>{question.label}</span>
+        {question.helpText ? <p>{question.helpText}</p> : null}
+        <select
+          required={question.required}
+          value={typeof answer === "boolean" ? String(answer) : ""}
+          onChange={(event) => onChange(event.target.value === "true")}
+        >
+          <option value="">Choose one</option>
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+      </label>
+    );
+  }
+
+  return (
+    <label className="intake-question">
+      <span>{question.label}</span>
+      {question.helpText ? <p>{question.helpText}</p> : null}
+      <select
+        required={question.required}
+        value={typeof answer === "string" ? answer : ""}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }

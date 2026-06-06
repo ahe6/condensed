@@ -944,6 +944,34 @@ h3 {
   gap: 14px;
 }
 
+.intake-question {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.intake-question legend,
+.intake-question > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.intake-question p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.intake-choice-list {
+  display: grid;
+  gap: 8px;
+}
+
 .intake-next-step {
   display: grid;
   gap: 4px;

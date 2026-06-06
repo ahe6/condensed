@@ -2,7 +2,7 @@
 
 This doc covers public catalog behavior and admin catalog management. Route contracts live in [API](../reference/api.md), module inventory lives in [Backend Modules](backend-modules.md), and table details live in [Database](database.md).
 
-Last verified against backend catalog routes and services on 2026-06-05.
+Last verified against backend catalog routes and services on 2026-06-06.
 
 ## Model
 
@@ -13,6 +13,7 @@ Catalog data is split across:
 - `product_images`: display images for products
 - `categories`: navigation taxonomy
 - `product_categories`: product/category join table
+- `assessment_templates` and `assessment_questions`: intake definitions for assessment-required products
 
 Cart items and order items reference variants. Products are for display, grouping, status, and purchase mode.
 
@@ -22,6 +23,7 @@ Public product routes expose only active products:
 
 - `GET /products`
 - `GET /products/:slug`
+- `GET /products/:slug/assessment`
 
 The category route returns all categories ordered by name:
 
@@ -32,6 +34,8 @@ Product list/detail responses include variants, images, and category joins so th
 Public product browsing should treat variants as the purchasable unit. A product without a usable active variant is not enough to sell on its own.
 
 `purchaseMode` controls whether the frontend should show direct add-to-cart controls or an assessment-first CTA. The backend still owns the rule: carts and checkout only allow `DIRECT` products.
+
+`GET /products/:slug/assessment` returns the latest active assessment definition for active products with `purchaseMode=ASSESSMENT_REQUIRED`. Direct-purchase products do not have public assessment definitions.
 
 ## Admin Catalog
 

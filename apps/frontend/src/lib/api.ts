@@ -69,6 +69,41 @@ export type Product = {
 export type ProductStatus = Product["status"];
 export type ProductPurchaseMode = Product["purchaseMode"];
 
+export type AssessmentQuestionType = "SINGLE_SELECT" | "MULTI_SELECT" | "TEXT" | "NUMBER" | "BOOLEAN";
+
+export type AssessmentQuestionOption = {
+  label: string;
+  value: string;
+};
+
+export type AssessmentQuestion = {
+  id: string;
+  templateId: string;
+  key: string;
+  label: string;
+  helpText: string | null;
+  type: AssessmentQuestionType;
+  required: boolean;
+  options: AssessmentQuestionOption[] | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AssessmentTemplate = {
+  id: string;
+  productId: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  status: "DRAFT" | "ACTIVE" | "ARCHIVED";
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+  product: Product;
+  questions: AssessmentQuestion[];
+};
+
 export type CreateCategoryInput = {
   slug: string;
   name: string;
@@ -507,6 +542,10 @@ export async function listProducts() {
 
 export async function getProduct(slug: string) {
   return request<Product>(`/products/${encodeURIComponent(slug)}`);
+}
+
+export async function getProductAssessment(slug: string) {
+  return request<AssessmentTemplate>(`/products/${encodeURIComponent(slug)}/assessment`);
 }
 
 export async function listCategories() {
