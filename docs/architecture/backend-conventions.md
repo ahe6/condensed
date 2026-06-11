@@ -90,7 +90,7 @@ Stripe webhooks enter through `POST /webhooks/stripe`. The server keeps the raw 
 
 Scheduled jobs should call service functions instead of reimplementing business rules. Current examples:
 
-- `orders:expire` reconciles old open Stripe Checkout attempts against Stripe and releases inventory only when Stripe reports expiration
+- `stripe:reconcile-checkouts` reconciles old open Stripe Checkout attempts against Stripe and releases inventory only when Stripe reports expiration
 - `notifications:retry` retries pending or failed notification events through the notification service
 
 ## Related Docs

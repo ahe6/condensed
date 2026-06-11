@@ -2,7 +2,7 @@
 
 This doc covers the `users` backend module. Auth identity behavior lives in [Auth](auth.md), route contracts live in [API](../reference/api.md), and user/address tables live in [Database](database.md).
 
-Last verified against backend user routes and services on 2026-06-05.
+Last verified against backend user routes and services on 2026-06-07.
 
 ## Responsibilities
 
@@ -15,12 +15,14 @@ The `users` module owns:
 
 Routes:
 
-- `GET /users`
-- `POST /users`
+- `GET /admin/users`
+- `POST /admin/users`
 - `GET /me/addresses`
 - `POST /me/addresses`
 - `PATCH /me/addresses/:id`
 - `DELETE /me/addresses/:id`
+
+`/admin/users` routes are operational/dev-admin routes and use the shared `/admin/*` Cognito admin-group guard.
 
 ## Saved Addresses
 
@@ -46,4 +48,4 @@ The current checkout API accepts address fields directly. The frontend may use s
 
 ## Notes
 
-`GET /users` and `POST /users` are basic backend user routes and are not under the `/admin/*` pre-handler. Cognito signup and local user linking are handled by [Auth](auth.md).
+Cognito signup and local user linking are handled by [Auth](auth.md). Public customer code should use `/me` and `/me/addresses`, not direct user creation routes.

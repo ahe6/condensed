@@ -2,7 +2,7 @@
 
 This doc maps how backend modules cooperate across major application flows. Product and business-level flow descriptions live in [Flows](../reference/flows.md). Implementation conventions live in [Backend Conventions](backend-conventions.md), module inventory lives in [Backend Modules](backend-modules.md), and exact route contracts live in [API](../reference/api.md).
 
-Last verified against backend routes and services on 2026-06-06.
+Last verified against backend routes and services on 2026-06-07.
 
 ## Auth, Users, And Addresses
 
@@ -27,12 +27,38 @@ Read:
 - [Users](users.md)
 - [Database](database.md)
 
-## Catalog To Cart
+## Goal Intake To Recommendation
+
+Modules:
+
+- `assessments`
+- `catalog`
+
+Flow:
+
+```text
+customer starts from a goal key
+  -> assessments exposes active goal-intake questions
+  -> auth verifies the customer before submit
+  -> assessments saves submitted answers
+  -> recommendation policy creates ranked product recommendations
+  -> client can route the customer into a recommended product intake
+```
+
+Goal intake is discovery, not approval. The `assessments` module owns goal templates, goal submissions, and recommendation rows. The `catalog` module owns the products referenced by recommendations.
+
+Read:
+
+- [Assessments](assessments.md)
+- [Catalog](catalog.md)
+
+## Product Intake To Cart
 
 Modules:
 
 - `catalog`
 - `assessments`
+- `checkout-authorizations`
 - `carts`
 
 Flow:
@@ -41,13 +67,14 @@ Flow:
 catalog exposes active products and variants
   -> assessments exposes active intake questions for assessment-required products
   -> auth verifies the customer before assessment submit
-  -> assessments persists submitted intake answers for that user
+  -> assessments persists submitted intake answers and policy decision for that user
+  -> approved submissions create checkout authorization
   -> client adds selected variant to cart
-  -> carts validates product status, purchase mode, and inventory
+  -> carts validates product status, purchase mode, checkout authorization, and inventory
   -> carts returns live totals from current variant prices
 ```
 
-The `catalog` module owns product, category, variant, image, purchase mode, and inventory records. The `assessments` module owns intake templates, questions, submissions, and answers for assessment-required products. The `carts` module owns mutable cart rows and rejects inactive, assessment-required, or over-inventory variants.
+The `catalog` module owns product, category, variant, image, purchase mode, and inventory records. The `assessments` module owns intake templates, questions, submissions, answers, recommendations, and the first product-intake policy decision. The `checkout-authorizations` module owns short-lived approval records. The `carts` module owns mutable cart rows and rejects inactive, unauthorized assessment-required, or over-inventory variants.
 
 Read:
 
@@ -68,10 +95,11 @@ Flow:
 
 ```text
 cart contains selected variants
-  -> checkout validates cart and inventory in a transaction
+  -> checkout validates cart, checkout authorizations, and inventory in a transaction
   -> checkout decrements inventory
   -> checkout snapshots order addresses and items
   -> checkout clears cart
+  -> checkout marks used checkout authorizations
   -> checkout optionally asks payments to create Stripe Checkout Session
 ```
 

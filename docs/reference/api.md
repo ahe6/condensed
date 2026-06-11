@@ -21,6 +21,10 @@ apps/backend/src/modules/
     catalog.routes.ts
     catalog.schemas.ts
     catalog.service.ts
+  assessments/
+    assessments.routes.ts
+    assessments.schemas.ts
+    assessments.service.ts
   carts/
     carts.routes.ts
     carts.schemas.ts
@@ -29,6 +33,8 @@ apps/backend/src/modules/
     checkout.routes.ts
     checkout.schemas.ts
     checkout.service.ts
+  checkout-authorizations/
+    checkout-authorizations.service.ts
   orders/
     orders.routes.ts
     orders.schemas.ts
@@ -65,13 +71,15 @@ GET /ready
 ## Users
 
 ```text
-GET  /users
-POST /users
+GET  /admin/users
+POST /admin/users
 ```
 
-`GET /users` returns users newest first.
+These routes require a Cognito ID token with the `admin` group.
 
-`POST /users` accepts:
+`GET /admin/users` returns users newest first.
+
+`POST /admin/users` accepts:
 
 ```json
 {
@@ -142,6 +150,8 @@ GET /products
 GET /products/:slug
 GET /products/:slug/assessment
 POST /products/:slug/assessment/submissions
+GET /goals/:goalKey/assessment
+POST /goals/:goalKey/assessment/submissions
 GET /categories
 ```
 
@@ -158,10 +168,12 @@ Product responses include:
 
 `GET /products/:slug/assessment` returns the latest active assessment definition for an active product with `purchaseMode=ASSESSMENT_REQUIRED`. Direct-purchase products return `404`.
 
-Assessment responses include:
+Product assessment responses include:
 
 - `product`: the product linked to the assessment template
 - `questions`: ordered question definitions
+
+Goal assessment responses use the same template/question shape, with `type=GOAL_INTAKE`, `goalKey` set, and `product=null`.
 
 Question definitions include:
 
@@ -187,15 +199,70 @@ Question definitions include:
 }
 ```
 
-The route validates required questions, unknown keys, option values, and answer types against the active assessment template before saving. It returns `201` with the created submission, product, template, and saved answers linked to the current local user.
+The route validates required questions, unknown keys, option values, and answer types against the active assessment template before saving. It returns `201` with the created submission, product, template, saved answers, decision metadata, and any checkout authorizations linked to the current local user.
+
+Submission statuses are:
+
+- `APPROVED`: automated policy passed and a checkout authorization was created.
+- `REVIEW_REQUIRED`: saved, but checkout remains locked until a later manual/provider flow exists.
+- `REJECTED`: supported by the API/schema for future policies.
+- `SUBMITTED`: legacy/pre-decision state; current product intake submissions are decided immediately.
+
+Current product-intake policy behavior:
+
+- `timeframe=researching` returns `REVIEW_REQUIRED`.
+- Other valid product-intake submissions return `APPROVED`.
+
+Approved submission responses include `checkoutAuthorizations`, for example:
+
+```json
+{
+  "status": "APPROVED",
+  "decisionPolicyId": "product-intake-basic-v1",
+  "decisionPolicyVersion": 1,
+  "decisionReason": "basic_eligible",
+  "checkoutAuthorizations": [
+    {
+      "status": "ACTIVE",
+      "expiresAt": "2026-06-21T00:00:00.000Z"
+    }
+  ]
+}
+```
 
 Anonymous requests return `401`. Direct-purchase products and products without an active assessment return `404`.
+
+`POST /goals/:goalKey/assessment/submissions` requires a Cognito bearer token and accepts the same answer-map shape. It returns `201` with the created goal submission and ranked `recommendations`:
+
+```json
+{
+  "goalKey": "weight-loss",
+  "status": "SUBMITTED",
+  "decisionPolicyId": "goal-intake-recommendations-v1",
+  "decisionReason": "recommendations_generated",
+  "checkoutAuthorizations": [],
+  "recommendations": [
+    {
+      "rank": 1,
+      "reasonCode": "glp1_consult",
+      "reasonText": "glp1 consult matched to weight loss because you want a clear next step.",
+      "product": {
+        "slug": "glp1-weight-care-consult",
+        "purchaseMode": "ASSESSMENT_REQUIRED"
+      }
+    }
+  ]
+}
+```
+
+Goal recommendations do not grant checkout access. If a recommended product has `purchaseMode=ASSESSMENT_REQUIRED`, the customer still needs an approved product assessment for that product before cart/checkout.
 
 `GET /categories` returns categories ordered by name.
 
 Dev-admin catalog routes:
 
 ```text
+GET    /admin/assessment-submissions
 GET    /admin/products
 POST   /admin/products
 PATCH  /admin/products/:id
@@ -209,6 +276,8 @@ PATCH  /admin/variants/:id
 PATCH  /admin/variants/:id/inventory
 POST   /admin/categories
 ```
+
+`GET /admin/assessment-submissions` returns recent assessment submissions newest first. Responses include the submission, user, product when applicable, template, answers, checkout authorizations, and goal recommendations with product details. The current admin UI uses this for the read-only Review tab.
 
 `POST /admin/products` accepts:
 
@@ -239,7 +308,7 @@ POST   /admin/categories
 }
 ```
 
-`slug` must be lowercase URL-safe text. `purchaseMode` is optional and defaults to `DIRECT`; use `ASSESSMENT_REQUIRED` for care-program products that should not enter normal cart checkout. Prices are accepted as decimal strings with up to two cents.
+`slug` must be lowercase URL-safe text. `purchaseMode` is optional and defaults to `DIRECT`; use `ASSESSMENT_REQUIRED` for care-program products that should require assessment approval before cart/checkout. Prices are accepted as decimal strings with up to two cents.
 
 `GET /admin/products` returns all products, including drafts and archived products.
 
@@ -385,7 +454,7 @@ Adding the same variant again increments the existing cart item quantity.
 }
 ```
 
-Quantity must be positive and cannot exceed current variant inventory. Adding or updating cart items also rejects inactive products. Use `DELETE /carts/:id/items/:itemId` to remove an item.
+Quantity must be positive and cannot exceed current variant inventory. Adding or updating cart items also rejects inactive products. Assessment-required products require a signed-in user with an active checkout authorization for the product or exact variant. Use `DELETE /carts/:id/items/:itemId` to remove an item.
 
 `DELETE /carts/:id/items` clears all items from the cart.
 
@@ -403,6 +472,7 @@ It validates:
 - cart exists
 - cart has items
 - products are active
+- assessment-required products have active checkout authorization for the signed-in user
 - all items use one currency
 - inventory is available
 
@@ -413,6 +483,7 @@ It then:
 - snapshots order items
 - decrements variant inventory
 - clears the cart
+- marks used checkout authorizations as `USED`
 
 Request body:
 
@@ -494,6 +565,8 @@ POST /admin/orders/:id/notes
 
 `GET /orders/:orderNumber` returns one order by its human-facing order number only when the signed-in user owns that order.
 
+Checkout-created orders include `reservationExpiresAt`. The current reservation window is 24 hours after checkout order creation. Customer order-history/detail reads and the scheduled reconciliation job expire overdue unpaid/failed reservations by marking the payment/order `EXPIRED`, cancelling the order, and releasing inventory once.
+
 `GET /admin/orders` returns a paged admin order result:
 
 ```json
@@ -542,18 +615,19 @@ POST /admin/orders/:id/payments
 POST /admin/payments/:id/authorize
 POST /admin/payments/:id/pay
 POST /admin/payments/:id/fail
-POST /admin/payments/:id/refund
+POST /admin/payments/:id/mark-refunded
+POST /admin/payments/sync-stripe
 POST /admin/payments/:id/sync-stripe
 POST /webhooks/stripe
 ```
 
-`POST /orders/:id/stripe-checkout-session` creates or reuses a card-only Stripe Checkout Session with `ui_mode: "elements"` for an existing unpaid order and records a local Stripe payment plus a `payment_attempts` row for the Checkout Session. The normal customer checkout path uses `POST /checkout/stripe`; this route is kept for payment recovery. The session uses the order email as `customer_email` and enables phone collection, so the frontend confirms checkout with the shipping phone number.
+`POST /orders/:id/stripe-checkout-session` creates or reuses a card-only Stripe Checkout Session with `ui_mode: "elements"` for an existing `UNPAID` or `FAILED` order owned by the signed-in user while the order reservation is still active. The normal customer checkout path uses `POST /checkout/stripe`; this route is kept for order-history payment recovery. The session uses the order email as `customer_email` and enables phone collection, so the frontend confirms checkout with the shipping phone number.
 
 Request:
 
 ```json
 {
-  "returnUrl": "http://localhost:3001/?order=HEALTH-123456&session_id={CHECKOUT_SESSION_ID}"
+  "returnUrl": "http://localhost:3001/orders/HEALTH-123456?session_id={CHECKOUT_SESSION_ID}"
 }
 ```
 
@@ -586,9 +660,25 @@ Payment status routes update the payment and the parent order `paymentStatus` in
 - `authorize` sets both to `AUTHORIZED`
 - `pay` sets both to `PAID`
 - `fail` sets both to `FAILED`
-- `refund` sets both to `REFUNDED`
+- `mark-refunded` sets both to `REFUNDED`
+
+`POST /admin/payments/:id/mark-refunded` is a local-only manual status action. It does not create a Stripe refund.
 
 `POST /admin/payments/:id/sync-stripe` retrieves the latest Checkout Session or PaymentIntent from Stripe and updates the local payment attempt, aggregate payment, and parent order. It stores Stripe details such as `paymentIntentId`, `chargeId`, Stripe status, and dispute flags in metadata. It only supports payments whose provider is `stripe`.
+
+`POST /admin/payments/sync-stripe` syncs every local Stripe payment in `UNPAID`, `AUTHORIZED`, or `FAILED` status and returns:
+
+```json
+{
+  "candidateCount": 1,
+  "syncedCount": 1,
+  "syncedPaymentIds": ["..."],
+  "settledCount": 1,
+  "settledPaymentIds": ["..."],
+  "failedCount": 0,
+  "failed": []
+}
+```
 
 Payment responses include `attempts` and `statusEvents`. `attempts` is the ordered list of provider-side attempts under the aggregate payment. `statusEvents` is the ordered audit trail of payment status changes and includes `paymentAttemptId` when the event is tied to a specific attempt. Admin manual actions, Stripe webhooks, and admin Stripe sync write status event rows when they change payment status.
 

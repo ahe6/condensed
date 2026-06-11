@@ -2,7 +2,7 @@
 
 Authentication uses Amazon Cognito. The app stack can stay local while Cognito runs in AWS.
 
-Last verified against backend auth routes and services on 2026-06-05.
+Last verified against backend auth routes, services, and dev reset scripts on 2026-06-07.
 
 ## Current State
 
@@ -51,9 +51,12 @@ Use `http://localhost:3001` consistently during local auth testing.
 2. Cognito handles signup, signin, password policy, and email confirmation.
 3. Cognito redirects back to the current browser origin at `/auth/callback`.
 4. The frontend exchanges the authorization code for tokens.
-5. API requests include the Cognito ID token in `Authorization: Bearer <token>`.
-6. Backend verifies the ID token against the Cognito issuer and app client ID.
-7. Backend links the Cognito `sub` to local `users.externalAuthId`.
+5. The callback redirects to the saved return path, or `/my-health` for generic sign-in.
+6. API requests include the Cognito ID token in `Authorization: Bearer <token>`.
+7. Backend verifies the ID token against the Cognito issuer and app client ID.
+8. Backend links the Cognito `sub` to local `users.externalAuthId`.
+
+Protected flows that should resume after login, such as checkout, admin, orders, addresses, and assessment drafts, pass an explicit return path before redirecting to Cognito.
 
 Do not mix `localhost` and `127.0.0.1` in the same login attempt. Browser storage is origin-specific, and PKCE state must be read from the same origin that started login.
 
@@ -118,6 +121,36 @@ Delete a throwaway dev user:
 ```sh
 make dev-auth-delete-user EMAIL=user@example.com
 ```
+
+Fix a local app user whose email is linked to an old Cognito identity:
+
+```sh
+make local-auth-reset-user EMAIL=user@example.com
+```
+
+This clears only the local app DB `users.externalAuthId` value for that email. It keeps orders, carts, addresses, assessments, and other app data. The next successful Cognito login with that email relinks the local app user to the current Cognito `sub`.
+
+If the Cognito user should also be deleted from the AWS dev user pool:
+
+```sh
+make local-auth-reset-user-delete-cognito EMAIL=user@example.com
+```
+
+AWS dev has a similar combined one-off task:
+
+```sh
+make dev-auth-reset-user EMAIL=user@example.com
+```
+
+Reset scope summary:
+
+| Command | Scope | Keeps App Data? |
+| --- | --- | --- |
+| `make local-auth-reset-user EMAIL=...` | Clears one local DB user's Cognito link only | Yes |
+| `make local-auth-reset-user-delete-cognito EMAIL=...` | Clears one local DB user's Cognito link and deletes the matching AWS dev Cognito user | Yes |
+| `make dev-auth-reset-user EMAIL=...` | Clears one AWS dev DB user's Cognito link through ECS, then deletes matching AWS dev Cognito user | Yes |
+| `make dev-auth-delete-user EMAIL=...` | Deletes matching AWS dev Cognito user only | Local/app DB rows are unchanged |
+| `make dev-db-reset-data CONFIRM=health-dev` | Truncates AWS dev app tables | No |
 
 ## Key Functions
 

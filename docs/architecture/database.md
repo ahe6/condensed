@@ -2,7 +2,7 @@
 
 The Prisma schema lives at `apps/backend/prisma/schema.prisma`. Prisma migrations in `apps/backend/prisma/migrations` are the source of truth for database changes. Fulfillment workflow behavior lives in [Fulfillment](fulfillment.md).
 
-Last verified against the Prisma schema and migration history on 2026-06-06.
+Last verified against the Prisma schema and migration history on 2026-06-07.
 
 ## Current Scope
 
@@ -10,7 +10,7 @@ The schema covers a practical ecommerce core:
 
 - Identity: users and addresses
 - Catalog: products, variants, images, and categories
-- Assessments: templates, questions, submissions, and answers
+- Assessments: templates, questions, submissions, answers, recommendations, and checkout authorizations
 - Shopping: carts and cart items
 - Checkout: orders, order addresses, order items, and admin order notes
 - Money movement: payments, payment attempts, and payment status events
@@ -33,7 +33,9 @@ Important fields:
 Related records:
 
 - `addresses`
+- `assessmentSubmissions`
 - `carts`
+- `checkoutAuthorizations`
 - `orders`
 
 ### `addresses`
@@ -56,24 +58,26 @@ Important fields:
 - `status`: `DRAFT`, `ACTIVE`, or `ARCHIVED`
 - `purchaseMode`: `DIRECT` or `ASSESSMENT_REQUIRED`
 
-Products have variants, images, categories, assessment templates, and assessment submissions.
+Products have variants, images, categories, assessment templates, assessment submissions, assessment recommendations, and checkout authorizations.
 
-`purchaseMode` controls checkout eligibility. `DIRECT` products can be added to carts and checked out. `ASSESSMENT_REQUIRED` products are visible as active care-program entries, but cart and checkout services reject their variants until an assessment/review flow exists.
+`purchaseMode` controls checkout eligibility. `DIRECT` products can be added to carts and checked out. `ASSESSMENT_REQUIRED` products are visible as active care-program entries, but cart and checkout services require an active checkout authorization for the signed-in user before allowing their variants.
 
 ### `assessment_templates`
 
-Versioned assessment definition for an assessment-required product.
+Versioned assessment definition for an assessment-required product or goal intake.
 
 Important fields:
 
-- `productId`
+- `productId`: nullable; required for current product intake templates
+- `goalKey`: nullable; set for goal/symptom intake templates
 - `slug`
 - `title`
 - `description`
+- `type`: `PRODUCT_INTAKE` or `GOAL_INTAKE`
 - `status`: `DRAFT`, `ACTIVE`, or `ARCHIVED`
 - `version`
 
-The current public assessment route returns the latest active template for a product.
+The current product assessment route returns the latest active `PRODUCT_INTAKE` template for a product. The current goal assessment route returns the latest active `GOAL_INTAKE` template for a goal key.
 
 ### `assessment_questions`
 
@@ -92,18 +96,23 @@ Important fields:
 
 ### `assessment_submissions`
 
-Submitted assessment instance for an assessment-required product.
+Submitted assessment instance for a product intake or goal intake.
 
 Important fields:
 
 - `templateId`: assessment template version the answers were submitted against
-- `productId`: product the assessment belongs to
-- `userId`: local user for the signed-in customer that submitted the assessment
+- `productId`: nullable product the assessment belongs to
+- `goalKey`: nullable goal/symptom intake key
+- `userId`: local user for the signed-in customer that submitted the assessment; nullable so history can survive user deletion
 - `email`: contact email copied from the signed-in user
 - `status`: `SUBMITTED`, `REVIEW_REQUIRED`, `APPROVED`, or `REJECTED`
+- `decisionReason`
+- `decisionPolicyId`
+- `decisionPolicyVersion`
+- `decidedAt`
 - `submittedAt`
 
-The current public submit route requires sign-in and creates submissions with `SUBMITTED` status. Review status transitions are not implemented yet.
+Product-intake submit requires sign-in, immediately evaluates the product-intake policy, and creates submissions as `APPROVED` or `REVIEW_REQUIRED`. `REJECTED` is supported by the schema/API for future policies. Goal-intake submit requires sign-in, creates a `SUBMITTED` submission, and creates recommendation rows.
 
 ### `assessment_answers`
 
@@ -117,6 +126,41 @@ Important fields:
 - `value`: JSON value, currently string, number, boolean, or string array depending on question type
 
 The pair `submissionId + questionKey` is unique, so one submission cannot have duplicate answers for a template key.
+
+### `assessment_recommendations`
+
+Ranked product recommendation generated from a goal-intake submission.
+
+Important fields:
+
+- `assessmentSubmissionId`: goal submission that generated the recommendation
+- `productId`: recommended product
+- `status`: `RECOMMENDED`, `SELECTED`, or `DISMISSED`
+- `rank`: display ordering within the submission
+- `reasonCode`
+- `reasonText`
+- `sourcePolicyId`
+- `sourcePolicyVersion`
+- `selectedAt`
+- `dismissedAt`
+
+The pair `assessmentSubmissionId + productId` is unique, so one submission cannot recommend the same product twice. Recommendations are not checkout authorization; assessment-required products still need an approved product intake before cart/checkout.
+
+### `checkout_authorizations`
+
+Short-lived approval record that allows one signed-in user to add/check out an assessment-required product.
+
+Important fields:
+
+- `userId`: approved local user
+- `productId`: approved product
+- `variantId`: optional exact variant limit; `null` means product-level authorization
+- `assessmentSubmissionId`: approved submission that created the authorization
+- `status`: `ACTIVE`, `USED`, `EXPIRED`, or `REVOKED`
+- `expiresAt`
+- `usedAt`
+
+Current approved product-intake submissions create product-level authorizations that expire after 14 days. Cart and checkout look for `ACTIVE` rows with `expiresAt` in the future. Checkout marks matching authorizations `USED` when the order is created.
 
 ### `product_variants`
 
@@ -185,11 +229,12 @@ Important fields:
 - `fulfillmentStatus`: `UNFULFILLED`, `PARTIAL`, `FULFILLED`, or `RETURNED`
 - `subtotal`, `discountTotal`, `shippingTotal`, `taxTotal`, `total`
 - `placedAt`
+- `reservationExpiresAt`: checkout-created reservation deadline, currently 24 hours after order creation
 - `inventoryReleasedAt`: set when cancelled unpaid-order inventory has been restored
 
 Orders can keep `userId` nullable so historical orders survive user deletion.
 
-Unpaid expiry and manual cancellation use `inventoryReleasedAt` to make inventory release idempotent. Once it is set, rerunning the expiry job or cancelling again will not add item quantities back a second time.
+Order reservation expiration and manual cancellation use `inventoryReleasedAt` to make inventory release idempotent. Once it is set, rerunning expiration or cancelling again will not add item quantities back a second time.
 
 ### `order_addresses`
 
@@ -269,7 +314,7 @@ Important fields:
 
 The pair `provider + providerAttemptId` is unique. The pair `provider + providerPaymentIntentId` is unique when the payment intent ID exists.
 
-Stripe owns Checkout Session expiration. The scheduled job reconciles old open local attempts against Stripe; it does not locally decide that an open Stripe session has expired. An expired or failed attempt only moves the aggregate payment and parent order when no other open or completed attempt remains.
+Stripe owns Checkout Session expiration. Separately, Health owns order reservation expiration through `orders.reservationExpiresAt`. The scheduled job reconciles old open local attempts against Stripe and also expires overdue order reservations. A Stripe-expired Checkout Session moves the attempt to `EXPIRED`, but it does not cancel the order or release inventory while the order reservation is still active.
 
 The `payment_attempts` migration backfilled existing Stripe Checkout Session payment rows where `providerPaymentId` started with `cs_`. It also linked existing payment status events to matching attempts when the event `providerObjectId` matched the attempt ID.
 

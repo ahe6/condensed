@@ -78,6 +78,8 @@ npm run frontend:dev
 stripe listen --forward-to http://127.0.0.1:3000/webhooks/stripe
 ```
 
+`npm run frontend:dev` starts Next.js on port `3001` with the webpack dev bundler. Keep that explicit unless Turbopack is re-verified; Turbopack has caused local account-page reload loops.
+
 For frontend-only iteration with hot reload against AWS dev backend/auth/Stripe:
 
 ```sh
@@ -95,6 +97,12 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:3000
 Override `NEXT_PUBLIC_API_URL` when pointing the frontend at a deployed backend, or use `npm run frontend:dev:aws` for the current AWS dev backend.
 
 Auth setup, signup recovery, and admin access commands are covered in [Auth](../architecture/auth.md).
+
+If `/account` returns `Email is already linked to another identity`, the local app DB has an email tied to an older Cognito `sub`. Keep the production protection in place and repair local dev data with:
+
+```sh
+make local-auth-reset-user EMAIL=user@example.com
+```
 
 Stripe payment testing needs:
 
@@ -153,10 +161,17 @@ Orders route at `/orders`:
 
 - Shows signed-in customer order history through `GET /me/orders`.
 - Searches and filters order history locally.
+- Links unpaid or failed-payment orders to detail so the customer can restart Stripe payment without creating a duplicate order.
 
-Account route at `/account`:
+Patient Portal route at `/my-health`:
 
-- Shows signed-in customer profile, links to orders and addresses, and contains customer sign out.
+- Is the default signed-in customer destination after generic Cognito login.
+- Shows the customer dashboard shell and links to current orders, care entry, and account settings.
+- Does not create care-specific backend records yet.
+
+Account settings route at `/account`:
+
+- Shows signed-in customer profile settings, links back to Patient Portal, links to orders and addresses, and contains customer sign out.
 
 Addresses route at `/addresses`:
 
@@ -165,7 +180,9 @@ Addresses route at `/addresses`:
 Order detail routes:
 
 - Shows signed-in customer order details through `GET /orders/:orderNumber`.
-- Reconciles old open Stripe Checkout attempts locally with `npm run orders:expire` or `make orders-expire`.
+- Starts Stripe payment recovery for owned unpaid or failed-payment orders through `POST /orders/:id/stripe-checkout-session`.
+- Shows the backend-owned 24-hour order reservation countdown from `reservationExpiresAt`; payment recovery is disabled after that deadline.
+- Reconciles old open Stripe Checkout attempts locally with `npm run stripe:reconcile-checkouts` or `make stripe-reconcile-checkouts`.
 - Runs Stripe Checkout reconciliation remotely with AWS EventBridge Scheduler when the Terraform jobs stack is enabled.
 
 Admin route at `/admin`:
@@ -174,7 +191,7 @@ Admin route at `/admin`:
 - Lists, searches, filters, sorts, and pages admin orders through SQL-backed `GET /admin/orders`.
 - Adds internal admin-only notes to orders.
 - Shows a combined order timeline with order, note, payment, fulfillment, and tracking activity.
-- Creates manual payments and marks them authorized, paid, failed, or refunded.
+- Creates manual payments and marks them authorized, paid, failed, or refunded locally.
 - Syncs Stripe payment status from Stripe for Stripe payments.
 - Creates shipments, allocates order item quantities, updates tracking, and marks shipments shipped, delivered, or returned.
 - Blocks shipment creation, shipped, and delivered actions unless payment is `PAID` or `AUTHORIZED`.

@@ -56,7 +56,7 @@ Flow:
 5. Stripe sends webhook events to the backend.
 6. The backend updates the local payment and parent order.
 
-`POST /orders/:id/stripe-checkout-session` still exists for payment recovery on an existing unpaid order.
+`POST /orders/:id/stripe-checkout-session` exists for signed-in payment recovery on an existing `UNPAID` or `FAILED` order. It requires the current local user to own the order and the order reservation deadline to still be active; order history/detail uses it to let customers pay an incomplete order without creating a duplicate order.
 
 The backend sets the order email on the Stripe session and enables phone collection. The frontend passes the shipping phone number when confirming the Checkout Session.
 
@@ -98,13 +98,13 @@ Handled Stripe events:
 
 New checkout payments are reconciled from Checkout Session and dispute events. PaymentIntent events are still handled for compatibility with older local payment rows and direct PaymentIntent references.
 
-`checkout.session.expired` maps to `EXPIRED`, not `FAILED`. `EXPIRED` means the customer did not complete the hosted Checkout Session before it closed. `FAILED` is reserved for actual failed payment attempts such as `checkout.session.async_payment_failed` or `payment_intent.payment_failed`.
+`checkout.session.expired` maps the provider attempt to `EXPIRED`, not `FAILED`. It means the customer did not complete that hosted Checkout Session before it closed. It does not expire/cancel the order while the order reservation is still active. `FAILED` is reserved for actual failed payment attempts such as `checkout.session.async_payment_failed` or `payment_intent.payment_failed`.
 
-Stripe is the source of truth for Checkout Session expiration. The local scheduled job only reconciles old open attempts by retrieving the Checkout Session from Stripe. If Stripe still reports the session as open, the local order stays open. If Stripe reports `expired`, the matching attempt becomes `EXPIRED`, the aggregate payment/order moves to `EXPIRED` when no other open/completed attempt remains, and inventory is released once through `orders.inventoryReleasedAt`.
+Stripe is the source of truth for Checkout Session expiration. Health is the source of truth for order reservation expiration through `orders.reservationExpiresAt`, currently 24 hours after checkout order creation. The local scheduled job reconciles old open attempts by retrieving the Checkout Session from Stripe and also expires overdue order reservations. If Stripe reports a session as expired before the reservation deadline, the order remains payable and `Pay Now` can create another Stripe Checkout Session for the same order. If the order reservation is overdue, the reservation expiration path expires/cancels the local order and releases inventory once through `orders.inventoryReleasedAt`.
 
 ## Admin Sync
 
-Admin Stripe payment rows include `Sync Stripe`.
+Admin Stripe payment rows include per-payment `Sync Stripe`. The admin orders toolbar also includes `Sync Stripe`, which syncs all Stripe payments currently in `UNPAID`, `AUTHORIZED`, or `FAILED` local status across the database; it is not limited to the visible order page.
 
 `POST /admin/payments/:id/sync-stripe` retrieves the latest Checkout Session or PaymentIntent from Stripe and updates the local attempt, aggregate payment, and parent order. This is useful when:
 
@@ -116,12 +116,15 @@ Sync does not replace webhooks. Webhooks are still the normal source of truth fo
 
 When sync changes payment status, it writes a `payment_status_events` row with source `ADMIN_SYNC`.
 
+`POST /admin/payments/sync-stripe` runs the same Stripe read/update logic for all unsettled local Stripe payments and returns sync counts plus any per-payment failures.
+
 ## Key Functions
 
-- `createStripeCheckoutSession(orderId, input)`: creates or reuses an open Stripe Checkout Session for an unpaid order, records a local `payment` and `paymentAttempt`, stores Stripe metadata, and records an initial payment status event. It rejects already-paid/refunded orders and orders without items.
+- `createStripeCheckoutSession(orderId, input, options)`: first applies the order reservation expiration guard, then creates or reuses an open Stripe Checkout Session for an `UNPAID` or `FAILED` order, records a local `payment` and `paymentAttempt`, stores Stripe metadata, and records an initial payment status event. It rejects orders in other payment states, expired reservations, orders without items, and customer recovery attempts where the signed-in user does not own the order.
 - `handleStripeWebhook(rawBody, signature)`: verifies the Stripe signature against `STRIPE_WEBHOOK_SECRET`, handles Checkout Session, PaymentIntent, and dispute events, and updates local payment/order state through the same internal Stripe update helpers used by sync/reconciliation.
 - `syncStripePayment(paymentId)`: admin-triggered Stripe read. It only supports Stripe payments, retrieves either a Checkout Session or PaymentIntent, records a same-status sync event when useful, and updates attempts/payment/order state from Stripe rather than browser state.
-- `reconcileStripeCheckoutSessions(options)`: batch job entry point for stale open Stripe Checkout attempts. It retrieves Stripe state, updates attempts/payment/order status, and cancels/releases inventory for expired attempts through the orders module.
+- `syncUnsettledStripePayments()`: admin-triggered batch sync for local Stripe payments in `UNPAID`, `AUTHORIZED`, or `FAILED` status. It returns candidate, synced, settled, and failure counts.
+- `reconcileStripeCheckoutSessions(options)`: batch job entry point for stale open Stripe Checkout attempts. It retrieves Stripe state and updates attempt/payment/order payment state. Stripe-expired Checkout Sessions close their local attempt; overdue order reservation cleanup is handled separately through the orders module.
 - `createPayment(orderId, input)` and manual status functions: admin/manual payment path. They update the payment and aggregate order payment status and record `ADMIN_MANUAL` status events; they do not contact Stripe.
 
 ## Disputes
@@ -151,7 +154,7 @@ Dispute webhook transitions are stored with source `STRIPE_WEBHOOK` and the Stri
 
 ## Refunds
 
-The current admin `Refund` button is a local/manual status update. It sets the local payment and order to `REFUNDED`, but it does not create a Stripe refund.
+The current admin `Mark Refunded` button is a local/manual status update. It sets the local payment and order to `REFUNDED`, but it does not create a Stripe refund.
 
 Important behavior:
 

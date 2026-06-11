@@ -167,21 +167,21 @@ make dev-smoke-check
 Run the local Stripe Checkout reconciliation job:
 
 ```sh
-npm run orders:expire
+npm run stripe:reconcile-checkouts
 ```
 
 or:
 
 ```sh
-make orders-expire
+make stripe-reconcile-checkouts
 ```
 
 Defaults:
 
-- `ORDER_EXPIRY_MINUTES=15`
-- `ORDER_EXPIRY_BATCH_SIZE=50`
+- `STRIPE_CHECKOUT_RECONCILE_MINUTES=15`
+- `STRIPE_CHECKOUT_RECONCILE_BATCH_SIZE=50`
 
-The job scans old open local Stripe Checkout attempts, retrieves each Checkout Session from Stripe, and mirrors Stripe's current state locally. It does not force-expire open Stripe sessions. When Stripe reports a session as expired and no other open/completed attempt remains, the job marks the local payment/order expired, cancels the order, and releases inventory once by setting `orders.inventoryReleasedAt`.
+The job scans old open local Stripe Checkout attempts, retrieves each Checkout Session from Stripe, and mirrors Stripe's current attempt state locally. It also expires overdue app-owned order reservations from `orders.reservationExpiresAt`. When Stripe reports a session as expired, the backend closes that local attempt. When the order reservation deadline has passed, the backend marks the local payment/order expired, cancels the order, and releases inventory once by setting `orders.inventoryReleasedAt`.
 
 For AWS dev, the scheduled ECS task is currently enabled. To preview or apply job changes:
 
@@ -193,10 +193,10 @@ make dev-jobs-apply
 Run the AWS job once without waiting for the schedule:
 
 ```sh
-make orders-expire-aws
+make stripe-reconcile-checkouts-aws
 ```
 
-The AWS schedule is controlled by `deploy_jobs_stack`, `orders_expiry_enabled`, and `orders_expiry_schedule_expression` in Terraform. The scheduled job is separate from the public backend/frontend services, but it requires the AWS app/data layer so the task can reach private RDS. The deployed ECS task runs the compiled script with `node apps/backend/dist/scripts/expire-unpaid-orders.js`.
+The AWS schedule is controlled by `deploy_jobs_stack`, `orders_expiry_enabled`, and `orders_expiry_schedule_expression` in Terraform. Those Terraform variable names keep the older prefix for compatibility. The scheduled job is separate from the public backend/frontend services, but it requires the AWS app/data layer so the task can reach private RDS. The deployed ECS task runs the compiled script with `node apps/backend/dist/scripts/reconcile-stripe-checkouts.js`.
 
 ## Retry Notifications
 
@@ -328,6 +328,14 @@ Restart backend and frontend dev servers after `make dev-auth-env`.
 ## Auth Tasks
 
 Signup recovery, deleting throwaway users, and granting admin access are covered in [Auth](../architecture/auth.md).
+
+For local DB/Cognito drift where `/account` returns `Email is already linked to another identity`, clear only the local app user's Cognito link:
+
+```sh
+make local-auth-reset-user EMAIL=user@example.com
+```
+
+Use `make local-auth-reset-user-delete-cognito EMAIL=user@example.com` only when the matching AWS dev Cognito user should also be deleted.
 
 Reset one dev signup account without taking AWS resources down:
 

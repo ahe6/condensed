@@ -54,6 +54,10 @@ Payment state is owned by the backend and reconciled with Stripe. A payment can 
 
 Stripe webhooks are the normal source of truth for automatic payment updates. Admin sync exists for manual reconciliation when webhook delivery or local development setup gets out of step.
 
+Signed-in customers can restart payment for an owned unpaid or failed-payment order from order detail. The backend creates or reuses a Stripe Checkout Session for that existing order instead of requiring the customer to place a duplicate order.
+
+Checkout-created orders reserve inventory for 24 hours through `reservationExpiresAt`. After that deadline, backend reads and the scheduled reconciliation job expire unpaid/failed reservations, cancel the order, and release inventory.
+
 Read:
 
 - [Payments](../architecture/payments.md)

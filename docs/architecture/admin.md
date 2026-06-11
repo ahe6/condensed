@@ -2,7 +2,7 @@
 
 This doc maps the admin workspace and operator guardrails. Module internals stay in [Auth](auth.md), [Orders](orders.md), [Payments](payments.md), [Fulfillment](fulfillment.md), [Catalog](catalog.md), and [Notifications](notifications.md). Frontend implementation details stay in [Frontend](frontend.md).
 
-Last verified against the frontend admin page and backend admin routes on 2026-06-05.
+Last verified against the frontend admin page and backend admin routes on 2026-06-07.
 
 ## Access
 
@@ -17,10 +17,11 @@ Admin identity comes from Cognito. The backend uses `getAdminIdentity` for admin
 
 ## Workspace
 
-The admin page is a single-page workspace with two tabs:
+The admin page is a single-page workspace with three tabs:
 
 - Orders
 - Catalog
+- Review
 
 The expanded order row is the main order work surface. It includes:
 
@@ -32,6 +33,8 @@ The expanded order row is the main order work surface. It includes:
 - Chronological timeline built from order events, notes, payment events, shipment events, tracking changes, and notification events
 
 The expanded catalog row is the main product work surface. It includes product fields, category chips, variant editing, inventory controls, and image links.
+
+The Review tab lists recent assessment submissions from `GET /admin/assessment-submissions`. It highlights review-required product intakes, shows submitted answers, shows checkout authorization state for product intakes, and shows generated recommendations for goal intakes. It is read-only for now; it does not approve, reject, prescribe, or create checkout authorizations.
 
 Detailed payment and shipment audit history is folded behind per-record `History` controls. Notes stay visible on expanded orders. The activity and actions accordion starts collapsed per order so admins can scan orders first, then open the operational workspace when needed.
 
@@ -57,6 +60,7 @@ Admins can:
 - Create manual payments.
 - Mark payments authorized, paid, failed, or refunded.
 - Sync Stripe payment status for Stripe payments.
+- Sync all unsettled Stripe payments from the orders toolbar.
 - Review Stripe metadata, attempts, and payment status history.
 
 Stripe webhooks and admin sync are the trusted payment-state paths. Browser payment state should not be treated as authoritative.
@@ -89,6 +93,18 @@ Admins can:
 
 Product status controls public catalog visibility. Product purchase mode controls whether variants are direct-checkout eligible or assessment-first. Variant inventory edits are direct admin changes; checkout still performs transactional purchase-mode and stock decrement checks before creating orders.
 
+## Assessment Review
+
+Admins can:
+
+- View recent product and goal assessment submissions.
+- See review-required product intakes.
+- Inspect submitted answers and policy decision metadata.
+- See generated goal recommendations.
+- See checkout authorization status when an approved product intake created one.
+
+Manual review actions are not implemented yet. The current tab is operational visibility so support/admin users can understand why checkout did or did not unlock.
+
 ## Guardrails
 
 - Customer-facing order reads must stay owner-scoped.
@@ -96,7 +112,7 @@ Product status controls public catalog visibility. Product purchase mode control
 - Fulfillment should not proceed unless payment is `PAID` or `AUTHORIZED`.
 - Cancellation releases inventory only through the idempotent unpaid-order release path.
 - Stripe is the source of truth for Checkout Session expiration and payment confirmation.
-- Manual refund is local-only until Stripe Refund API integration exists.
+- `Mark Refunded` is local-only until Stripe Refund API integration exists.
 - Tracking links are derived locally; the app does not call carrier APIs.
 
 ## Related Docs
@@ -106,5 +122,6 @@ Product status controls public catalog visibility. Product purchase mode control
 - [Payments](payments.md): Stripe Checkout, webhooks, admin sync, disputes, refunds, and test cards
 - [Fulfillment](fulfillment.md): shipment allocation, tracking, payment guardrails, and delivered notifications
 - [Catalog](catalog.md): admin product/category/variant/image/inventory behavior
+- [Assessments](assessments.md): product intake, goal intake, recommendations, and checkout authorization behavior
 - [Notifications](notifications.md): delivered shipment notification records and email retry
 - [Frontend](frontend.md): Next.js app structure and admin page implementation

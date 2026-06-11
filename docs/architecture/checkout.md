@@ -2,7 +2,7 @@
 
 This doc covers the `checkout` backend module. Cart behavior lives in [Carts](carts.md), payment behavior lives in [Payments](payments.md), order behavior lives in [Orders](orders.md), and route contracts live in [API](../reference/api.md).
 
-Last verified against backend checkout routes and services on 2026-06-05.
+Last verified against backend checkout routes and services on 2026-06-07.
 
 ## Responsibilities
 
@@ -12,6 +12,7 @@ The `checkout` module owns the cart-to-order boundary:
 - validate cart has items
 - validate all cart items share one currency
 - validate products are active
+- validate checkout authorization for assessment-required products
 - validate inventory is still available
 - decrement inventory
 - create the order
@@ -37,12 +38,14 @@ Inside the transaction, the backend:
 3. rejects cart access by the wrong user
 4. rejects mixed currencies
 5. rejects inactive products
-6. checks current inventory
-7. decrements variant inventory with guarded updates
-8. creates the order as `PLACED`
-9. snapshots shipping and billing addresses
-10. snapshots product name, variant title, SKU, unit price, quantity, and line total
-11. clears cart items
+6. rejects assessment-required products without an active checkout authorization for the signed-in user
+7. checks current inventory
+8. decrements variant inventory with guarded updates
+9. creates the order as `PLACED`
+10. snapshots shipping and billing addresses
+11. snapshots product name, variant title, SKU, unit price, quantity, and line total
+12. clears cart items
+13. marks used checkout authorizations as `USED`
 
 Order numbers use the `HEALTH-...` prefix.
 
@@ -59,18 +62,19 @@ This lets the frontend render Stripe Checkout Elements for the newly created ord
 
 ## Key Functions
 
-- `checkoutCart(input, options)`: single transaction that validates cart ownership, rejects empty carts, rejects inactive products and mixed currencies, decrements inventory with `updateMany` guards, creates the placed order and addresses/items, then clears the cart. This is the inventory reservation point for customer checkout.
+- `checkoutCart(input, options)`: single transaction that validates cart ownership, rejects empty carts, rejects inactive products and mixed currencies, requires checkout authorization for assessment-required products, decrements inventory with `updateMany` guards, creates the placed order with a 24-hour `reservationExpiresAt` deadline, creates addresses/items, clears the cart, and marks used checkout authorizations. This is the inventory reservation point for customer checkout.
 - `POST /checkout/stripe`: route-level flow that calls `checkoutCart` first, then calls `createStripeCheckoutSession` from the payments module for the newly created order. If Stripe session creation fails after the order transaction commits, the order exists with reserved inventory and needs normal unpaid-order reconciliation/cancellation handling.
 
 ## Inventory And Expiry
 
 Checkout decrements inventory when the order is created, before Stripe payment completes.
 
-If the customer does not complete Stripe Checkout, the scheduled/manual expiry flow reconciles old open Stripe Checkout attempts against Stripe. Inventory is released only when Stripe reports the Checkout Session as expired. That release path is owned by the orders/payments services and uses `orders.inventoryReleasedAt` to avoid double release.
+If the customer does not complete Stripe Checkout, the order reservation expires after 24 hours. The scheduled/manual reconciliation flow still checks old open Stripe Checkout attempts against Stripe, but Stripe session expiration only closes the local payment attempt. The app-owned order reservation deadline is what prevents unpaid orders from holding inventory forever. Reservation expiration and manual cancellation use `orders.inventoryReleasedAt` to avoid double release.
 
 ## Relationship To Other Modules
 
 - `carts` owns mutable cart operations before checkout.
 - `checkout` owns the transition from mutable cart to durable order.
+- `checkout-authorizations` owns the short-lived approval records consumed by cart and checkout.
 - `payments` owns Stripe Checkout Session creation and payment reconciliation.
 - `orders` owns later order lookup, cancellation, and expiry inventory release.

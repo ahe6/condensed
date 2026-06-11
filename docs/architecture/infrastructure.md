@@ -161,14 +161,14 @@ The jobs layer still requires `deploy_app_stack=true`, because the scheduled tas
 
 When enabled, Terraform creates:
 
-- ECS Fargate task definition: `health-dev-orders-expiry`
+- ECS Fargate task definition: `health-dev-stripe-checkout-reconciliation`
 - IAM role that lets EventBridge Scheduler run that task
-- EventBridge Scheduler schedule: `health-dev-orders-expiry`
+- EventBridge Scheduler schedule: `health-dev-stripe-checkout-reconciliation`
 
 The AWS scheduled task runs the compiled production script:
 
 ```sh
-node apps/backend/dist/scripts/expire-unpaid-orders.js
+node apps/backend/dist/scripts/reconcile-stripe-checkouts.js
 ```
 
 Default schedule:
@@ -179,7 +179,9 @@ orders_expiry_minutes             = 15
 orders_expiry_batch_size          = 50
 ```
 
-If unpaid orders use Stripe Checkout Sessions, set `stripe_api_key_secret_arn` to a Secrets Manager secret that contains the backend Stripe secret key. The scheduled task uses that key to retrieve stale open Checkout Sessions and mirror Stripe's state locally; it does not force-expire open Stripe sessions.
+The Terraform variable and output names still use the older `orders_expiry_*` prefix for compatibility, but the task, schedule, script, and env vars are named for Stripe Checkout reconciliation.
+
+If unpaid orders use Stripe Checkout Sessions, set `stripe_api_key_secret_arn` to a Secrets Manager secret that contains the backend Stripe secret key. The scheduled task uses that key to retrieve stale open Checkout Sessions and mirror Stripe's state locally. It also enforces app-owned order reservation deadlines by expiring overdue reservations, cancelling the local order, and releasing inventory once.
 
 ## Cognito
 

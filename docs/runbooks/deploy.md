@@ -401,19 +401,26 @@ The jobs layer creates:
 The local script command is:
 
 ```sh
-npm run orders:expire
+npm run stripe:reconcile-checkouts
 ```
 
 The AWS scheduled task runs the compiled production script directly:
 
 ```sh
-node apps/backend/dist/scripts/expire-unpaid-orders.js
+node apps/backend/dist/scripts/reconcile-stripe-checkouts.js
 ```
+
+When the reconciliation script path or command changes, deploy both pieces:
+
+1. Push a backend image that contains the compiled script.
+2. Apply the jobs stack so the ECS task definition points at the matching command.
+
+For a zero-noise handoff, temporarily disable the schedule with `orders_expiry_enabled=false`, apply, deploy the backend image, then re-enable/apply the jobs stack. In dev, a missed reconciliation run is safer than a scheduled task trying to run an old command path.
 
 Run the AWS job manually:
 
 ```sh
-make orders-expire-aws
+make stripe-reconcile-checkouts-aws
 ```
 
 Useful outputs:
@@ -423,13 +430,15 @@ terraform -chdir=infra/envs/dev output orders_expiry_task_definition_arn
 terraform -chdir=infra/envs/dev output orders_expiry_schedule_name
 ```
 
+The Terraform output names still use the older `orders_expiry_*` prefix for compatibility. The AWS task family and schedule are named `health-dev-stripe-checkout-reconciliation`.
+
 The default schedule is `rate(15 minutes)`. To disable the remote schedule while keeping the resources, set:
 
 ```hcl
 orders_expiry_enabled = false
 ```
 
-If the AWS dev database contains unpaid Stripe Checkout orders, configure `stripe_api_key_secret_arn` with a Secrets Manager secret ARN containing the Stripe secret key. The job needs that key to retrieve stale open Checkout Sessions and mirror Stripe's state locally; it does not force-expire open Stripe sessions.
+If the AWS dev database contains unpaid Stripe Checkout orders, configure `stripe_api_key_secret_arn` with a Secrets Manager secret ARN containing the Stripe secret key. The job needs that key to retrieve stale open Checkout Sessions and mirror Stripe's state locally. It also enforces app-owned order reservation deadlines by expiring overdue reservations, cancelling the local order, and releasing inventory once.
 
 ## Stripe
 

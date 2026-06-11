@@ -2,7 +2,7 @@
 
 This doc covers public catalog behavior and admin catalog management. Route contracts live in [API](../reference/api.md), module inventory lives in [Backend Modules](backend-modules.md), and table details live in [Database](database.md).
 
-Last verified against backend catalog routes and services on 2026-06-06.
+Last verified against backend catalog routes, cart checks, and checkout checks on 2026-06-07.
 
 ## Model
 
@@ -15,6 +15,8 @@ Catalog data is split across:
 - `product_categories`: product/category join table
 - `assessment_templates` and `assessment_questions`: intake definitions for assessment-required products
 - `assessment_submissions` and `assessment_answers`: submitted intake data for assessment-required products
+- `assessment_recommendations`: ranked product recommendations from goal intakes
+- `checkout_authorizations`: approved assessment decisions that unlock cart/checkout for a signed-in user
 
 Cart items and order items reference variants. Products are for display, grouping, status, and purchase mode.
 
@@ -26,6 +28,8 @@ Public product routes expose only active products:
 - `GET /products/:slug`
 - `GET /products/:slug/assessment`
 - `POST /products/:slug/assessment/submissions`
+- `GET /goals/:goalKey/assessment`
+- `POST /goals/:goalKey/assessment/submissions`
 
 The category route returns all categories ordered by name:
 
@@ -35,9 +39,11 @@ Product list/detail responses include variants, images, and category joins so th
 
 Public product browsing should treat variants as the purchasable unit. A product without a usable active variant is not enough to sell on its own.
 
-`purchaseMode` controls whether the frontend should show direct add-to-cart controls or an assessment-first CTA. The backend still owns the rule: carts and checkout only allow `DIRECT` products.
+`purchaseMode` controls whether the frontend should show direct add-to-cart controls or an assessment-first CTA. The backend still owns the rule: carts and checkout allow `DIRECT` products, and only allow `ASSESSMENT_REQUIRED` products when the signed-in user has an active checkout authorization.
 
-`GET /products/:slug/assessment` returns the latest active assessment definition for active products with `purchaseMode=ASSESSMENT_REQUIRED`. `POST /products/:slug/assessment/submissions` validates and saves answers against that active definition. Direct-purchase products do not have public assessment definitions.
+`GET /products/:slug/assessment` returns the latest active assessment definition for active products with `purchaseMode=ASSESSMENT_REQUIRED`. `POST /products/:slug/assessment/submissions` validates answers against that active definition, records the automated decision, and creates a checkout authorization for approved submissions. Direct-purchase products do not have public assessment definitions.
+
+Goal assessment routes return goal-intake definitions and save goal-linked submissions that create ranked product recommendations. Recommendations can point at direct or assessment-required products; they do not bypass product purchase mode.
 
 ## Admin Catalog
 
@@ -75,7 +81,7 @@ The backend uses explicit publish/archive routes instead of generic status patch
 Product purchase mode controls checkout eligibility:
 
 - `DIRECT`: variants can be added to carts and checked out.
-- `ASSESSMENT_REQUIRED`: public product data can be displayed, but variants cannot be added to carts or checked out.
+- `ASSESSMENT_REQUIRED`: public product data can be displayed, but variants require a signed-in user with an active checkout authorization before cart add or checkout.
 
 This is enforced in the cart and checkout services, not only in the frontend. The frontend uses the same `purchaseMode` field to route care-program products into `/intake/[slug]`.
 
@@ -99,9 +105,9 @@ There is no inventory movement ledger yet. The current record is the variant's l
 Catalog services are upstream of cart and checkout:
 
 - carts reject inactive products and invalid variants
-- carts reject variants whose product `purchaseMode` is `ASSESSMENT_REQUIRED`
+- carts reject assessment-required variants unless the signed-in user has an active checkout authorization
 - checkout snapshots product/variant names, SKU, unit price, and quantity into order items
-- checkout revalidates product status, purchase mode, and inventory before creating orders
+- checkout revalidates product status, purchase mode, checkout authorization, and inventory before creating orders
 - order history remains readable if product names, variants, or images change later
 
 Catalog data should stay operationally simple until product options, inventory movement history, or supplier/vendor workflows become real requirements.

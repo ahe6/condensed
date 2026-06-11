@@ -2,7 +2,7 @@
 
 This doc covers the `carts` backend module. Product/variant behavior lives in [Catalog](catalog.md), checkout behavior lives in [Checkout](checkout.md), and route contracts live in [API](../reference/api.md).
 
-Last verified against backend cart routes and services on 2026-06-05.
+Last verified against backend cart routes and services on 2026-06-07.
 
 ## Responsibilities
 
@@ -48,6 +48,8 @@ Adding an item increments the existing row when the same variant is already in t
 
 The backend rejects inactive products, invalid variants, and requested quantities above current variant inventory.
 
+For `ASSESSMENT_REQUIRED` products, cart item add/update requires a signed-in actor with an active checkout authorization for that product or exact variant. Anonymous carts can still hold direct-purchase products, but they cannot receive assessment-required variants.
+
 ## Totals
 
 Cart totals are calculated from current variant prices every time the cart is returned.
@@ -63,6 +65,6 @@ Cart totals are previews. Checkout recalculates and snapshots authoritative orde
 ## Key Functions
 
 - `getOrCreateUserCart(userId, input)`: loads the latest user cart, creates one when needed, or adopts/merges the provided browser-local cart ID into the signed-in user's cart.
-- `addCartItem(cartId, input, actorUserId)` / `updateCartItemQuantity(...)`: enforce cart ownership when the cart has a user, require the product to be active, and reject quantities above current inventory.
+- `addCartItem(cartId, input, actorUserId)` / `updateCartItemQuantity(...)`: enforce cart ownership when the cart has a user, require the product to be active, require checkout authorization for assessment-required products, and reject quantities above current inventory.
 - `clearCart(cartId, actorUserId)`: deletes cart items only after the same cart access check used by item operations.
 - `adoptCartForUser(userId, cartId)`: private helper that validates source cart access, validates merged quantities against current inventory, merges duplicate variants into the user's existing cart when present, and deletes the source cart after a successful merge.

@@ -2,7 +2,7 @@
 
 The frontend is a single Next.js app in `apps/frontend`. It serves both the public shop and the admin order tools.
 
-Last verified against the frontend source and deployment scripts on 2026-06-06.
+Last verified against the frontend source on 2026-06-07.
 
 ## App Structure
 
@@ -10,11 +10,14 @@ Important files:
 
 - `app/layout.tsx`: root Next.js shell, metadata, and global CSS import
 - `app/page.tsx`: outcome-first public storefront landing page
+- `app/shop/page.tsx`: outcome/program storefront that routes into goal intakes and keeps catalog/cart/orders as utilities
+- `app/care/page.tsx`: care-layer entry page for goals, history, labs, and clinician-review concepts
+- `app/my-health/page.tsx`: frontend-only Patient Portal dashboard shell for future care context
 - `app/catalog/page.tsx`: public product catalog and add-to-cart flow
 - `app/intake/[slug]/page.tsx`: assessment entry flow for care-program products
 - `app/products/[slug]/page.tsx`: public product detail page with variant selection and add-to-cart
 - `app/cart/page.tsx`: cart review, signed-in checkout, and Stripe Checkout Elements
-- `app/account/page.tsx`: signed-in customer profile, account actions, and sign out
+- `app/account/page.tsx`: signed-in customer profile settings, account links, and sign out
 - `app/addresses/page.tsx`: signed-in customer saved address management
 - `app/orders/page.tsx`: signed-in customer order history, search, and filters
 - `app/orders/[orderNumber]/page.tsx`: signed-in customer order detail view
@@ -27,10 +30,12 @@ Important files:
 - `src/lib/auth.ts`: Cognito PKCE login, session storage, sign-out, and confirmation helpers
 - `src/lib/format.ts`: money, date, status, button, and tracking-link formatting
 - `src/components/CustomerBrand.tsx`: placeholder customer brand link back to the shop home
-- `src/components/CustomerNav.tsx`: shared customer navigation for Cart, Orders, and Account
+- `src/components/CustomerNav.tsx`: shared customer navigation for Shop, Get Care, and Patient Portal
 - `src/components/OrderSummary.tsx`: reusable customer-facing order summary
 
-The app currently keeps shop and admin in one Next app. Customer pages use a placeholder HEALTH brand link to `/` plus a compact Cart, Orders, and Account nav with a Cart item-count badge. The public shop does not link to `/admin`; admins open that route directly.
+The app currently keeps shop, care, account, and admin in one Next app. Customer pages use a placeholder HEALTH brand link to `/` plus a centered Shop, Get Care, and Patient Portal nav. Cart stays available at `/cart`, but it is treated as a checkout utility instead of a primary centered navigation mode. The public shop does not link to `/admin`; admins open that route directly.
+
+The frontend target architecture is documented in [Frontend Care And Commerce](frontend-care-commerce.md). The new `/shop`, `/care`, and `/my-health` routes are frontend-only shell routes for that model; they reuse existing product, assessment, account, and order routes instead of introducing new backend schema.
 
 `/style-lab` is an unlinked design sandbox for frontend-only iteration. It uses static mock data and scoped `style-lab-*` classes, so experiments should not change cart, auth, checkout, admin, backend, or database behavior. Remove or gate this route before production if it is no longer useful.
 
@@ -77,6 +82,8 @@ Session behavior:
 - Stores PKCE verifier and state in `sessionStorage` during login.
 - Clears expired sessions on read.
 - Uses the ID token for backend identity and admin authorization.
+- Defaults generic successful sign-in to `/my-health`.
+- Preserves explicit return paths for protected flows such as cart checkout, admin, orders, addresses, and assessment drafts.
 
 Admin access requires the signed-in Cognito user to be in the `admin` group. See [Auth](auth.md).
 
@@ -86,8 +93,31 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 
 - Shows customer-facing goal and routine prompts before exposing the full SKU list.
 - Filters static outcome cards from the in-page search input.
-- Links customers into `/catalog`, `/cart`, and product detail routes.
+- Links customers into `/care`, `/shop`, `/goals/[goalKey]`, `/cart`, and product detail routes.
 - Avoids loading the product catalog directly on the home page, so an empty catalog or API issue does not turn the first page into a raw product dump or backend error.
+
+`app/shop/page.tsx` is the commerce-layer entry shell:
+
+- Shows image-led outcome/program cards for weight loss, hair loss, skin care, and labs.
+- Routes primary CTAs into `/goals/[goalKey]` flows instead of exposing a cart-first shopping model.
+- Keeps `/catalog`, `/cart`, and `/orders` available as secondary utility links.
+- Does not load product catalog or cart data directly.
+
+`app/care/page.tsx` is the care-layer entry shell:
+
+- Explains goals, medical history, labs, and clinician review as care-layer concepts.
+- Links current working flows such as `/goals/weight-loss` and `/goals/wellness-labs`.
+- Marks medical history and clinician review as planned frontend areas rather than implemented backend data.
+
+`app/goals/[goalKey]/page.tsx` owns the goal-intake flow:
+
+- Loads goal assessment questions from `GET /goals/:goalKey/assessment`.
+- Renders backend-owned question definitions as a one-question-at-a-time stepper.
+- Requires sign-in after answers are complete and before saving the submission.
+- Stores a browser-local draft under `health.goalAssessmentDraft.<goalKey>` so answers survive the Cognito redirect.
+- Submits answers to `POST /goals/:goalKey/assessment/submissions`.
+- Shows ranked product recommendations with links into product intake for assessment-required products or product detail for direct products.
+- Does not create checkout authorizations; recommendation is discovery, not approval.
 
 `app/catalog/page.tsx` owns the public catalog flow:
 
@@ -107,7 +137,7 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 - Loads one active product from `GET /products/:slug`.
 - Shows the product image, description, categories, variants, price, and stock.
 - Uses the same browser-local or signed-in account cart behavior as the catalog page for direct-purchase products.
-- Adds the selected variant to the active cart and updates the shared cart-count badge for direct-purchase products.
+- Adds the selected variant to the active cart for direct-purchase products.
 - Shows an assessment-first CTA instead of cart controls for products with `purchaseMode=ASSESSMENT_REQUIRED`.
 
 `app/intake/[slug]/page.tsx` owns the current assessment entry prototype:
@@ -119,8 +149,10 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 - Requires sign-in after answers are complete and before saving the submission.
 - Stores a browser-local assessment draft under `health.assessmentDraft.<slug>` so answers survive the Cognito redirect.
 - Submits answers to `POST /products/:slug/assessment/submissions` and shows the saved submission state.
+- Shows approved, review-required, and rejected decision states from the submission response.
+- Lets approved customers continue to the signed-in cart by adding the first available product variant.
 - Sends direct-purchase products back to their product detail page.
-- Does not create orders, carts, prescriptions, or provider review records yet.
+- Does not create orders, prescriptions, or provider review records yet.
 
 `app/cart/page.tsx` owns cart review and checkout:
 
@@ -138,12 +170,21 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 
 ## Customer Account
 
-`app/account/page.tsx` is the signed-in customer account view:
+`app/my-health/page.tsx` is a frontend-only Patient Portal dashboard shell:
+
+- Uses the current Cognito session to show signed-in account context when available.
+- Acts as the default signed-in customer destination after generic Cognito login.
+- Uses Patient Portal as the visible nav/product label while keeping `/my-health` as the route for now.
+- Frames care plans, medical history, labs/results, and clinician review as customer dashboard areas.
+- Links to existing `/orders`, `/account`, and `/care` routes for currently implemented actions.
+- Does not create or mutate any care-specific backend data yet.
+
+`app/account/page.tsx` is the signed-in customer account settings view:
 
 - Requires Cognito session before loading customer data.
 - Loads the current profile with `GET /me`.
 - Updates local profile name and phone with `PATCH /me`.
-- Links to `/orders` and `/addresses`.
+- Links back to `/my-health` and out to `/orders` and `/addresses`.
 - Owns customer sign out.
 
 `app/addresses/page.tsx` is the signed-in customer address view:
@@ -165,7 +206,7 @@ Admin access requires the signed-in Cognito user to be in the `admin` group. See
 - Links order history summaries to `/orders/[orderNumber]`.
 - Lets customers refresh order history after payment, shipment, or status changes.
 
-`app/orders/[orderNumber]/page.tsx` shows a full signed-in customer order detail page with items, totals, addresses, payments, shipments, and tracking links. The backend only returns the order if it belongs to the signed-in user.
+`app/orders/[orderNumber]/page.tsx` shows a full signed-in customer order detail page with items, totals, addresses, payments, shipments, and tracking links. The backend only returns the order if it belongs to the signed-in user. For unpaid or failed-payment orders, the page shows the backend-owned reservation countdown from `reservationExpiresAt`; payment recovery is hidden once that deadline passes.
 
 Payment state should not be trusted from the browser alone. Stripe webhooks or admin sync update the backend payment/order state.
 
@@ -203,6 +244,8 @@ npm run frontend:dev:aws
 ```
 
 Run the app locally at `http://localhost:3001`.
+
+Local frontend dev uses Next.js with the webpack dev bundler through `npm run frontend:dev`. Keep webpack explicit until Turbopack is re-verified locally; Turbopack has caused account-page reload loops during auth testing.
 
 Use `npm run frontend:dev:aws` for frontend/design iteration against AWS dev. It starts the local Next.js dev server with hot reload, points `NEXT_PUBLIC_API_URL` at the deployed AWS dev backend, and uses the dev Cognito config from Terraform or local env fallbacks. It reads the Stripe publishable key from the environment, `apps/frontend/.env.local`, or `.env.test`, in that order.
 
