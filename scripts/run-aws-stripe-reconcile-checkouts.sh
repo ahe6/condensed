@@ -11,7 +11,7 @@ subnets="$(terraform -chdir="$terraform_dir" output -raw app_public_subnet_ids_c
 security_group="$(terraform -chdir="$terraform_dir" output -raw backend_security_group_id)"
 
 if [[ -z "$task_definition" || "$task_definition" == "null" ]]; then
-  echo "orders_expiry_task_definition_arn is not available. Deploy with deploy_jobs_stack=true first." >&2
+  echo "Stripe checkout reconciliation task definition is not available. Deploy with deploy_jobs_stack=true first." >&2
   exit 2
 fi
 
@@ -28,11 +28,11 @@ task_arn="$(
 )"
 
 if [[ -z "$task_arn" || "$task_arn" == "None" ]]; then
-  echo "Failed to start orders expiry task" >&2
+  echo "Failed to start Stripe checkout reconciliation task" >&2
   exit 1
 fi
 
-echo "Started orders expiry task: $task_arn"
+echo "Started Stripe checkout reconciliation task: $task_arn"
 aws ecs wait tasks-stopped \
   --cluster "$cluster" \
   --tasks "$task_arn" \
@@ -59,8 +59,8 @@ reason="$(
     --output text
 )"
 
-echo "Orders expiry task stopped: $reason"
-echo "Orders expiry exit code: $exit_code"
+echo "Stripe checkout reconciliation task stopped: $reason"
+echo "Stripe checkout reconciliation exit code: $exit_code"
 
 if [[ "$exit_code" == "None" || -z "$exit_code" ]]; then
   exit 1

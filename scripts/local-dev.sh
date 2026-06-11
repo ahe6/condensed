@@ -145,7 +145,7 @@ set_env_value() {
 stop_existing_processes() {
   log "Stopping existing local backend, frontend, and Stripe listener processes"
   pkill -f "tsx watch src/index.ts" >/dev/null 2>&1 || true
-  pkill -f "next dev -p 3001" >/dev/null 2>&1 || true
+  pkill -f "next dev .*3001" >/dev/null 2>&1 || true
   pkill -f "stripe listen --forward-to ${stripe_webhook_url}" >/dev/null 2>&1 || true
 }
 
@@ -298,7 +298,7 @@ Stripe:   $stripe_log
 
 Stop app processes:
   pkill -f "tsx watch src/index.ts"
-  pkill -f "next dev -p 3001"
+  pkill -f "next dev .*3001"
   pkill -f "stripe listen --forward-to ${stripe_webhook_url}"
 
 Stop Postgres:

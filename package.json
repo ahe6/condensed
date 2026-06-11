@@ -19,7 +19,7 @@
     "frontend:start": "npm --workspace apps/frontend run start",
     "frontend:check": "npm --workspace apps/frontend run check",
     "test:stripe-checkout": "scripts/restock-dev-mug.sh && playwright test tests/stripe-checkout.spec.ts --project=local-chrome",
-    "orders:expire": "npm --workspace apps/backend run orders:expire",
+    "stripe:reconcile-checkouts": "npm --workspace apps/backend run stripe:reconcile-checkouts",
     "notifications:retry": "npm --workspace apps/backend run notifications:retry",
     "db:migrate": "npm --workspace apps/backend run prisma:migrate",
     "db:deploy": "npm --workspace apps/backend run prisma:deploy",

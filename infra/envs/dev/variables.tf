@@ -117,25 +117,25 @@ variable "deploy_jobs_stack" {
 }
 
 variable "orders_expiry_enabled" {
-  description = "Whether the unpaid-order expiry schedule is enabled."
+  description = "Whether the Stripe Checkout reconciliation schedule is enabled."
   type        = bool
   default     = true
 }
 
 variable "orders_expiry_schedule_expression" {
-  description = "EventBridge Scheduler expression for unpaid-order expiry."
+  description = "EventBridge Scheduler expression for Stripe Checkout reconciliation."
   type        = string
   default     = "rate(15 minutes)"
 }
 
 variable "orders_expiry_minutes" {
-  description = "Age in minutes before unpaid orders are eligible for expiry."
+  description = "Minimum age in minutes before open Stripe Checkout attempts are reconciled."
   type        = number
   default     = 15
 }
 
 variable "orders_expiry_batch_size" {
-  description = "Maximum number of unpaid orders to expire per scheduled run."
+  description = "Maximum number of open Stripe Checkout attempts to reconcile per scheduled run."
   type        = number
   default     = 50
 }

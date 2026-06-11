@@ -7,7 +7,7 @@ FRONTEND_TAG ?= latest
 BOOTSTRAP_DIR := infra/bootstrap
 DEV_DIR := infra/envs/dev
 
-.PHONY: aws-login aws-whoami fmt validate local-dev local-dev-restart frontend-dev-aws bootstrap-init bootstrap-plan bootstrap-apply dev-init dev-plan dev-auth-plan dev-auth-apply dev-jobs-plan dev-jobs-apply dev-auth-env dev-test-env dev-stripe-secrets-sync dev-stripe-webhook-sync dev-reset-smoke-prepare dev-smoke-prepare dev-smoke-check dev-auth-add-admin dev-auth-delete-user dev-auth-reset-user dev-db-reset-data dev-db-seed dev-db-reset-seed backend-docker-build frontend-docker-build backend-ecr-login backend-ecr-push frontend-ecr-login frontend-ecr-push backend-migrate-aws backend-deploy-aws frontend-deploy-aws orders-expire orders-expire-aws notifications-retry
+.PHONY: aws-login aws-whoami fmt validate local-dev local-dev-restart frontend-dev-aws bootstrap-init bootstrap-plan bootstrap-apply dev-init dev-plan dev-auth-plan dev-auth-apply dev-jobs-plan dev-jobs-apply dev-auth-env dev-test-env dev-stripe-secrets-sync dev-stripe-webhook-sync dev-reset-smoke-prepare dev-smoke-prepare dev-smoke-check local-auth-reset-user local-auth-reset-user-delete-cognito dev-auth-add-admin dev-auth-delete-user dev-auth-reset-user dev-db-reset-data dev-db-seed dev-db-reset-seed backend-docker-build frontend-docker-build backend-ecr-login backend-ecr-push frontend-ecr-login frontend-ecr-push backend-migrate-aws backend-deploy-aws frontend-deploy-aws stripe-reconcile-checkouts stripe-reconcile-checkouts-aws notifications-retry
 
 aws-login:
 	aws sso login --profile $(AWS_PROFILE)
@@ -82,6 +82,14 @@ dev-smoke-prepare:
 dev-smoke-check:
 	AWS_PROFILE=$(AWS_PROFILE) AWS_REGION=$(AWS_REGION) TERRAFORM_DIR=$(DEV_DIR) scripts/check-aws-dev-smoke.sh
 
+local-auth-reset-user:
+	@test -n "$(EMAIL)" || (echo "Usage: make local-auth-reset-user EMAIL=user@example.com" >&2; exit 2)
+	scripts/reset-local-dev-user-auth.sh "$(EMAIL)"
+
+local-auth-reset-user-delete-cognito:
+	@test -n "$(EMAIL)" || (echo "Usage: make local-auth-reset-user-delete-cognito EMAIL=user@example.com" >&2; exit 2)
+	AWS_PROFILE=$(AWS_PROFILE) AWS_REGION=$(AWS_REGION) TERRAFORM_DIR=$(DEV_DIR) scripts/reset-local-dev-user-auth.sh --delete-cognito "$(EMAIL)"
+
 dev-auth-add-admin:
 	@test -n "$(EMAIL)" || (echo "Usage: make dev-auth-add-admin EMAIL=user@example.com" >&2; exit 2)
 	AWS_PROFILE=$(AWS_PROFILE) AWS_REGION=$(AWS_REGION) TERRAFORM_DIR=$(DEV_DIR) scripts/add-cognito-admin.sh "$(EMAIL)"
@@ -134,11 +142,11 @@ backend-deploy-aws:
 frontend-deploy-aws:
 	AWS_PROFILE=$(AWS_PROFILE) AWS_REGION=$(AWS_REGION) TERRAFORM_DIR=$(DEV_DIR) FRONTEND_IMAGE=$(FRONTEND_IMAGE) FRONTEND_TAG=$(FRONTEND_TAG) scripts/deploy-aws-frontend.sh
 
-orders-expire:
-	npm run orders:expire
+stripe-reconcile-checkouts:
+	npm run stripe:reconcile-checkouts
 
-orders-expire-aws:
-	AWS_PROFILE=$(AWS_PROFILE) AWS_REGION=$(AWS_REGION) TERRAFORM_DIR=$(DEV_DIR) scripts/run-aws-orders-expire.sh
+stripe-reconcile-checkouts-aws:
+	AWS_PROFILE=$(AWS_PROFILE) AWS_REGION=$(AWS_REGION) TERRAFORM_DIR=$(DEV_DIR) scripts/run-aws-stripe-reconcile-checkouts.sh
 
 notifications-retry:
 	npm run notifications:retry

@@ -1,7 +1,7 @@
 resource "aws_ecs_task_definition" "orders_expiry" {
   count = local.deploy_jobs_stack ? 1 : 0
 
-  family                   = "${local.name_prefix}-orders-expiry"
+  family                   = "${local.name_prefix}-stripe-checkout-reconciliation"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = var.backend_cpu
@@ -16,10 +16,10 @@ resource "aws_ecs_task_definition" "orders_expiry" {
 
   container_definitions = jsonencode([
     {
-      name      = "orders-expiry"
+      name      = "stripe-checkout-reconciliation"
       image     = "${aws_ecr_repository.backend[0].repository_url}:${var.backend_image_tag}"
       essential = true
-      command   = ["node", "apps/backend/dist/scripts/expire-unpaid-orders.js"]
+      command   = ["node", "apps/backend/dist/scripts/reconcile-stripe-checkouts.js"]
       environment = [
         {
           name  = "DB_HOST"
@@ -38,11 +38,11 @@ resource "aws_ecs_task_definition" "orders_expiry" {
           value = "info"
         },
         {
-          name  = "ORDER_EXPIRY_MINUTES"
+          name  = "STRIPE_CHECKOUT_RECONCILE_MINUTES"
           value = tostring(var.orders_expiry_minutes)
         },
         {
-          name  = "ORDER_EXPIRY_BATCH_SIZE"
+          name  = "STRIPE_CHECKOUT_RECONCILE_BATCH_SIZE"
           value = tostring(var.orders_expiry_batch_size)
         }
       ]
@@ -65,7 +65,7 @@ resource "aws_ecs_task_definition" "orders_expiry" {
         options = {
           awslogs-group         = aws_cloudwatch_log_group.backend[0].name
           awslogs-region        = var.aws_region
-          awslogs-stream-prefix = "orders-expiry"
+          awslogs-stream-prefix = "stripe-checkout-reconciliation"
         }
       }
     }
@@ -94,7 +94,7 @@ resource "aws_iam_role" "scheduler" {
 resource "aws_iam_role_policy" "scheduler_run_orders_expiry" {
   count = local.deploy_jobs_stack ? 1 : 0
 
-  name = "${local.name_prefix}-run-orders-expiry"
+  name = "${local.name_prefix}-run-stripe-checkout-reconciliation"
   role = aws_iam_role.scheduler[0].id
 
   policy = jsonencode({
@@ -129,8 +129,8 @@ resource "aws_iam_role_policy" "scheduler_run_orders_expiry" {
 resource "aws_scheduler_schedule" "orders_expiry" {
   count = local.deploy_jobs_stack ? 1 : 0
 
-  name        = "${local.name_prefix}-orders-expiry"
-  description = "Expire unpaid orders and release reserved inventory."
+  name        = "${local.name_prefix}-stripe-checkout-reconciliation"
+  description = "Reconcile stale Stripe Checkout Sessions and mirror Stripe state locally."
   state       = var.orders_expiry_enabled ? "ENABLED" : "DISABLED"
 
   schedule_expression = var.orders_expiry_schedule_expression

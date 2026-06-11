@@ -27,6 +27,8 @@ Environment:
   FRONTEND_IMAGE     Local Docker image name. Defaults to health/frontend.
   FRONTEND_TAG       Image tag. Defaults to latest.
   FRONTEND_SERVICE   ECS service name. Defaults to <ecs_cluster_name>-frontend.
+  FRONTEND_API_URL   Public API URL baked into the frontend. Defaults to backend_public_url.
+                     Set to an empty string for a frontend-only deploy.
   FRONTEND_ENABLE_COGNITO
                      Set to 1 to force Cognito config into the image, 0 to force it off.
                      Defaults to auto, enabled only when frontend_public_url is HTTPS.
@@ -101,9 +103,13 @@ frontend_public_url="$(optional_terraform_output frontend_public_url)"
 frontend_dns="$(optional_terraform_output frontend_load_balancer_dns_name)"
 frontend_service="${FRONTEND_SERVICE:-${cluster}-frontend}"
 stripe_publishable_key="${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-$(read_env_var "apps/frontend/.env.local" "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY")}"
-api_url="$backend_public_url"
+api_url="${FRONTEND_API_URL-}"
 cognito_build_domain=""
 cognito_build_client_id=""
+
+if [[ -z "${FRONTEND_API_URL+x}" ]]; then
+  api_url="$backend_public_url"
+fi
 
 if [[ -z "$api_url" || "$api_url" == "null" ]]; then
   if [[ -n "$backend_dns" && "$backend_dns" != "null" ]]; then
@@ -131,8 +137,8 @@ if [[ -z "$frontend_repository_url" || "$frontend_repository_url" == "null" ]]; 
 fi
 
 if [[ -z "$api_url" || "$api_url" == "null" ]]; then
-  echo "backend_public_url is not available. Enable the backend service before deploying the frontend." >&2
-  exit 2
+  echo "backend_public_url is not available; building frontend with an empty NEXT_PUBLIC_API_URL." >&2
+  api_url=""
 fi
 
 log "Building frontend image $frontend_image:$frontend_tag"

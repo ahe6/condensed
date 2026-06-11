@@ -54,12 +54,12 @@ output "backend_migration_task_definition_arn" {
 }
 
 output "orders_expiry_task_definition_arn" {
-  description = "Task definition ARN for the unpaid-order expiry job."
+  description = "Task definition ARN for the Stripe Checkout reconciliation job."
   value       = local.deploy_jobs_stack ? aws_ecs_task_definition.orders_expiry[0].arn : null
 }
 
 output "orders_expiry_schedule_name" {
-  description = "EventBridge Scheduler schedule name for unpaid-order expiry."
+  description = "EventBridge Scheduler schedule name for Stripe Checkout reconciliation."
   value       = local.deploy_jobs_stack ? aws_scheduler_schedule.orders_expiry[0].name : null
 }
 

@@ -104,7 +104,7 @@ pass "Backend ECS task has DB and Stripe secrets"
 
 orders_secrets="$(
   aws ecs describe-task-definition \
-    --task-definition "${cluster}-orders-expiry" \
+    --task-definition "${cluster}-stripe-checkout-reconciliation" \
     --region "$region" \
     --profile "$profile" \
     --query 'taskDefinition.containerDefinitions[0].secrets[].name' \
@@ -112,8 +112,8 @@ orders_secrets="$(
 )"
 
 jq -e 'index("DB_SECRET_JSON") and index("STRIPE_API_KEY")' <<<"$orders_secrets" >/dev/null ||
-  fail "Orders expiry task definition is missing required secrets"
-pass "Orders expiry task has DB and Stripe API secrets"
+  fail "Stripe checkout reconciliation task definition is missing required secrets"
+pass "Stripe checkout reconciliation task has DB and Stripe API secrets"
 
 cognito_client_json="$(
   aws cognito-idp describe-user-pool-client \
