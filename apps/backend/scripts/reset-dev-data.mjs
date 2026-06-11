@@ -10,6 +10,12 @@ if (process.env.CONFIRM_DEV_DATA_RESET !== expectedConfirmation) {
 const prisma = await createPrismaClient();
 
 const tables = [
+  "checkout_authorizations",
+  "assessment_recommendations",
+  "assessment_answers",
+  "assessment_submissions",
+  "assessment_questions",
+  "assessment_templates",
   "notification_events",
   "shipment_tracking_events",
   "shipment_status_events",

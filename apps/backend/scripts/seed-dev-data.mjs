@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import fs from "node:fs";
+
 import { createPrismaClient } from "./database-url.mjs";
 
 const prisma = await createPrismaClient();
@@ -20,10 +22,374 @@ const categories = [
   { slug: "smoking-cessation", name: "Smoking Cessation" },
   { slug: "mental-wellness", name: "Mental Wellness" },
   { slug: "labs", name: "Labs" },
+  { slug: "imaging", name: "Imaging" },
+  { slug: "genetics", name: "Genetics" },
   { slug: "health-checks", name: "Health Checks" },
+  { slug: "lab-core-health", name: "Core Health Labs" },
+  { slug: "lab-metabolic-heart", name: "Metabolic & Heart Labs" },
+  { slug: "lab-hormones-thyroid", name: "Hormone & Thyroid Labs" },
+  { slug: "lab-sexual-infectious", name: "Sexual Health & Infectious Disease Labs" },
+  { slug: "lab-allergy-immune", name: "Allergy & Immune Labs" },
+  { slug: "lab-nutrition-deficiency", name: "Nutrition & Deficiency Labs" },
+  { slug: "lab-digestive-urinary", name: "Digestive, Kidney & Urinary Labs" },
+  { slug: "lab-toxicology-environmental", name: "Toxicology & Environmental Labs" },
+  { slug: "lab-cancer-screening", name: "Cancer Screening Labs" },
+  { slug: "lab-fitness-services", name: "Fitness & Body Composition Services" },
+  { slug: "imaging-ct", name: "CT Imaging" },
+  { slug: "imaging-mri", name: "MRI" },
+  { slug: "imaging-ultrasound", name: "Ultrasound" },
+  { slug: "imaging-dexa", name: "DEXA" },
+  { slug: "imaging-xray", name: "X-ray" },
+  { slug: "imaging-breast", name: "Breast Imaging" },
+  { slug: "genetic-wgs", name: "Whole Genome Sequencing" },
+  { slug: "genetic-wes", name: "Whole Exome Sequencing" },
+  { slug: "genetic-panels", name: "Genetic Panels" },
+  { slug: "genetic-carrier", name: "Carrier Screening" },
+  { slug: "genetic-pharmacogenomics", name: "Pharmacogenomics" },
+  { slug: "genetic-cancer-risk", name: "Hereditary Cancer Genetics" },
+  { slug: "genetic-cardiovascular", name: "Cardiovascular Genetics" },
+  { slug: "genetic-chromosomal", name: "Chromosomal Testing" },
+  { slug: "genetic-familial-variant", name: "Familial Variant Testing" },
+  { slug: "genetic-mitochondrial", name: "Mitochondrial Genetics" },
+  { slug: "genetic-traits", name: "Traits & Wellness Genetics" },
   { slug: "supplements", name: "Supplements" },
   { slug: "drinkware", name: "Drinkware" }
 ];
+
+const questCatalogPath = new URL("../../../docs/research/questhealth-catalog.md", import.meta.url);
+
+const questLabGroupCategoryByHeading = new Map([
+  ["Core health, blood & wellness panels", "lab-core-health"],
+  ["Metabolic, weight & heart health", "lab-metabolic-heart"],
+  ["Hormones, fertility & thyroid", "lab-hormones-thyroid"],
+  ["Sexual & reproductive health / infectious disease", "lab-sexual-infectious"],
+  ["Allergy, food & immune response", "lab-allergy-immune"],
+  ["Nutrition & deficiencies", "lab-nutrition-deficiency"],
+  ["Digestive, kidney, liver & urinary", "lab-digestive-urinary"],
+  ["Drug, toxicology & environmental exposure", "lab-toxicology-environmental"],
+  ["Cancer screening & inherited risk", "lab-cancer-screening"],
+  ["Fitness, body composition & services", "lab-fitness-services"]
+]);
+
+const questLabImage = {
+  url: "https://images.unsplash.com/photo-1581093458791-9f3c3900df7b?auto=format&fit=crop&w=1200&q=80",
+  altText: "Laboratory sample tubes and testing equipment"
+};
+
+function slugify(value) {
+  return value
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 84);
+}
+
+function questSku(questId) {
+  return `QH-${questId.replace(/[^a-z0-9]+/gi, "-").toUpperCase()}`;
+}
+
+function parseQuestHealthCatalog() {
+  const markdown = fs.readFileSync(questCatalogPath, "utf8");
+  const products = [];
+  let currentGroup = null;
+  let inInventory = false;
+
+  for (const line of markdown.split("\n")) {
+    if (line === "## Inventory") {
+      inInventory = true;
+      continue;
+    }
+
+    if (!inInventory) {
+      continue;
+    }
+
+    const headingMatch = line.match(/^### (.+)$/);
+
+    if (headingMatch) {
+      currentGroup = headingMatch[1];
+      continue;
+    }
+
+    const productMatch = line.match(/^\| \[([^\]]+)\]\((https:\/\/www\.questhealth\.com\/product\/[^)]+)\) \| \$?([0-9.]+) \| ([^ |]+) \|$/);
+
+    if (!productMatch || !currentGroup) {
+      continue;
+    }
+
+    const [, name, sourceUrl, price, questId] = productMatch;
+    const groupCategorySlug = questLabGroupCategoryByHeading.get(currentGroup);
+
+    if (!groupCategorySlug) {
+      throw new Error(`Missing Quest lab category mapping for group: ${currentGroup}`);
+    }
+
+    products.push({
+      slug: `quest-${slugify(name)}-${slugify(questId)}`,
+      name,
+      description: `Quest Health listing. Quest ID: ${questId}. Source: ${sourceUrl}`,
+      purchaseMode: "DIRECT",
+      categorySlugs: ["labs", groupCategorySlug],
+      image: questLabImage,
+      variants: [
+        {
+          sku: questSku(questId),
+          title: "Quest Health listing",
+          price,
+          inventoryQuantity: 1000
+        }
+      ]
+    });
+  }
+
+  return products;
+}
+
+const questHealthLabProducts = parseQuestHealthCatalog();
+
+const imagingImage = {
+  url: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1200&q=80",
+  altText: "Clinical imaging room"
+};
+
+const imagingDiagnosticProducts = [
+  {
+    slug: "heart-ct-calcium-score-review",
+    name: "Heart CT Calcium Score Review",
+    description:
+      "Imaging request path for coronary artery calcium scoring. Use review to confirm fit, risk context, and follow-up needs before scheduling.",
+    categorySlugs: ["imaging", "imaging-ct", "heart-health", "lab-metabolic-heart"]
+  },
+  {
+    slug: "low-dose-lung-ct-screening-review",
+    name: "Low-Dose Lung CT Screening Review",
+    description:
+      "Imaging request path for low-dose lung CT screening. Intended for eligibility review around smoking history, age, symptoms, and follow-up planning.",
+    categorySlugs: ["imaging", "imaging-ct"]
+  },
+  {
+    slug: "brain-mri-review",
+    name: "Brain MRI Review",
+    description:
+      "Imaging request path for brain MRI questions. Review should cover symptoms, urgency, prior imaging, implants, contrast considerations, and follow-up.",
+    categorySlugs: ["imaging", "imaging-mri"]
+  },
+  {
+    slug: "spine-mri-review",
+    name: "Spine MRI Review",
+    description:
+      "Imaging request path for cervical, thoracic, or lumbar spine MRI questions with clinical review before scheduling.",
+    categorySlugs: ["imaging", "imaging-mri"]
+  },
+  {
+    slug: "joint-mri-review",
+    name: "Joint MRI Review",
+    description:
+      "Imaging request path for knee, shoulder, hip, ankle, elbow, or wrist MRI questions with review of injury history and prior care.",
+    categorySlugs: ["imaging", "imaging-mri"]
+  },
+  {
+    slug: "abdomen-pelvis-mri-review",
+    name: "Abdomen & Pelvis MRI Review",
+    description:
+      "Imaging request path for abdomen or pelvis MRI questions with review of indication, contrast needs, and appropriate modality.",
+    categorySlugs: ["imaging", "imaging-mri", "digestive-health"]
+  },
+  {
+    slug: "thyroid-ultrasound-review",
+    name: "Thyroid Ultrasound Review",
+    description:
+      "Imaging request path for thyroid ultrasound questions, commonly tied to nodules, enlargement, abnormal exam, or follow-up imaging.",
+    categorySlugs: ["imaging", "imaging-ultrasound", "hormone-health"]
+  },
+  {
+    slug: "abdominal-ultrasound-review",
+    name: "Abdominal Ultrasound Review",
+    description:
+      "Imaging request path for liver, gallbladder, kidney, spleen, or abdominal symptom questions with review before scheduling.",
+    categorySlugs: ["imaging", "imaging-ultrasound", "digestive-health"]
+  },
+  {
+    slug: "pelvic-ultrasound-review",
+    name: "Pelvic Ultrasound Review",
+    description:
+      "Imaging request path for pelvic ultrasound questions with review of symptoms, pregnancy status, cycle context, and urgency.",
+    categorySlugs: ["imaging", "imaging-ultrasound", "womens-health"]
+  },
+  {
+    slug: "vascular-ultrasound-review",
+    name: "Vascular Ultrasound Review",
+    description:
+      "Imaging request path for carotid, venous, or arterial ultrasound questions with review of symptoms and clinical indication.",
+    categorySlugs: ["imaging", "imaging-ultrasound", "heart-health"]
+  },
+  {
+    slug: "dexa-bone-density-review",
+    name: "DEXA Bone Density Review",
+    description:
+      "Imaging request path for bone density screening or monitoring, often relevant to menopause, fracture risk, and long-term bone health.",
+    categorySlugs: ["imaging", "imaging-dexa", "hormone-health", "womens-health"]
+  },
+  {
+    slug: "dexa-body-composition-review",
+    name: "DEXA Body Composition Review",
+    description:
+      "Imaging request path for body composition measurement with review of goals, limitations, and follow-up context.",
+    categorySlugs: ["imaging", "imaging-dexa", "weight-management"]
+  },
+  {
+    slug: "screening-mammogram-review",
+    name: "Screening Mammogram Review",
+    description:
+      "Imaging request path for breast screening questions with review of age, symptoms, history, prior imaging, and appropriate next step.",
+    categorySlugs: ["imaging", "imaging-breast", "womens-health"]
+  },
+  {
+    slug: "xray-imaging-review",
+    name: "X-ray Imaging Review",
+    description:
+      "Imaging request path for simple X-ray questions, generally for focused concerns where an imaging order is clinically appropriate.",
+    categorySlugs: ["imaging", "imaging-xray"]
+  }
+].map((product, index) => ({
+  ...product,
+  purchaseMode: "ASSESSMENT_REQUIRED",
+  image: imagingImage,
+  variants: [
+    {
+      sku: `IMG-${String(index + 1).padStart(3, "0")}`,
+      title: "Review request",
+      price: "0.00",
+      inventoryQuantity: 1000
+    }
+  ]
+}));
+
+const geneticTestingImage = {
+  url: "https://images.unsplash.com/photo-1530026186672-2cd00ffc50fe?auto=format&fit=crop&w=1200&q=80",
+  altText: "DNA sequencing and lab analysis"
+};
+
+const geneticTestingProducts = [
+  {
+    slug: "whole-genome-sequencing-30x-review",
+    name: "30x Whole Genome Sequencing Review",
+    description:
+      "Review path for clinical-grade whole genome sequencing discussion, including scope, secondary findings, privacy, and confirmatory follow-up.",
+    categorySlugs: ["genetics", "genetic-wgs"]
+  },
+  {
+    slug: "whole-genome-sequencing-15x-review",
+    name: "15x Whole Genome Sequencing Review",
+    description:
+      "Review path for lower-coverage whole genome sequencing options, limitations, and whether genome-wide testing is appropriate.",
+    categorySlugs: ["genetics", "genetic-wgs"]
+  },
+  {
+    slug: "whole-exome-sequencing-review",
+    name: "Whole Exome Sequencing Review",
+    description:
+      "Review path for exome sequencing, which focuses on protein-coding regions and is often considered when a specific cause is unclear.",
+    categorySlugs: ["genetics", "genetic-wes"]
+  },
+  {
+    slug: "rare-disease-genetics-review",
+    name: "Rare Disease Genetics Review",
+    description:
+      "Review path for selecting an appropriate rare-disease genetics approach, such as a targeted panel, exome, or genome sequencing.",
+    categorySlugs: ["genetics", "genetic-panels", "genetic-wes", "genetic-wgs"]
+  },
+  {
+    slug: "targeted-gene-panel-review",
+    name: "Targeted Gene Panel Review",
+    description:
+      "Review path for focused gene panels where the health question points to a specific condition area or gene set.",
+    categorySlugs: ["genetics", "genetic-panels"]
+  },
+  {
+    slug: "hereditary-cancer-risk-panel-review",
+    name: "Hereditary Cancer Risk Panel Review",
+    description:
+      "Review path for inherited cancer risk testing, including family history, prior testing, counseling, and confirmatory clinical follow-up.",
+    categorySlugs: ["genetics", "genetic-cancer-risk", "genetic-panels"]
+  },
+  {
+    slug: "cardiovascular-genetics-panel-review",
+    name: "Cardiovascular Genetics Panel Review",
+    description:
+      "Review path for inherited cardiovascular risk questions such as cardiomyopathy, arrhythmia, familial hypercholesterolemia, or a strong family history.",
+    categorySlugs: ["genetics", "genetic-cardiovascular", "heart-health", "genetic-panels"]
+  },
+  {
+    slug: "expanded-carrier-screening-review",
+    name: "Expanded Carrier Screening Review",
+    description:
+      "Review path for carrier screening before or during family planning, including partner testing and result interpretation.",
+    categorySlugs: ["genetics", "genetic-carrier", "womens-health"]
+  },
+  {
+    slug: "pharmacogenomics-review",
+    name: "Pharmacogenomics Review",
+    description:
+      "Review path for medication-response genetics, focused on whether results may support a clinician discussion about drug metabolism or dosing.",
+    categorySlugs: ["genetics", "genetic-pharmacogenomics"]
+  },
+  {
+    slug: "familial-variant-testing-review",
+    name: "Known Familial Variant Testing Review",
+    description:
+      "Review path for testing a specific variant already identified in a family member, with attention to documentation and clinical confirmation.",
+    categorySlugs: ["genetics", "genetic-familial-variant"]
+  },
+  {
+    slug: "chromosomal-microarray-review",
+    name: "Chromosomal Microarray Review",
+    description:
+      "Review path for copy-number and chromosomal imbalance questions where microarray may be more appropriate than sequencing alone.",
+    categorySlugs: ["genetics", "genetic-chromosomal"]
+  },
+  {
+    slug: "karyotype-testing-review",
+    name: "Karyotype Testing Review",
+    description:
+      "Review path for chromosome-level questions such as aneuploidy, large rearrangements, infertility workups, or recurrent pregnancy loss context.",
+    categorySlugs: ["genetics", "genetic-chromosomal"]
+  },
+  {
+    slug: "mitochondrial-dna-testing-review",
+    name: "Mitochondrial DNA Testing Review",
+    description:
+      "Review path for mitochondrial genetics questions, including whether targeted mitochondrial testing, panel testing, exome, or genome sequencing is a better fit.",
+    categorySlugs: ["genetics", "genetic-mitochondrial", "genetic-panels"]
+  },
+  {
+    slug: "nutrigenomics-wellness-genetics-review",
+    name: "Nutrigenomics & Wellness Genetics Review",
+    description:
+      "Review path for lower-acuity wellness genetics questions, with clear limits around clinical actionability and need for confirmatory testing.",
+    categorySlugs: ["genetics", "genetic-traits"]
+  },
+  {
+    slug: "ancestry-traits-genetics-review",
+    name: "Ancestry & Traits Genetics Review",
+    description:
+      "Review path for non-diagnostic genetics interests such as ancestry and traits, separated from clinical risk or diagnostic testing.",
+    categorySlugs: ["genetics", "genetic-traits"]
+  }
+].map((product, index) => ({
+  ...product,
+  purchaseMode: "ASSESSMENT_REQUIRED",
+  image: geneticTestingImage,
+  variants: [
+    {
+      sku: `GEN-${String(index + 1).padStart(3, "0")}`,
+      title: "Review request",
+      price: "0.00",
+      inventoryQuantity: 1000
+    }
+  ]
+}));
 
 const products = [
   {
@@ -888,6 +1254,10 @@ const products = [
   }
 ];
 
+products.push(...questHealthLabProducts);
+products.push(...imagingDiagnosticProducts);
+products.push(...geneticTestingProducts);
+
 const legacyPlaceholderProductSlugs = ["test-product"];
 
 const standardOptions = {
@@ -912,6 +1282,51 @@ const standardOptions = {
     { label: "Just researching", value: "researching" }
   ]
 };
+
+const goalPriorityOptions = [
+  { label: "Understand my options", value: "understand-options" },
+  { label: "Find a likely next step", value: "find-next-step" },
+  { label: "Check if labs make sense", value: "consider-labs" }
+];
+
+const goalKeys = [
+  {
+    goalKey: "weight-loss",
+    slug: "goal-weight-loss",
+    title: "Weight Goal Intake",
+    topic: "weight and metabolic health"
+  },
+  {
+    goalKey: "hair-loss",
+    slug: "goal-hair-loss",
+    title: "Hair Goal Intake",
+    topic: "hair loss and scalp support"
+  },
+  {
+    goalKey: "sexual-health",
+    slug: "goal-sexual-health",
+    title: "Sexual Health Goal Intake",
+    topic: "sexual wellness"
+  },
+  {
+    goalKey: "skin-care",
+    slug: "goal-skin-care",
+    title: "Skin Care Goal Intake",
+    topic: "skin care"
+  },
+  {
+    goalKey: "hormone-health",
+    slug: "goal-hormone-health",
+    title: "Hormone Health Goal Intake",
+    topic: "hormone health"
+  },
+  {
+    goalKey: "wellness-labs",
+    slug: "goal-wellness-labs",
+    title: "Wellness Labs Goal Intake",
+    topic: "wellness labs and health checks"
+  }
+];
 
 function assessmentQuestions(topic) {
   return [
@@ -953,6 +1368,45 @@ function assessmentQuestions(topic) {
   ];
 }
 
+function goalAssessmentQuestions(topic) {
+  return [
+    {
+      key: "main_goal",
+      label: `What are you hoping to improve with ${topic}?`,
+      type: "TEXT",
+      sortOrder: 0
+    },
+    {
+      key: "priority",
+      label: "What would help most right now?",
+      type: "SINGLE_SELECT",
+      options: goalPriorityOptions,
+      sortOrder: 1
+    },
+    {
+      key: "timeframe",
+      label: "When would you like to take the next step?",
+      type: "SINGLE_SELECT",
+      options: standardOptions.timeframe,
+      sortOrder: 2
+    },
+    {
+      key: "prior_experience",
+      label: "Have you used similar support before?",
+      type: "SINGLE_SELECT",
+      options: standardOptions.experience,
+      sortOrder: 3
+    },
+    {
+      key: "notes",
+      label: "Anything else you want to mention?",
+      type: "TEXT",
+      required: false,
+      sortOrder: 4
+    }
+  ];
+}
+
 function assessmentTemplate(productSlug, slug, title, topic) {
   return {
     productSlug,
@@ -960,6 +1414,16 @@ function assessmentTemplate(productSlug, slug, title, topic) {
     title,
     description: `A short intake for ${topic} goals and support preferences.`,
     questions: assessmentQuestions(topic)
+  };
+}
+
+function goalAssessmentTemplate(input) {
+  return {
+    goalKey: input.goalKey,
+    slug: input.slug,
+    title: input.title,
+    description: `A short intake to match ${input.topic} goals with recommended next steps.`,
+    questions: goalAssessmentQuestions(input.topic)
   };
 }
 
@@ -1049,6 +1513,17 @@ const assessmentTemplates = [
     "smoking cessation support"
   )
 ];
+
+assessmentTemplates.push(
+  ...imagingDiagnosticProducts.map((product) =>
+    assessmentTemplate(product.slug, `${product.slug}-assessment`, `${product.name} Assessment`, "imaging review")
+  ),
+  ...geneticTestingProducts.map((product) =>
+    assessmentTemplate(product.slug, `${product.slug}-assessment`, `${product.name} Assessment`, "genetics review")
+  )
+);
+
+const goalAssessmentTemplates = goalKeys.map(goalAssessmentTemplate);
 
 try {
   const categoryBySlug = new Map();
@@ -1179,16 +1654,78 @@ try {
       },
       create: {
         productId: product.id,
+        goalKey: null,
         slug: templateInput.slug,
         title: templateInput.title,
         description: templateInput.description,
+        type: "PRODUCT_INTAKE",
         status: "ACTIVE",
         version: 1
       },
       update: {
         productId: product.id,
+        goalKey: null,
         title: templateInput.title,
         description: templateInput.description,
+        type: "PRODUCT_INTAKE",
+        status: "ACTIVE"
+      }
+    });
+
+    for (const question of templateInput.questions) {
+      await prisma.assessmentQuestion.upsert({
+        where: {
+          templateId_key: {
+            templateId: template.id,
+            key: question.key
+          }
+        },
+        create: {
+          templateId: template.id,
+          key: question.key,
+          label: question.label,
+          helpText: question.helpText,
+          type: question.type,
+          required: question.required ?? true,
+          options: question.options,
+          sortOrder: question.sortOrder
+        },
+        update: {
+          label: question.label,
+          helpText: question.helpText,
+          type: question.type,
+          required: question.required ?? true,
+          options: question.options,
+          sortOrder: question.sortOrder
+        }
+      });
+    }
+  }
+
+  for (const templateInput of goalAssessmentTemplates) {
+    const template = await prisma.assessmentTemplate.upsert({
+      where: {
+        slug_version: {
+          slug: templateInput.slug,
+          version: 1
+        }
+      },
+      create: {
+        goalKey: templateInput.goalKey,
+        productId: null,
+        slug: templateInput.slug,
+        title: templateInput.title,
+        description: templateInput.description,
+        type: "GOAL_INTAKE",
+        status: "ACTIVE",
+        version: 1
+      },
+      update: {
+        goalKey: templateInput.goalKey,
+        productId: null,
+        title: templateInput.title,
+        description: templateInput.description,
+        type: "GOAL_INTAKE",
         status: "ACTIVE"
       }
     });
@@ -1235,7 +1772,9 @@ try {
   });
 
   console.log(`Seeded dev catalog: ${products.length} products, ${categories.length} categories`);
-  console.log(`Seeded assessment templates: ${assessmentTemplates.length}`);
+  console.log(
+    `Seeded assessment templates: ${assessmentTemplates.length} product, ${goalAssessmentTemplates.length} goal`
+  );
   if (archivedLegacyProducts.count > 0) {
     console.log(`Archived legacy placeholder products: ${archivedLegacyProducts.count}`);
   }

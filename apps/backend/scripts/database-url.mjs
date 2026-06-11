@@ -1,3 +1,14 @@
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { config as loadEnv } from "dotenv";
+
+const scriptDir = dirname(fileURLToPath(import.meta.url));
+const backendDir = resolve(scriptDir, "..");
+const rootDir = resolve(backendDir, "..", "..");
+
+loadEnv({ path: resolve(rootDir, ".env") });
+loadEnv({ override: true, path: resolve(backendDir, ".env") });
+
 export function databaseUrlFromEnv() {
   if (process.env.DATABASE_URL) {
     return process.env.DATABASE_URL;
