@@ -1,12 +1,23 @@
 "use client";
 
+import { CheckoutElementsProvider } from "@stripe/react-stripe-js/checkout";
+import { loadStripe } from "@stripe/stripe-js";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CustomerBrand } from "../../../src/components/CustomerBrand";
 import { CustomerNav } from "../../../src/components/CustomerNav";
-import { Order, getOrder } from "../../../src/lib/api";
-import { getSession, isAuthConfigured, startLogin } from "../../../src/lib/auth";
+import {
+  OrderReservationStatus,
+  canPayOrder,
+  useReservationNow
+} from "../../../src/components/OrderReservationStatus";
+import { StripePaymentForm } from "../../../src/components/StripePaymentForm";
+import { Order, createStripeCheckoutSession, getOrder } from "../../../src/lib/api";
+import { getCurrentReturnTo, getSession, isAuthConfigured, startLogin } from "../../../src/lib/auth";
 import { formatDateTime, formatMoney, statusClass, trackingUrl } from "../../../src/lib/format";
+
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 function addressLabel(address: Order["addresses"][number]) {
   return [
@@ -25,7 +36,10 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [needsSignIn, setNeedsSignIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [checkoutClientSecret, setCheckoutClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const reservationNow = useReservationNow(order);
 
   useEffect(() => {
     let isMounted = true;
@@ -54,6 +68,9 @@ export default function OrderDetailPage() {
 
         if (isMounted) {
           setOrder(nextOrder);
+          if (!canPayOrder(nextOrder)) {
+            setCheckoutClientSecret(null);
+          }
         }
       } catch (caught) {
         if (isMounted) {
@@ -74,6 +91,55 @@ export default function OrderDetailPage() {
     };
   }, [orderNumber]);
 
+  async function refreshOrder() {
+    setPendingAction("refresh");
+    setError(null);
+
+    try {
+      const nextOrder = await getOrder(orderNumber);
+      setOrder(nextOrder);
+
+      if (!canPayOrder(nextOrder)) {
+        setCheckoutClientSecret(null);
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not refresh order");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function startOrderPayment(orderToPay: Order) {
+    if (!canPayOrder(orderToPay)) {
+      setCheckoutClientSecret(null);
+      setError("Order reservation expired");
+      return;
+    }
+
+    if (!stripePromise) {
+      setError("Stripe payment is not configured");
+      return;
+    }
+
+    setPendingAction("pay");
+    setCheckoutClientSecret(null);
+    setError(null);
+
+    try {
+      const returnUrl = `${window.location.origin}/orders/${encodeURIComponent(
+        orderToPay.orderNumber
+      )}?session_id={CHECKOUT_SESSION_ID}`;
+      const checkoutSession = await createStripeCheckoutSession(orderToPay.id, returnUrl);
+
+      setOrder(checkoutSession.payment.order);
+      setCheckoutClientSecret(checkoutSession.clientSecret);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not start payment");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
   return (
     <main className="shell">
       <section className="topbar" aria-label="Order navigation">
@@ -84,15 +150,9 @@ export default function OrderDetailPage() {
             className="secondary"
             type="button"
             disabled={isLoading || needsSignIn}
-            onClick={() => {
-              void getOrder(orderNumber)
-                .then(setOrder)
-                .catch((caught) =>
-                  setError(caught instanceof Error ? caught.message : "Could not refresh order")
-                );
-            }}
+            onClick={() => void refreshOrder()}
           >
-            {isLoading ? "Loading" : "Refresh"}
+            {isLoading || pendingAction === "refresh" ? "Loading" : "Refresh"}
           </button>
         </div>
       </section>
@@ -102,7 +162,7 @@ export default function OrderDetailPage() {
       {needsSignIn ? (
         <section className="panel">
           <div className="empty-state compact">Sign in to view this order</div>
-          <button type="button" onClick={() => void startLogin()}>
+          <button type="button" onClick={() => void startLogin({ returnTo: getCurrentReturnTo() })}>
             Sign In
           </button>
         </section>
@@ -215,7 +275,51 @@ export default function OrderDetailPage() {
                     <dd>{formatDateTime(order.updatedAt)}</dd>
                   </div>
                 </dl>
+                <OrderReservationStatus order={order} />
+                {canPayOrder(order, reservationNow) ? (
+                  <div className="payment-recovery">
+                    <p>Payment is not complete for this order.</p>
+                    <button
+                      type="button"
+                      disabled={pendingAction === "pay" || !stripePromise}
+                      onClick={() => void startOrderPayment(order)}
+                    >
+                      {pendingAction === "pay"
+                        ? "Starting Payment"
+                        : `Pay ${formatMoney(order.total, order.currency)}`}
+                    </button>
+                    {!stripePromise ? <p className="warning compact">Stripe payment is not configured</p> : null}
+                  </div>
+                ) : null}
               </section>
+
+              {checkoutClientSecret && stripePromise && canPayOrder(order, reservationNow) ? (
+                <section className="panel" aria-label="Pay order">
+                  <div className="panel-heading">
+                    <h2>Pay This Order</h2>
+                  </div>
+                  <CheckoutElementsProvider
+                    key={checkoutClientSecret}
+                    stripe={stripePromise}
+                    options={{
+                      clientSecret: checkoutClientSecret
+                    }}
+                  >
+                    <StripePaymentForm
+                      order={order}
+                      onError={setError}
+                      onSubmitted={async () => {
+                        const refreshedOrder = await getOrder(order.orderNumber);
+                        setOrder(refreshedOrder);
+
+                        if (!canPayOrder(refreshedOrder)) {
+                          setCheckoutClientSecret(null);
+                        }
+                      }}
+                    />
+                  </CheckoutElementsProvider>
+                </section>
+              ) : null}
 
               <section className="panel" aria-label="Shipping and billing addresses">
                 <div className="panel-heading">

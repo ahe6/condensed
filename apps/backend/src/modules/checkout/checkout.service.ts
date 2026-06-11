@@ -1,6 +1,11 @@
 import { randomInt } from "node:crypto";
 import { AddressType, OrderStatus, Prisma, ProductPurchaseMode, ProductStatus } from "@prisma/client";
 import { prisma } from "../../prisma.js";
+import {
+  findActiveCheckoutAuthorization,
+  markCheckoutAuthorizationUsed
+} from "../checkout-authorizations/checkout-authorizations.service.js";
+import { getOrderReservationExpiresAt } from "../orders/orders.service.js";
 import type { CheckoutCartInput } from "./checkout.schemas.js";
 
 const orderInclude = {
@@ -47,7 +52,10 @@ export async function checkoutCart(input: CheckoutCartInput, options: { userId?:
     }
 
     const currency = cart.items[0]?.variant.currency ?? "USD";
-    const subtotal = cart.items.reduce((total, item) => {
+    const checkoutAuthorizationsToUse: Array<{ id: string }> = [];
+    let subtotal = new Prisma.Decimal(0);
+
+    for (const item of cart.items) {
       if (item.variant.currency !== currency) {
         throw new CheckoutError("Cart contains multiple currencies");
       }
@@ -57,17 +65,33 @@ export async function checkoutCart(input: CheckoutCartInput, options: { userId?:
       }
 
       if (item.variant.product.purchaseMode !== ProductPurchaseMode.DIRECT) {
-        throw new CheckoutError(
-          `Product requires assessment before checkout: ${item.variant.product.slug}`
-        );
+        if (!options.userId) {
+          throw new CheckoutError(
+            `Product requires sign-in and assessment approval: ${item.variant.product.slug}`
+          );
+        }
+
+        const authorization = await findActiveCheckoutAuthorization(tx, {
+          productId: item.variant.productId,
+          userId: options.userId,
+          variantId: item.variantId
+        });
+
+        if (!authorization) {
+          throw new CheckoutError(
+            `Product requires assessment approval before checkout: ${item.variant.product.slug}`
+          );
+        }
+
+        checkoutAuthorizationsToUse.push(authorization);
       }
 
       if (item.variant.inventoryQuantity < item.quantity) {
         throw new CheckoutError(`Insufficient inventory for SKU ${item.variant.sku}`);
       }
 
-      return total.plus(item.variant.price.mul(item.quantity));
-    }, new Prisma.Decimal(0));
+      subtotal = subtotal.plus(item.variant.price.mul(item.quantity));
+    }
 
     for (const item of cart.items) {
       const updateResult = await tx.productVariant.updateMany({
@@ -95,6 +119,7 @@ export async function checkoutCart(input: CheckoutCartInput, options: { userId?:
         orderNumber: generateOrderNumber(),
         email: input.email,
         status: OrderStatus.PLACED,
+        reservationExpiresAt: getOrderReservationExpiresAt(),
         currency,
         subtotal,
         total: subtotal,
@@ -133,8 +158,18 @@ export async function checkoutCart(input: CheckoutCartInput, options: { userId?:
       }
     });
 
+    for (const authorization of dedupeCheckoutAuthorizations(checkoutAuthorizationsToUse)) {
+      await markCheckoutAuthorizationUsed(tx, authorization);
+    }
+
     return order;
   });
+}
+
+function dedupeCheckoutAuthorizations(authorizations: Array<{ id: string }>) {
+  return Array.from(
+    new Map(authorizations.map((authorization) => [authorization.id, authorization])).values()
+  );
 }
 
 function generateOrderNumber() {

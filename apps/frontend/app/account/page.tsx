@@ -5,7 +5,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { CustomerBrand } from "../../src/components/CustomerBrand";
 import { CustomerNav } from "../../src/components/CustomerNav";
 import { User, getMe, updateMe } from "../../src/lib/api";
-import { getSession, isAuthConfigured, signOut, startLogin } from "../../src/lib/auth";
+import { getCurrentReturnTo, getSession, isAuthConfigured, signOut, startLogin } from "../../src/lib/auth";
 import { formatDateTime } from "../../src/lib/format";
 
 export default function AccountPage() {
@@ -95,10 +95,10 @@ export default function AccountPage() {
         <section className="panel account-sign-in" aria-label="Sign in">
           <div>
             <p className="eyebrow">Sign in required</p>
-            <h2>Manage your account</h2>
+            <h2>Manage account settings</h2>
           </div>
           <div className="auth-actions">
-            <button type="button" onClick={() => void startLogin()}>
+            <button type="button" onClick={() => void startLogin({ returnTo: getCurrentReturnTo() })}>
               Sign In
             </button>
             <Link className="nav-link" href="/auth/confirm">
@@ -138,7 +138,7 @@ export default function AccountPage() {
           <section className="account-layout">
             <section className="panel account-profile" aria-label="Profile">
               <div className="panel-heading">
-                <h2>Profile</h2>
+                <h2>Account Settings</h2>
               </div>
               <dl className="order-meta">
                 <div>
@@ -193,9 +193,13 @@ export default function AccountPage() {
 
             <section className="panel account-actions-panel" aria-label="Account actions">
               <div className="panel-heading">
-                <h2>Account Tools</h2>
+                <h2>Dashboard Links</h2>
               </div>
               <div className="account-action-list">
+                <Link className="nav-link account-action-link" href="/my-health">
+                  <span>Patient Portal</span>
+                  <strong>Return to your healthcare dashboard</strong>
+                </Link>
                 <Link className="nav-link account-action-link" href="/orders">
                   <span>Your Orders</span>
                   <strong>View order history and tracking</strong>

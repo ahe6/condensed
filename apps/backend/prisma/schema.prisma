@@ -32,11 +32,29 @@ enum AssessmentQuestionType {
   BOOLEAN
 }
 
+enum AssessmentTemplateType {
+  PRODUCT_INTAKE
+  GOAL_INTAKE
+}
+
 enum AssessmentSubmissionStatus {
   SUBMITTED
   REVIEW_REQUIRED
   APPROVED
   REJECTED
+}
+
+enum CheckoutAuthorizationStatus {
+  ACTIVE
+  USED
+  EXPIRED
+  REVOKED
+}
+
+enum AssessmentRecommendationStatus {
+  RECOMMENDED
+  SELECTED
+  DISMISSED
 }
 
 enum OrderStatus {
@@ -112,17 +130,18 @@ enum ShipmentStatus {
 }
 
 model User {
-  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  externalAuthId        String?                @unique
-  email                 String                 @unique
-  name                  String?
-  phone                 String?
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-  addresses             Address[]
-  assessmentSubmissions AssessmentSubmission[]
-  carts                 Cart[]
-  orders                Order[]
+  id                     String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  externalAuthId         String?                 @unique
+  email                  String                  @unique
+  name                   String?
+  phone                  String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  addresses              Address[]
+  assessmentSubmissions  AssessmentSubmission[]
+  carts                  Cart[]
+  checkoutAuthorizations CheckoutAuthorization[]
+  orders                 Order[]
 
   @@map("users")
 }
@@ -150,20 +169,22 @@ model Address {
 }
 
 model Product {
-  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  slug                  String                 @unique
-  name                  String
-  description           String?
-  status                ProductStatus          @default(DRAFT)
-  purchaseMode          ProductPurchaseMode    @default(DIRECT)
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-  variants              ProductVariant[]
-  images                ProductImage[]
-  categories            ProductCategory[]
-  orderItems            OrderItem[]
-  assessmentTemplates   AssessmentTemplate[]
-  assessmentSubmissions AssessmentSubmission[]
+  id                        String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug                      String                     @unique
+  name                      String
+  description               String?
+  status                    ProductStatus              @default(DRAFT)
+  purchaseMode              ProductPurchaseMode        @default(DIRECT)
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+  variants                  ProductVariant[]
+  images                    ProductImage[]
+  categories                ProductCategory[]
+  orderItems                OrderItem[]
+  assessmentTemplates       AssessmentTemplate[]
+  assessmentSubmissions     AssessmentSubmission[]
+  checkoutAuthorizations    CheckoutAuthorization[]
+  assessmentRecommendations AssessmentRecommendation[]
 
   @@index([status])
   @@map("products")
@@ -171,20 +192,23 @@ model Product {
 
 model AssessmentTemplate {
   id          String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  productId   String                   @db.Uuid
+  productId   String?                  @db.Uuid
+  goalKey     String?
   slug        String
   title       String
   description String?
+  type        AssessmentTemplateType   @default(PRODUCT_INTAKE)
   status      AssessmentTemplateStatus @default(DRAFT)
   version     Int                      @default(1)
   createdAt   DateTime                 @default(now())
   updatedAt   DateTime                 @updatedAt
-  product     Product                  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product     Product?                 @relation(fields: [productId], references: [id], onDelete: Cascade)
   questions   AssessmentQuestion[]
   submissions AssessmentSubmission[]
 
   @@unique([slug, version])
   @@index([productId, status, version])
+  @@index([type, goalKey, status, version])
   @@map("assessment_templates")
 }
 
@@ -209,22 +233,30 @@ model AssessmentQuestion {
 }
 
 model AssessmentSubmission {
-  id          String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  templateId  String                     @db.Uuid
-  productId   String                     @db.Uuid
-  userId      String?                    @db.Uuid
-  email       String?
-  status      AssessmentSubmissionStatus @default(SUBMITTED)
-  submittedAt DateTime                   @default(now())
-  createdAt   DateTime                   @default(now())
-  updatedAt   DateTime                   @updatedAt
-  template    AssessmentTemplate         @relation(fields: [templateId], references: [id], onDelete: Restrict)
-  product     Product                    @relation(fields: [productId], references: [id], onDelete: Restrict)
-  user        User?                      @relation(fields: [userId], references: [id], onDelete: SetNull)
-  answers     AssessmentAnswer[]
+  id                     String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  templateId             String                     @db.Uuid
+  productId              String?                    @db.Uuid
+  goalKey                String?
+  userId                 String?                    @db.Uuid
+  email                  String?
+  status                 AssessmentSubmissionStatus @default(SUBMITTED)
+  decisionReason         String?
+  decisionPolicyId       String?
+  decisionPolicyVersion  Int?
+  decidedAt              DateTime?
+  submittedAt            DateTime                   @default(now())
+  createdAt              DateTime                   @default(now())
+  updatedAt              DateTime                   @updatedAt
+  template               AssessmentTemplate         @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  product                Product?                   @relation(fields: [productId], references: [id], onDelete: Restrict)
+  user                   User?                      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  answers                AssessmentAnswer[]
+  checkoutAuthorizations CheckoutAuthorization[]
+  recommendations        AssessmentRecommendation[]
 
   @@index([templateId, submittedAt])
   @@index([productId, submittedAt])
+  @@index([goalKey, submittedAt])
   @@index([userId, submittedAt])
   @@index([status, submittedAt])
   @@map("assessment_submissions")
@@ -247,21 +279,67 @@ model AssessmentAnswer {
 }
 
 model ProductVariant {
-  id                String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  productId         String      @db.Uuid
-  sku               String      @unique
-  title             String
-  price             Decimal     @db.Decimal(12, 2)
-  currency          String      @default("USD") @db.Char(3)
-  inventoryQuantity Int         @default(0)
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
-  product           Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  cartItems         CartItem[]
-  orderItems        OrderItem[]
+  id                     String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId              String                  @db.Uuid
+  sku                    String                  @unique
+  title                  String
+  price                  Decimal                 @db.Decimal(12, 2)
+  currency               String                  @default("USD") @db.Char(3)
+  inventoryQuantity      Int                     @default(0)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  product                Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems              CartItem[]
+  checkoutAuthorizations CheckoutAuthorization[]
+  orderItems             OrderItem[]
 
   @@index([productId])
   @@map("product_variants")
+}
+
+model CheckoutAuthorization {
+  id                     String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                 String                      @db.Uuid
+  productId              String                      @db.Uuid
+  variantId              String?                     @db.Uuid
+  assessmentSubmissionId String                      @db.Uuid
+  status                 CheckoutAuthorizationStatus @default(ACTIVE)
+  expiresAt              DateTime
+  usedAt                 DateTime?
+  createdAt              DateTime                    @default(now())
+  updatedAt              DateTime                    @updatedAt
+  user                   User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product                Product                     @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variant                ProductVariant?             @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  assessmentSubmission   AssessmentSubmission        @relation(fields: [assessmentSubmissionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, productId, status, expiresAt])
+  @@index([assessmentSubmissionId])
+  @@index([variantId])
+  @@map("checkout_authorizations")
+}
+
+model AssessmentRecommendation {
+  id                     String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assessmentSubmissionId String                         @db.Uuid
+  productId              String                         @db.Uuid
+  status                 AssessmentRecommendationStatus @default(RECOMMENDED)
+  rank                   Int
+  reasonCode             String
+  reasonText             String?
+  sourcePolicyId         String
+  sourcePolicyVersion    Int
+  selectedAt             DateTime?
+  dismissedAt            DateTime?
+  createdAt              DateTime                       @default(now())
+  updatedAt              DateTime                       @updatedAt
+  assessmentSubmission   AssessmentSubmission           @relation(fields: [assessmentSubmissionId], references: [id], onDelete: Cascade)
+  product                Product                        @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([assessmentSubmissionId, productId])
+  @@index([assessmentSubmissionId, rank])
+  @@index([productId])
+  @@map("assessment_recommendations")
 }
 
 model ProductImage {
@@ -346,6 +424,7 @@ model Order {
   taxTotal               Decimal                 @default(0) @db.Decimal(12, 2)
   total                  Decimal                 @default(0) @db.Decimal(12, 2)
   placedAt               DateTime?
+  reservationExpiresAt   DateTime?
   inventoryReleasedAt    DateTime?
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
@@ -364,6 +443,7 @@ model Order {
   @@index([userId])
   @@index([status])
   @@index([createdAt])
+  @@index([reservationExpiresAt])
   @@index([inventoryReleasedAt])
   @@map("orders")
 }

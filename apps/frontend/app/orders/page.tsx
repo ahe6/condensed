@@ -6,7 +6,7 @@ import { CustomerBrand } from "../../src/components/CustomerBrand";
 import { CustomerNav } from "../../src/components/CustomerNav";
 import { OrderSummary } from "../../src/components/OrderSummary";
 import { Order, User, getMe, getMyOrders } from "../../src/lib/api";
-import { getSession, isAuthConfigured, startLogin } from "../../src/lib/auth";
+import { getCurrentReturnTo, getSession, isAuthConfigured, startLogin } from "../../src/lib/auth";
 import { formatMoney } from "../../src/lib/format";
 
 type OrderFilter = "ALL" | "OPEN" | "PAID" | "UNPAID" | "FULFILLED" | "CANCELLED";
@@ -144,7 +144,7 @@ export default function OrdersPage() {
             <h2>View your orders</h2>
           </div>
           <div className="auth-actions">
-            <button type="button" onClick={() => void startLogin()}>
+            <button type="button" onClick={() => void startLogin({ returnTo: getCurrentReturnTo() })}>
               Sign In
             </button>
             <Link className="nav-link" href="/auth/confirm">

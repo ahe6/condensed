@@ -1,8 +1,12 @@
 import Link from "next/link";
 import type { Order } from "../lib/api";
 import { formatDateTime, formatMoney, statusClass, trackingUrl } from "../lib/format";
+import { OrderReservationStatus, canPayOrder, useReservationNow } from "./OrderReservationStatus";
 
 export function OrderSummary({ order }: { order: Order }) {
+  const orderHref = `/orders/${encodeURIComponent(order.orderNumber)}`;
+  const reservationNow = useReservationNow(order);
+
   return (
     <article className="order-summary">
       <div className="order-summary-heading">
@@ -12,9 +16,16 @@ export function OrderSummary({ order }: { order: Order }) {
         </div>
         <div>
           <strong>{formatMoney(order.total, order.currency)}</strong>
-          <Link className="text-link" href={`/orders/${encodeURIComponent(order.orderNumber)}`}>
-            View details
-          </Link>
+          <div className="order-summary-actions">
+            {canPayOrder(order, reservationNow) ? (
+              <Link className="nav-link" href={orderHref}>
+                Pay Now
+              </Link>
+            ) : null}
+            <Link className="text-link" href={orderHref}>
+              View details
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -32,6 +43,7 @@ export function OrderSummary({ order }: { order: Order }) {
           <dd>{formatDateTime(order.placedAt ?? order.createdAt)}</dd>
         </div>
       </dl>
+      <OrderReservationStatus order={order} compact />
 
       <div className="order-lines">
         {order.items.map((item) => (

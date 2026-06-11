@@ -1,7 +1,7 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { config } from "../../config.js";
 import { prisma } from "../../prisma.js";
-import { orderInclude } from "../orders/orders.service.js";
+import { expireDueOrderReservations, orderInclude } from "../orders/orders.service.js";
 import type { UpdateCurrentUserInput } from "./auth.schemas.js";
 
 type CognitoClaims = {
@@ -13,6 +13,8 @@ type CognitoClaims = {
   family_name?: string;
   token_use?: string;
 };
+
+const jwksTimeoutDurationMs = 5000;
 
 let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
 
@@ -64,7 +66,7 @@ export async function getCurrentUser(authorization: string | undefined) {
 
   if (existingByEmail) {
     if (existingByEmail.externalAuthId && existingByEmail.externalAuthId !== externalAuthId) {
-      throw new AuthError("Email is already linked to another identity", 409);
+      throw new AuthError(emailLinkedToAnotherIdentityMessage(email), 409);
     }
 
     return prisma.user.update({
@@ -89,6 +91,8 @@ export async function getCurrentUser(authorization: string | undefined) {
 
 export async function listCurrentUserOrders(authorization: string | undefined) {
   const user = await getCurrentUser(authorization);
+
+  await expireDueOrderReservations();
 
   return prisma.order.findMany({
     where: {
@@ -136,7 +140,9 @@ async function verifyCognitoToken(authorization: string | undefined): Promise<Co
   const token = parseBearerToken(authorization);
 
   if (!jwks) {
-    jwks = createRemoteJWKSet(new URL(`${config.COGNITO_ISSUER}/.well-known/jwks.json`));
+    jwks = createRemoteJWKSet(new URL(`${config.COGNITO_ISSUER}/.well-known/jwks.json`), {
+      timeoutDuration: jwksTimeoutDurationMs
+    });
   }
 
   const result = await jwtVerify(token, jwks, {
@@ -179,4 +185,18 @@ function getDisplayName(claims: CognitoClaims) {
   }
 
   return [claims.given_name, claims.family_name].filter(Boolean).join(" ") || undefined;
+}
+
+function emailLinkedToAnotherIdentityMessage(email: string) {
+  const baseMessage = "Email is already linked to another identity";
+
+  if (!isLocalAppBaseUrl()) {
+    return baseMessage;
+  }
+
+  return `${baseMessage}. Local dev repair: make local-auth-reset-user EMAIL=${email}`;
+}
+
+function isLocalAppBaseUrl() {
+  return config.APP_BASE_URL.startsWith("http://localhost:") || config.APP_BASE_URL.startsWith("http://127.0.0.1:");
 }

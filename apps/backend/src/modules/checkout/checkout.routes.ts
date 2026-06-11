@@ -24,9 +24,15 @@ export const checkoutRoutes: FastifyPluginAsync = async (server) => {
     const returnUrl = `${body.returnBaseUrl.replace(/\/$/, "")}/orders/${encodeURIComponent(
       order.orderNumber
     )}?session_id={CHECKOUT_SESSION_ID}`;
-    const checkoutSession = await createStripeCheckoutSession(order.id, {
-      returnUrl
-    });
+    const checkoutSession = await createStripeCheckoutSession(
+      order.id,
+      {
+        returnUrl
+      },
+      {
+        userId: currentUser.id
+      }
+    );
 
     return reply.code(201).send({
       checkoutSession,

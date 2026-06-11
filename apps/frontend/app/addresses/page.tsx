@@ -14,7 +14,7 @@ import {
   getMyAddresses,
   updateMyAddress
 } from "../../src/lib/api";
-import { getSession, isAuthConfigured, startLogin } from "../../src/lib/auth";
+import { getCurrentReturnTo, getSession, isAuthConfigured, startLogin } from "../../src/lib/auth";
 
 const emptyAddressForm: CreateAddressInput = {
   label: "",
@@ -187,7 +187,7 @@ export default function AddressesPage() {
             <h2>Manage your addresses</h2>
           </div>
           <div className="auth-actions">
-            <button type="button" onClick={() => void startLogin()}>
+            <button type="button" onClick={() => void startLogin({ returnTo: getCurrentReturnTo() })}>
               Sign In
             </button>
             <Link className="nav-link" href="/auth/confirm">

@@ -2,6 +2,7 @@ const authStorageKey = "health.auth";
 const codeVerifierKey = "health.auth.codeVerifier";
 const returnToKey = "health.auth.returnTo";
 const stateKey = "health.auth.state";
+const defaultLoginReturnTo = "/my-health";
 
 type TokenResponse = {
   access_token: string;
@@ -17,6 +18,8 @@ export type AuthSession = {
   idToken: string;
   refreshToken?: string;
 };
+
+let pendingCompleteLogin: Promise<AuthSession> | null = null;
 
 export const cognitoDomain = process.env.NEXT_PUBLIC_COGNITO_DOMAIN?.replace(/\/$/, "") ?? "";
 export const cognitoClientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID ?? "";
@@ -41,7 +44,19 @@ export function getSession() {
     return null;
   }
 
-  const session = JSON.parse(raw) as AuthSession;
+  let session: AuthSession;
+
+  try {
+    session = JSON.parse(raw) as AuthSession;
+  } catch {
+    clearSession();
+    return null;
+  }
+
+  if (!isValidSession(session)) {
+    clearSession();
+    return null;
+  }
 
   if (session.expiresAt <= Date.now()) {
     clearSession();
@@ -52,9 +67,30 @@ export function getSession() {
 }
 
 export function clearSession() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
   window.localStorage.removeItem(authStorageKey);
+  clearLoginState();
+}
+
+export function clearLoginState() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
   window.sessionStorage.removeItem(codeVerifierKey);
   window.sessionStorage.removeItem(returnToKey);
+  window.sessionStorage.removeItem(stateKey);
+}
+
+function clearOAuthState() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.sessionStorage.removeItem(codeVerifierKey);
   window.sessionStorage.removeItem(stateKey);
 }
 
@@ -82,6 +118,14 @@ export async function startLogin(options: { returnTo?: string } = {}) {
   window.location.assign(`${cognitoDomain}/oauth2/authorize?${params.toString()}`);
 }
 
+export function getCurrentReturnTo() {
+  if (typeof window === "undefined") {
+    return defaultLoginReturnTo;
+  }
+
+  return normalizeReturnTo(`${window.location.pathname}${window.location.search}${window.location.hash}`);
+}
+
 export function signOut() {
   ensureConfigured();
   clearSession();
@@ -95,6 +139,14 @@ export function signOut() {
 }
 
 export async function completeLogin(searchParams: URLSearchParams) {
+  pendingCompleteLogin ??= completeLoginOnce(searchParams).finally(() => {
+    pendingCompleteLogin = null;
+  });
+
+  return pendingCompleteLogin;
+}
+
+async function completeLoginOnce(searchParams: URLSearchParams) {
   ensureConfigured();
 
   const code = searchParams.get("code");
@@ -103,6 +155,7 @@ export async function completeLogin(searchParams: URLSearchParams) {
   const codeVerifier = window.sessionStorage.getItem(codeVerifierKey);
 
   if (!code || !state || !expectedState || state !== expectedState || !codeVerifier) {
+    clearSession();
     throw new Error("Invalid Cognito callback");
   }
 
@@ -121,7 +174,8 @@ export async function completeLogin(searchParams: URLSearchParams) {
   });
 
   if (!response.ok) {
-    throw new Error(await response.text());
+    clearSession();
+    throw new Error(await getOAuthErrorMessage(response));
   }
 
   const tokenResponse = (await response.json()) as TokenResponse;
@@ -133,15 +187,34 @@ export async function completeLogin(searchParams: URLSearchParams) {
   };
 
   window.localStorage.setItem(authStorageKey, JSON.stringify(session));
-  window.sessionStorage.removeItem(codeVerifierKey);
-  window.sessionStorage.removeItem(stateKey);
+  clearOAuthState();
 
   return session;
 }
 
+async function getOAuthErrorMessage(response: Response) {
+  const text = await response.text();
+
+  if (!text) {
+    return `Cognito login failed with ${response.status}`;
+  }
+
+  try {
+    const payload = JSON.parse(text) as { error?: string; error_description?: string };
+
+    if (payload.error === "invalid_grant") {
+      return "That sign-in attempt expired. Start sign-in again.";
+    }
+
+    return payload.error_description ?? payload.error ?? text;
+  } catch {
+    return text;
+  }
+}
+
 export function consumeLoginReturnTo() {
   if (typeof window === "undefined") {
-    return "/";
+    return defaultLoginReturnTo;
   }
 
   const returnTo = normalizeReturnTo(window.sessionStorage.getItem(returnToKey));
@@ -179,20 +252,41 @@ function getLogoutUri() {
 
 function normalizeReturnTo(returnTo: string | null | undefined) {
   if (!returnTo) {
-    return `${window.location.pathname}${window.location.search}`;
+    return defaultLoginReturnTo;
   }
 
   try {
     const url = new URL(returnTo, window.location.origin);
 
     if (url.origin !== window.location.origin) {
-      return "/";
+      return defaultLoginReturnTo;
+    }
+
+    if (url.pathname === "/auth/callback") {
+      return defaultLoginReturnTo;
     }
 
     return `${url.pathname}${url.search}${url.hash}`;
   } catch {
-    return "/";
+    return defaultLoginReturnTo;
   }
+}
+
+function isValidSession(value: unknown): value is AuthSession {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const session = value as Partial<AuthSession>;
+
+  return (
+    typeof session.accessToken === "string" &&
+    session.accessToken.length > 0 &&
+    typeof session.idToken === "string" &&
+    session.idToken.length > 0 &&
+    typeof session.expiresAt === "number" &&
+    Number.isFinite(session.expiresAt)
+  );
 }
 
 function ensureConfigured() {

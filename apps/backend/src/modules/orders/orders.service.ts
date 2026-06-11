@@ -1,4 +1,11 @@
-import { FulfillmentStatus, OrderStatus, PaymentStatus, Prisma } from "@prisma/client";
+import {
+  FulfillmentStatus,
+  OrderStatus,
+  PaymentAttemptStatus,
+  PaymentStatus,
+  PaymentStatusEventSource,
+  Prisma
+} from "@prisma/client";
 import Stripe from "stripe";
 import { config } from "../../config.js";
 import { prisma } from "../../prisma.js";
@@ -68,7 +75,21 @@ export function getOrderByNumber(orderNumber: string) {
   });
 }
 
-export function getOrderByNumberForUser(orderNumber: string, userId: string) {
+export async function getOrderByNumberForUser(orderNumber: string, userId: string) {
+  const order = await prisma.order.findFirst({
+    where: {
+      orderNumber,
+      userId
+    },
+    include: orderInclude
+  });
+
+  if (!order) {
+    return null;
+  }
+
+  await expireOrderReservationIfNeeded(order.id);
+
   return prisma.order.findFirst({
     where: {
       orderNumber,
@@ -82,18 +103,20 @@ type OrderWithRelations = Prisma.OrderGetPayload<{
   include: typeof adminOrderInclude;
 }>;
 
-type ExpireUnpaidOrdersOptions = {
-  batchSize?: number;
-  olderThanMinutes?: number;
-  now?: Date;
-};
 type StripePaymentForExpiry = {
+  id: string;
   provider: string;
   providerPaymentId: string | null;
   status: PaymentStatus;
+  attempts?: Array<{
+    provider: string;
+    providerAttemptId: string;
+    status: PaymentAttemptStatus;
+  }>;
 };
 
 let stripe: Stripe | null = null;
+const orderReservationDurationMs = 24 * 60 * 60 * 1000;
 
 export class OrderError extends Error {
   constructor(
@@ -104,7 +127,13 @@ export class OrderError extends Error {
   }
 }
 
+export function getOrderReservationExpiresAt(now = new Date()) {
+  return new Date(now.getTime() + orderReservationDurationMs);
+}
+
 export async function listOrders(query: AdminOrderQuery) {
+  await expireDueOrderReservations();
+
   const whereClause = adminOrderWhereClause(query);
   const [{ count }] = await prisma.$queryRaw<Array<{ count: number }>>`
     SELECT COUNT(*)::int AS count
@@ -181,7 +210,11 @@ export async function cancelOrder(orderId: string) {
       id: orderId
     },
     include: {
-      payments: true
+      payments: {
+        include: {
+          attempts: true
+        }
+      }
     }
   });
 
@@ -241,6 +274,93 @@ export async function cancelUnpaidOrderAndReleaseInventory(orderId: string, rele
   return prisma.$transaction(async (tx) => cancelUnpaidOrderAndReleaseInventoryTx(tx, orderId, releasedAt));
 }
 
+export async function expireOrderReservationIfNeeded(orderId: string, now = new Date()) {
+  const order = await prisma.order.findFirst({
+    where: {
+      id: orderId,
+      reservationExpiresAt: {
+        lte: now
+      },
+      fulfillmentStatus: FulfillmentStatus.UNFULFILLED,
+      inventoryReleasedAt: null,
+      paymentStatus: {
+        in: [PaymentStatus.UNPAID, PaymentStatus.FAILED, PaymentStatus.EXPIRED]
+      },
+      status: {
+        in: [OrderStatus.PENDING, OrderStatus.PLACED]
+      }
+    },
+    include: {
+      payments: {
+        include: {
+          attempts: true
+        }
+      }
+    }
+  });
+
+  if (!order) {
+    return null;
+  }
+
+  const canExpire = await expireStripeCheckoutSessionsForCancellation(order.payments, {
+    throwWhenPaid: false
+  });
+
+  if (!canExpire) {
+    return null;
+  }
+
+  return prisma.$transaction(async (tx) => expireOrderReservationTx(tx, order.id, now));
+}
+
+export async function expireDueOrderReservations(options: { batchSize?: number; now?: Date } = {}) {
+  const now = options.now ?? new Date();
+  const batchSize = options.batchSize ?? 50;
+  const orders = await prisma.order.findMany({
+    where: {
+      reservationExpiresAt: {
+        lte: now
+      },
+      fulfillmentStatus: FulfillmentStatus.UNFULFILLED,
+      inventoryReleasedAt: null,
+      paymentStatus: {
+        in: [PaymentStatus.UNPAID, PaymentStatus.FAILED, PaymentStatus.EXPIRED]
+      },
+      status: {
+        in: [OrderStatus.PENDING, OrderStatus.PLACED]
+      }
+    },
+    select: {
+      id: true
+    },
+    orderBy: {
+      reservationExpiresAt: "asc"
+    },
+    take: batchSize
+  });
+  const expiredOrderIds: string[] = [];
+  const skippedOrderIds: string[] = [];
+
+  for (const order of orders) {
+    const expiredOrder = await expireOrderReservationIfNeeded(order.id, now);
+
+    if (expiredOrder) {
+      expiredOrderIds.push(expiredOrder.id);
+    } else {
+      skippedOrderIds.push(order.id);
+    }
+  }
+
+  return {
+    batchSize,
+    candidateCount: orders.length,
+    expiredCount: expiredOrderIds.length,
+    expiredOrderIds,
+    skippedOrderIds
+  };
+}
+
 export function markOrderPlaced(orderId: string) {
   return prisma.order.update({
     where: {
@@ -275,78 +395,6 @@ export function updateFulfillmentStatus(orderId: string, fulfillmentStatus: Fulf
       fulfillmentStatus
     },
     include: orderInclude
-  });
-}
-
-export async function expireUnpaidOrders(options: ExpireUnpaidOrdersOptions = {}) {
-  const now = options.now ?? new Date();
-  const olderThanMinutes = options.olderThanMinutes ?? 15;
-  const batchSize = options.batchSize ?? 50;
-  const expiresBefore = new Date(now.getTime() - olderThanMinutes * 60_000);
-  const candidates = await prisma.order.findMany({
-    where: unpaidExpiryWhere(expiresBefore),
-    select: {
-      id: true,
-      payments: {
-        select: {
-          provider: true,
-          providerPaymentId: true,
-          status: true
-        }
-      }
-    },
-    orderBy: {
-      createdAt: "asc"
-    },
-    take: batchSize
-  });
-  const expiredOrderIds: string[] = [];
-
-  for (const candidate of candidates) {
-    const canCancel = await expireStripeCheckoutSessionsForCancellation(candidate.payments, {
-      throwWhenPaid: false
-    });
-
-    if (!canCancel) {
-      continue;
-    }
-
-    const expired = await cancelOrderAndReleaseInventory(candidate.id, expiresBefore, now);
-
-    if (expired) {
-      expiredOrderIds.push(expired.id);
-    }
-  }
-
-  return {
-    batchSize,
-    expiredCount: expiredOrderIds.length,
-    expiredOrderIds,
-    expiresBefore: expiresBefore.toISOString()
-  };
-}
-
-async function cancelOrderAndReleaseInventory(
-  orderId: string,
-  expiresBefore: Date,
-  releasedAt = new Date()
-) {
-  return prisma.$transaction(async (tx) => {
-    const order = await tx.order.findFirst({
-      where: {
-        id: orderId,
-        ...unpaidExpiryWhere(expiresBefore)
-      },
-      include: {
-        items: true
-      }
-    });
-
-    if (!order) {
-      return null;
-    }
-
-    return cancelUnpaidOrderAndReleaseInventoryTx(tx, order.id, releasedAt);
   });
 }
 
@@ -416,20 +464,87 @@ async function cancelUnpaidOrderAndReleaseInventoryTx(
   });
 }
 
-function unpaidExpiryWhere(expiresBefore: Date) {
-  return {
-    createdAt: {
-      lte: expiresBefore
+async function expireOrderReservationTx(tx: Prisma.TransactionClient, orderId: string, now: Date) {
+  const payments = await tx.payment.findMany({
+    where: {
+      orderId,
+      status: {
+        in: [PaymentStatus.UNPAID, PaymentStatus.FAILED, PaymentStatus.EXPIRED]
+      }
     },
-    fulfillmentStatus: FulfillmentStatus.UNFULFILLED,
-    inventoryReleasedAt: null,
-    paymentStatus: {
-      in: [PaymentStatus.UNPAID, PaymentStatus.FAILED, PaymentStatus.EXPIRED]
-    },
-    status: {
-      in: [OrderStatus.PENDING, OrderStatus.PLACED]
+    include: {
+      attempts: {
+        where: {
+          status: PaymentAttemptStatus.OPEN
+        },
+        orderBy: {
+          createdAt: "desc"
+        },
+        take: 1
+      }
     }
-  } satisfies Prisma.OrderWhereInput;
+  });
+
+  for (const payment of payments) {
+    if (payment.status === PaymentStatus.EXPIRED) {
+      continue;
+    }
+
+    await tx.paymentStatusEvent.create({
+      data: {
+        paymentId: payment.id,
+        paymentAttemptId: payment.attempts[0]?.id,
+        orderId,
+        fromStatus: payment.status,
+        toStatus: PaymentStatus.EXPIRED,
+        source: PaymentStatusEventSource.SYSTEM,
+        reason: "Order reservation expired",
+        metadata: {
+          reservationExpiredAt: now.toISOString()
+        }
+      }
+    });
+  }
+
+  await tx.paymentAttempt.updateMany({
+    where: {
+      orderId,
+      status: PaymentAttemptStatus.OPEN
+    },
+    data: {
+      status: PaymentAttemptStatus.EXPIRED,
+      expiredAt: now
+    }
+  });
+
+  await tx.payment.updateMany({
+    where: {
+      orderId,
+      status: {
+        in: [PaymentStatus.UNPAID, PaymentStatus.FAILED]
+      }
+    },
+    data: {
+      status: PaymentStatus.EXPIRED
+    }
+  });
+
+  await tx.order.updateMany({
+    where: {
+      id: orderId,
+      reservationExpiresAt: {
+        lte: now
+      },
+      paymentStatus: {
+        in: [PaymentStatus.UNPAID, PaymentStatus.FAILED, PaymentStatus.EXPIRED]
+      }
+    },
+    data: {
+      paymentStatus: PaymentStatus.EXPIRED
+    }
+  });
+
+  return cancelUnpaidOrderAndReleaseInventoryTx(tx, orderId, now);
 }
 
 async function expireStripeCheckoutSessionsForCancellation(
@@ -437,15 +552,25 @@ async function expireStripeCheckoutSessionsForCancellation(
   options: { throwWhenPaid: boolean }
 ) {
   const checkoutSessionIds = payments
-    .filter(
-      (payment) =>
-        payment.provider === "stripe" &&
-        payment.providerPaymentId?.startsWith("cs_") &&
-        payment.status !== PaymentStatus.PAID &&
-        payment.status !== PaymentStatus.REFUNDED
-    )
-    .map((payment) => payment.providerPaymentId)
-    .filter((id): id is string => Boolean(id));
+    .flatMap((payment) => {
+      if (payment.provider !== "stripe" || payment.status === PaymentStatus.PAID || payment.status === PaymentStatus.REFUNDED) {
+        return [];
+      }
+
+      const paymentIds = payment.providerPaymentId?.startsWith("cs_") ? [payment.providerPaymentId] : [];
+      const attemptIds =
+        payment.attempts
+          ?.filter(
+            (attempt) =>
+              attempt.provider === "stripe" &&
+              attempt.providerAttemptId.startsWith("cs_") &&
+              attempt.status === PaymentAttemptStatus.OPEN
+          )
+          .map((attempt) => attempt.providerAttemptId) ?? [];
+
+      return [...paymentIds, ...attemptIds];
+    })
+    .filter((id, index, ids): id is string => Boolean(id) && ids.indexOf(id) === index);
 
   if (checkoutSessionIds.length === 0) {
     return true;
@@ -454,9 +579,25 @@ async function expireStripeCheckoutSessionsForCancellation(
   const stripeClient = getStripe();
 
   for (const checkoutSessionId of checkoutSessionIds) {
+    const canContinue = await expireStripeCheckoutSessionForCancellation(stripeClient, checkoutSessionId, options);
+
+    if (!canContinue) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+async function expireStripeCheckoutSessionForCancellation(
+  stripeClient: Stripe,
+  checkoutSessionId: string,
+  options: { throwWhenPaid: boolean }
+) {
+  try {
     const checkoutSession = await stripeClient.checkout.sessions.retrieve(checkoutSessionId);
 
-    if (checkoutSession.payment_status === "paid" || checkoutSession.status === "complete") {
+    if (isPaidCheckoutSession(checkoutSession)) {
       if (options.throwWhenPaid) {
         throw new OrderError("Cannot cancel an order with a completed Stripe Checkout Session", 409);
       }
@@ -467,9 +608,29 @@ async function expireStripeCheckoutSessionsForCancellation(
     if (checkoutSession.status === "open") {
       await stripeClient.checkout.sessions.expire(checkoutSession.id);
     }
-  }
 
-  return true;
+    return true;
+  } catch (caught) {
+    const refreshedSession = await stripeClient.checkout.sessions.retrieve(checkoutSessionId).catch(() => null);
+
+    if (refreshedSession && isPaidCheckoutSession(refreshedSession)) {
+      if (options.throwWhenPaid) {
+        throw new OrderError("Cannot cancel an order with a completed Stripe Checkout Session", 409);
+      }
+
+      return false;
+    }
+
+    if (refreshedSession?.status === "expired") {
+      return true;
+    }
+
+    throw caught;
+  }
+}
+
+function isPaidCheckoutSession(checkoutSession: Stripe.Checkout.Session) {
+  return checkoutSession.payment_status === "paid" || checkoutSession.status === "complete";
 }
 
 function getStripe() {

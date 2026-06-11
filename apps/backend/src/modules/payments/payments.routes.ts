@@ -1,4 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
+import { getCurrentUser } from "../auth/auth.service.js";
 import {
   createPaymentSchema,
   createStripeCheckoutSessionSchema,
@@ -13,15 +14,19 @@ import {
   markPaymentAuthorized,
   markPaymentFailed,
   markPaymentPaid,
-  refundPayment,
-  syncStripePayment
+  markPaymentRefunded,
+  syncStripePayment,
+  syncUnsettledStripePayments
 } from "./payments.service.js";
 
 export const paymentsRoutes: FastifyPluginAsync = async (server) => {
   server.post("/orders/:id/stripe-checkout-session", async (request, reply) => {
+    const currentUser = await getCurrentUser(request.headers.authorization);
     const { id } = orderIdParamsSchema.parse(request.params);
     const input = createStripeCheckoutSessionSchema.parse(request.body);
-    const checkoutSession = await createStripeCheckoutSession(id, input);
+    const checkoutSession = await createStripeCheckoutSession(id, input, {
+      userId: currentUser.id
+    });
 
     return reply.code(201).send(checkoutSession);
   });
@@ -58,11 +63,13 @@ export const paymentsRoutes: FastifyPluginAsync = async (server) => {
     return markPaymentFailed(id);
   });
 
-  server.post("/admin/payments/:id/refund", async (request) => {
+  server.post("/admin/payments/:id/mark-refunded", async (request) => {
     const { id } = paymentIdParamsSchema.parse(request.params);
 
-    return refundPayment(id);
+    return markPaymentRefunded(id);
   });
+
+  server.post("/admin/payments/sync-stripe", async () => syncUnsettledStripePayments());
 
   server.post("/admin/payments/:id/sync-stripe", async (request) => {
     const { id } = paymentIdParamsSchema.parse(request.params);

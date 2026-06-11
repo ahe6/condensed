@@ -1,11 +1,16 @@
 import {
   AssessmentQuestionType,
-  AssessmentSubmissionStatus,
+  AssessmentTemplateType,
   AssessmentTemplateStatus,
   ProductPurchaseMode,
   ProductStatus
 } from "@prisma/client";
 import { prisma } from "../../prisma.js";
+import { createCheckoutAuthorization } from "../checkout-authorizations/checkout-authorizations.service.js";
+import {
+  evaluateGoalIntakeRecommendations,
+  evaluateProductIntakeAssessment
+} from "./assessments.policies.js";
 import type { AssessmentAnswerValue, SubmitAssessmentInput } from "./assessments.schemas.js";
 
 type AssessmentTemplateWithQuestions = NonNullable<
@@ -17,6 +22,48 @@ type NormalizedAssessmentAnswer = string | number | boolean | string[];
 type SubmitAssessmentOptions = {
   email?: string | null;
   userId?: string;
+};
+
+const recommendationProductInclude = {
+  variants: {
+    orderBy: {
+      createdAt: "asc" as const
+    }
+  },
+  images: {
+    orderBy: {
+      sortOrder: "asc" as const
+    }
+  },
+  categories: {
+    include: {
+      category: true
+    }
+  }
+};
+
+const assessmentSubmissionInclude = {
+  answers: {
+    orderBy: {
+      questionKey: "asc" as const
+    }
+  },
+  checkoutAuthorizations: true,
+  recommendations: {
+    include: {
+      product: {
+        include: recommendationProductInclude
+      }
+    },
+    orderBy: {
+      rank: "asc" as const
+    }
+  },
+  product: {
+    include: recommendationProductInclude
+  },
+  template: true,
+  user: true
 };
 
 export class AssessmentError extends Error {
@@ -32,11 +79,38 @@ export function getActiveAssessmentForProductSlug(slug: string) {
   return prisma.assessmentTemplate.findFirst({
     where: {
       status: AssessmentTemplateStatus.ACTIVE,
+      type: AssessmentTemplateType.PRODUCT_INTAKE,
       product: {
         slug,
         status: ProductStatus.ACTIVE,
         purchaseMode: ProductPurchaseMode.ASSESSMENT_REQUIRED
       }
+    },
+    include: {
+      questions: {
+        orderBy: [
+          {
+            sortOrder: "asc"
+          },
+          {
+            createdAt: "asc"
+          }
+        ]
+      },
+      product: true
+    },
+    orderBy: {
+      version: "desc"
+    }
+  });
+}
+
+export function getActiveAssessmentForGoalKey(goalKey: string) {
+  return prisma.assessmentTemplate.findFirst({
+    where: {
+      goalKey,
+      status: AssessmentTemplateStatus.ACTIVE,
+      type: AssessmentTemplateType.GOAL_INTAKE
     },
     include: {
       questions: {
@@ -68,33 +142,150 @@ export async function submitAssessmentForProductSlug(
     throw new AssessmentError("Assessment not found", 404);
   }
 
+  if (!assessment.productId) {
+    throw new AssessmentError("Assessment is not linked to a product", 500);
+  }
+
+  if (!options.userId) {
+    throw new AssessmentError("Sign in required", 401);
+  }
+
+  const productId = assessment.productId;
+  const userId = options.userId;
   const answers = validateAssessmentAnswers(assessment, input.answers);
+  const decision = evaluateProductIntakeAssessment(getAnswersByKey(answers));
   const email = input.email ?? options.email ?? null;
 
-  return prisma.assessmentSubmission.create({
-    data: {
-      email,
-      productId: assessment.productId,
-      status: AssessmentSubmissionStatus.SUBMITTED,
-      templateId: assessment.id,
-      userId: options.userId,
-      answers: {
-        create: answers.map((answer) => ({
-          questionId: answer.questionId,
-          questionKey: answer.questionKey,
-          value: answer.value
-        }))
-      }
-    },
-    include: {
-      answers: {
-        orderBy: {
-          questionKey: "asc"
+  return prisma.$transaction(async (tx) => {
+    const submission = await tx.assessmentSubmission.create({
+      data: {
+        decidedAt: new Date(),
+        decisionPolicyId: decision.policyId,
+        decisionPolicyVersion: decision.policyVersion,
+        decisionReason: decision.reason,
+        email,
+        productId,
+        status: decision.status,
+        templateId: assessment.id,
+        userId,
+        answers: {
+          create: answers.map((answer) => ({
+            questionId: answer.questionId,
+            questionKey: answer.questionKey,
+            value: answer.value
+          }))
         }
       },
-      product: true,
-      template: true
+      include: assessmentSubmissionInclude
+    });
+
+    if (decision.status === "APPROVED") {
+      await createCheckoutAuthorization(tx, {
+        assessmentSubmissionId: submission.id,
+        productId,
+        userId
+      });
     }
+
+    return tx.assessmentSubmission.findUniqueOrThrow({
+      where: {
+        id: submission.id
+      },
+      include: assessmentSubmissionInclude
+    });
+  });
+}
+
+export async function submitAssessmentForGoalKey(
+  goalKey: string,
+  input: SubmitAssessmentInput,
+  options: SubmitAssessmentOptions = {}
+) {
+  const assessment = await getActiveAssessmentForGoalKey(goalKey);
+
+  if (!assessment) {
+    throw new AssessmentError("Assessment not found", 404);
+  }
+
+  if (!options.userId) {
+    throw new AssessmentError("Sign in required", 401);
+  }
+
+  const userId = options.userId;
+  const answers = validateAssessmentAnswers(assessment, input.answers);
+  const recommendations = evaluateGoalIntakeRecommendations(goalKey, getAnswersByKey(answers));
+  const recommendedProducts = await prisma.product.findMany({
+    where: {
+      slug: {
+        in: recommendations.map((recommendation) => recommendation.productSlug)
+      },
+      status: ProductStatus.ACTIVE
+    },
+    select: {
+      id: true,
+      slug: true
+    }
+  });
+  const recommendedProductsBySlug = new Map(
+    recommendedProducts.map((product) => [product.slug, product])
+  );
+  const email = input.email ?? options.email ?? null;
+
+  return prisma.$transaction(async (tx) => {
+    const submission = await tx.assessmentSubmission.create({
+      data: {
+        decidedAt: new Date(),
+        decisionPolicyId: "goal-intake-recommendations-v1",
+        decisionPolicyVersion: 1,
+        decisionReason: "recommendations_generated",
+        email,
+        goalKey,
+        status: "SUBMITTED",
+        templateId: assessment.id,
+        userId,
+        answers: {
+          create: answers.map((answer) => ({
+            questionId: answer.questionId,
+            questionKey: answer.questionKey,
+            value: answer.value
+          }))
+        },
+        recommendations: {
+          create: recommendations.map((recommendation) => {
+            const product = recommendedProductsBySlug.get(recommendation.productSlug);
+
+            if (!product) {
+              throw new AssessmentError(
+                `Recommendation product not found: ${recommendation.productSlug}`,
+                500
+              );
+            }
+
+            return {
+              productId: product.id,
+              rank: recommendation.rank,
+              reasonCode: recommendation.reasonCode,
+              reasonText: recommendation.reasonText,
+              sourcePolicyId: recommendation.sourcePolicyId,
+              sourcePolicyVersion: recommendation.sourcePolicyVersion
+            };
+          })
+        }
+      },
+      include: assessmentSubmissionInclude
+    });
+
+    return submission;
+  });
+}
+
+export function listAdminAssessmentSubmissions() {
+  return prisma.assessmentSubmission.findMany({
+    include: assessmentSubmissionInclude,
+    orderBy: {
+      submittedAt: "desc"
+    },
+    take: 50
   });
 }
 
@@ -124,6 +315,15 @@ function validateAssessmentAnswers(
       value
     };
   });
+}
+
+function getAnswersByKey(
+  answers: Array<{
+    questionKey: string;
+    value: NormalizedAssessmentAnswer;
+  }>
+) {
+  return Object.fromEntries(answers.map((answer) => [answer.questionKey, answer.value]));
 }
 
 function normalizeAnswer(

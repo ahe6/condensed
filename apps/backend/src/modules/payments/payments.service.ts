@@ -9,7 +9,7 @@ import {
 import Stripe from "stripe";
 import { config } from "../../config.js";
 import { prisma } from "../../prisma.js";
-import { cancelUnpaidOrderAndReleaseInventory, orderInclude } from "../orders/orders.service.js";
+import { expireOrderReservationIfNeeded, orderInclude } from "../orders/orders.service.js";
 import type { CreatePaymentInput, CreateStripeCheckoutSessionInput } from "./payments.schemas.js";
 
 const paymentInclude = {
@@ -67,6 +67,10 @@ type ReconcileStripeCheckoutSessionsOptions = {
   olderThanMinutes?: number;
   now?: Date;
 };
+type SyncStripePaymentFailure = {
+  paymentId: string;
+  error: string;
+};
 
 export class PaymentError extends Error {
   constructor(
@@ -117,7 +121,7 @@ export function markPaymentFailed(paymentId: string) {
   return updatePaymentAndOrder(paymentId, PaymentStatus.FAILED, "Admin marked payment failed");
 }
 
-export function refundPayment(paymentId: string) {
+export function markPaymentRefunded(paymentId: string) {
   return updatePaymentAndOrder(paymentId, PaymentStatus.REFUNDED, "Admin marked payment refunded");
 }
 
@@ -187,7 +191,59 @@ export async function syncStripePayment(paymentId: string) {
   throw new PaymentError("Stripe payment id must be a Checkout Session or PaymentIntent id", 400);
 }
 
-export async function createStripeCheckoutSession(orderId: string, input: CreateStripeCheckoutSessionInput) {
+export async function syncUnsettledStripePayments() {
+  const payments = await prisma.payment.findMany({
+    where: {
+      provider: "stripe",
+      status: {
+        in: [PaymentStatus.UNPAID, PaymentStatus.AUTHORIZED, PaymentStatus.FAILED]
+      }
+    },
+    orderBy: {
+      createdAt: "desc"
+    },
+    select: {
+      id: true
+    }
+  });
+  const syncedPaymentIds: string[] = [];
+  const settledPaymentIds: string[] = [];
+  const failed: SyncStripePaymentFailure[] = [];
+
+  for (const payment of payments) {
+    try {
+      const syncedPayment = await syncStripePayment(payment.id);
+      syncedPaymentIds.push(syncedPayment.id);
+
+      if (syncedPayment.status === PaymentStatus.PAID || syncedPayment.status === PaymentStatus.AUTHORIZED) {
+        settledPaymentIds.push(syncedPayment.id);
+      }
+    } catch (caught) {
+      failed.push({
+        paymentId: payment.id,
+        error: caught instanceof Error ? caught.message : "Could not sync Stripe payment"
+      });
+    }
+  }
+
+  return {
+    candidateCount: payments.length,
+    syncedCount: syncedPaymentIds.length,
+    syncedPaymentIds,
+    settledCount: settledPaymentIds.length,
+    settledPaymentIds,
+    failedCount: failed.length,
+    failed
+  };
+}
+
+export async function createStripeCheckoutSession(
+  orderId: string,
+  input: CreateStripeCheckoutSessionInput,
+  options: { userId?: string } = {}
+) {
+  await expireOrderReservationIfNeeded(orderId);
+
   const stripeClient = getStripe();
   const order = await prisma.order.findUniqueOrThrow({
     where: {
@@ -207,7 +263,15 @@ export async function createStripeCheckoutSession(orderId: string, input: Create
     }
   });
 
-  if (order.paymentStatus === PaymentStatus.PAID || order.paymentStatus === PaymentStatus.REFUNDED) {
+  if (options.userId && order.userId !== options.userId) {
+    throw new PaymentError("Order not found", 404);
+  }
+
+  if (order.reservationExpiresAt && order.reservationExpiresAt <= new Date()) {
+    throw new PaymentError("Order reservation expired", 409);
+  }
+
+  if (order.paymentStatus !== PaymentStatus.UNPAID && order.paymentStatus !== PaymentStatus.FAILED) {
     throw new PaymentError(`Order payment is already ${order.paymentStatus.toLowerCase()}`, 409);
   }
 
@@ -235,6 +299,32 @@ export async function createStripeCheckoutSession(orderId: string, input: Create
           include: paymentInclude
         })
       };
+    }
+
+    const syncedStatus = statusFromCheckoutSession(checkoutSession, PaymentStatus.UNPAID);
+
+    if (syncedStatus !== PaymentStatus.UNPAID) {
+      await applyStripeCheckoutSessionUpdate(
+        existingPayment,
+        reusableAttempt,
+        checkoutSession,
+        syncedStatus,
+        {
+          ...checkoutSessionMetadata(checkoutSession),
+          lastStripeRecoverySyncAt: new Date().toISOString()
+        },
+        {
+          source: PaymentStatusEventSource.SYSTEM,
+          paymentAttemptId: reusableAttempt.id,
+          providerObjectId: checkoutSession.id,
+          reason: "Stripe Checkout Session recovery sync",
+          metadata: checkoutSessionMetadata(checkoutSession)
+        }
+      );
+
+      if (syncedStatus !== PaymentStatus.EXPIRED) {
+        throw new PaymentError(`Order payment is already ${syncedStatus.toLowerCase()}`, 409);
+      }
     }
   }
 
@@ -377,7 +467,7 @@ export async function reconcileStripeCheckoutSessions(options: ReconcileStripeCh
   const reconciledAttemptIds: string[] = [];
   const openAttemptIds: string[] = [];
   const paidAttemptIds: string[] = [];
-  const expiredOrderIds: string[] = [];
+  const expiredAttemptIds: string[] = [];
   const failedAttemptIds: string[] = [];
 
   for (const attempt of attempts) {
@@ -387,7 +477,7 @@ export async function reconcileStripeCheckoutSessions(options: ReconcileStripeCh
       ...checkoutSessionMetadata(checkoutSession),
       lastStripeReconciliationAt: now.toISOString()
     };
-    const updatedPayment = await applyStripeCheckoutSessionUpdate(attempt.payment, attempt, checkoutSession, status, metadata, {
+    await applyStripeCheckoutSessionUpdate(attempt.payment, attempt, checkoutSession, status, metadata, {
       source: PaymentStatusEventSource.SYSTEM,
       paymentAttemptId: attempt.id,
       providerObjectId: checkoutSession.id,
@@ -400,7 +490,7 @@ export async function reconcileStripeCheckoutSessions(options: ReconcileStripeCh
     if (status === PaymentStatus.PAID || status === PaymentStatus.AUTHORIZED) {
       paidAttemptIds.push(attempt.id);
     } else if (status === PaymentStatus.EXPIRED) {
-      expiredOrderIds.push(updatedPayment.orderId);
+      expiredAttemptIds.push(attempt.id);
     } else if (status === PaymentStatus.FAILED) {
       failedAttemptIds.push(attempt.id);
     } else {
@@ -416,8 +506,8 @@ export async function reconcileStripeCheckoutSessions(options: ReconcileStripeCh
     openAttemptIds,
     paidAttemptIds,
     failedAttemptIds,
-    expiredCount: expiredOrderIds.length,
-    expiredOrderIds
+    expiredCount: expiredAttemptIds.length,
+    expiredAttemptIds
   };
 }
 
@@ -833,10 +923,6 @@ async function applyStripeCheckoutSessionUpdate(
     });
   });
 
-  if (status === PaymentStatus.EXPIRED && updatedPayment.order.paymentStatus === PaymentStatus.EXPIRED) {
-    await cancelUnpaidOrderAndReleaseInventory(updatedPayment.orderId);
-  }
-
   return updatedPayment;
 }
 
@@ -1030,6 +1116,10 @@ async function aggregatePaymentStatusForAttempt(
   }
 
   if (incomingStatus === PaymentStatus.UNPAID) {
+    return payment.status;
+  }
+
+  if (incomingStatus === PaymentStatus.EXPIRED) {
     return payment.status;
   }
 

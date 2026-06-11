@@ -92,15 +92,17 @@ export type AssessmentQuestion = {
 
 export type AssessmentTemplate = {
   id: string;
-  productId: string;
+  productId: string | null;
+  goalKey: string | null;
   slug: string;
   title: string;
   description: string | null;
+  type: "PRODUCT_INTAKE" | "GOAL_INTAKE";
   status: "DRAFT" | "ACTIVE" | "ARCHIVED";
   version: number;
   createdAt: string;
   updatedAt: string;
-  product: Product;
+  product: Product | null;
   questions: AssessmentQuestion[];
 };
 
@@ -118,19 +120,65 @@ export type AssessmentSubmissionAnswer = {
   updatedAt: string;
 };
 
-export type AssessmentSubmission = {
+export type CheckoutAuthorizationStatus = "ACTIVE" | "USED" | "EXPIRED" | "REVOKED";
+
+export type CheckoutAuthorization = {
   id: string;
-  templateId: string;
+  userId: string;
   productId: string;
-  userId: string | null;
-  email: string | null;
-  status: AssessmentSubmissionStatus;
-  submittedAt: string;
+  variantId: string | null;
+  assessmentSubmissionId: string;
+  status: CheckoutAuthorizationStatus;
+  expiresAt: string;
+  usedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AssessmentRecommendationStatus = "RECOMMENDED" | "SELECTED" | "DISMISSED";
+
+export type AssessmentRecommendation = {
+  id: string;
+  assessmentSubmissionId: string;
+  productId: string;
+  status: AssessmentRecommendationStatus;
+  rank: number;
+  reasonCode: string;
+  reasonText: string | null;
+  sourcePolicyId: string;
+  sourcePolicyVersion: number;
+  selectedAt: string | null;
+  dismissedAt: string | null;
   createdAt: string;
   updatedAt: string;
   product: Product;
+};
+
+export type AssessmentSubmission = {
+  id: string;
+  templateId: string;
+  productId: string | null;
+  goalKey: string | null;
+  userId: string | null;
+  email: string | null;
+  status: AssessmentSubmissionStatus;
+  decisionReason: string | null;
+  decisionPolicyId: string | null;
+  decisionPolicyVersion: number | null;
+  decidedAt: string | null;
+  submittedAt: string;
+  createdAt: string;
+  updatedAt: string;
+  user: User | null;
+  product: Product | null;
   template: Omit<AssessmentTemplate, "product" | "questions">;
   answers: AssessmentSubmissionAnswer[];
+  checkoutAuthorizations: CheckoutAuthorization[];
+  recommendations: AssessmentRecommendation[];
+};
+
+export type AdminAssessmentSubmissionsResponse = {
+  submissions: AssessmentSubmission[];
 };
 
 export type CreateCategoryInput = {
@@ -407,6 +455,7 @@ export type Order = {
   shippingTotal: string;
   taxTotal: string;
   total: string;
+  reservationExpiresAt: string | null;
   inventoryReleasedAt: string | null;
   placedAt: string | null;
   createdAt: string;
@@ -494,6 +543,19 @@ export type CheckoutWithStripeResult = {
   checkoutSession: StripeCheckoutSession;
 };
 
+export type SyncStripePaymentsResult = {
+  candidateCount: number;
+  syncedCount: number;
+  syncedPaymentIds: string[];
+  settledCount: number;
+  settledPaymentIds: string[];
+  failedCount: number;
+  failed: Array<{
+    paymentId: string;
+    error: string;
+  }>;
+};
+
 export const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://127.0.0.1:3000";
 
@@ -577,6 +639,10 @@ export async function getProductAssessment(slug: string) {
   return request<AssessmentTemplate>(`/products/${encodeURIComponent(slug)}/assessment`);
 }
 
+export async function getGoalAssessment(goalKey: string) {
+  return request<AssessmentTemplate>(`/goals/${encodeURIComponent(goalKey)}/assessment`);
+}
+
 export async function submitProductAssessment(
   slug: string,
   input: { answers: Record<string, AssessmentAnswerValue>; email?: string }
@@ -590,12 +656,29 @@ export async function submitProductAssessment(
   );
 }
 
+export async function submitGoalAssessment(
+  goalKey: string,
+  input: { answers: Record<string, AssessmentAnswerValue>; email?: string }
+) {
+  return request<AssessmentSubmission>(
+    `/goals/${encodeURIComponent(goalKey)}/assessment/submissions`,
+    {
+      method: "POST",
+      body: JSON.stringify(input)
+    }
+  );
+}
+
 export async function listCategories() {
   return request<Category[]>("/categories");
 }
 
 export async function listAdminProducts() {
   return request<Product[]>("/admin/products");
+}
+
+export async function listAdminAssessmentSubmissions() {
+  return request<AdminAssessmentSubmissionsResponse>("/admin/assessment-submissions");
 }
 
 export async function createCategory(input: CreateCategoryInput) {
@@ -810,14 +893,20 @@ export async function markPaymentFailed(paymentId: string) {
   });
 }
 
-export async function refundPayment(paymentId: string) {
-  return request<PaymentWithOrder>(`/admin/payments/${paymentId}/refund`, {
+export async function markPaymentRefunded(paymentId: string) {
+  return request<PaymentWithOrder>(`/admin/payments/${paymentId}/mark-refunded`, {
     method: "POST"
   });
 }
 
 export async function syncStripePayment(paymentId: string) {
   return request<PaymentWithOrder>(`/admin/payments/${paymentId}/sync-stripe`, {
+    method: "POST"
+  });
+}
+
+export async function syncUnsettledStripePayments() {
+  return request<SyncStripePaymentsResult>("/admin/payments/sync-stripe", {
     method: "POST"
   });
 }

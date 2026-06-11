@@ -1,5 +1,6 @@
 import { Prisma, ProductPurchaseMode, ProductStatus } from "@prisma/client";
 import { prisma } from "../../prisma.js";
+import { hasActiveCheckoutAuthorization } from "../checkout-authorizations/checkout-authorizations.service.js";
 import type {
   AddCartItemInput,
   CreateCartInput,
@@ -118,6 +119,7 @@ export async function addCartItem(
       inventoryQuantity: true,
       product: {
         select: {
+          id: true,
           slug: true,
           purchaseMode: true,
           status: true
@@ -138,7 +140,11 @@ export async function addCartItem(
     }
   });
 
-  assertVariantCanBeInCart(variant, (existingItem?.quantity ?? 0) + input.quantity);
+  await assertVariantCanBeInCart(
+    variant,
+    (existingItem?.quantity ?? 0) + input.quantity,
+    actorUserId
+  );
 
   await prisma.cartItem.upsert({
     where: {
@@ -179,9 +185,11 @@ export async function updateCartItemQuantity(
       id: true,
       variant: {
         select: {
+          id: true,
           inventoryQuantity: true,
           product: {
             select: {
+              id: true,
               slug: true,
               purchaseMode: true,
               status: true
@@ -192,7 +200,7 @@ export async function updateCartItemQuantity(
       }
     }
   });
-  assertVariantCanBeInCart(cartItem.variant, input.quantity);
+  await assertVariantCanBeInCart(cartItem.variant, input.quantity, actorUserId);
 
   await prisma.cartItem.update({
     where: {
@@ -276,7 +284,11 @@ async function adoptCartForUser(userId: string, cartId: string): Promise<CartWit
 
   if (!existingCart) {
     for (const item of sourceCart.items) {
-      assertVariantCanBeInCart(getCartItemVariant(sourceVariantsById, item.variantId), item.quantity);
+      await assertVariantCanBeInCart(
+        getCartItemVariant(sourceVariantsById, item.variantId),
+        item.quantity,
+        userId
+      );
     }
 
     const adoptedCart = await prisma.cart.update({
@@ -298,9 +310,10 @@ async function adoptCartForUser(userId: string, cartId: string): Promise<CartWit
     );
 
     for (const item of sourceCart.items) {
-      assertVariantCanBeInCart(
+      await assertVariantCanBeInCart(
         getCartItemVariant(sourceVariantsById, item.variantId),
-        (existingItemsByVariantId.get(item.variantId) ?? 0) + item.quantity
+        (existingItemsByVariantId.get(item.variantId) ?? 0) + item.quantity,
+        userId
       );
     }
 
@@ -368,6 +381,7 @@ async function getCartItemVariantsById(variantIds: string[]) {
       inventoryQuantity: true,
       product: {
         select: {
+          id: true,
           slug: true,
           purchaseMode: true,
           status: true
@@ -393,24 +407,43 @@ function getCartItemVariant(
   return variant;
 }
 
-function assertVariantCanBeInCart(
+async function assertVariantCanBeInCart(
   variant: {
+    id: string;
     inventoryQuantity: number;
     product: {
+      id: string;
       slug: string;
       purchaseMode: ProductPurchaseMode;
       status: ProductStatus;
     };
     sku: string;
   },
-  requestedQuantity: number
+  requestedQuantity: number,
+  actorUserId?: string
 ) {
   if (variant.product.status !== ProductStatus.ACTIVE) {
     throw new CartError(`Product is not active: ${variant.product.slug}`);
   }
 
   if (variant.product.purchaseMode !== ProductPurchaseMode.DIRECT) {
-    throw new CartError(`Product requires assessment before checkout: ${variant.product.slug}`);
+    if (!actorUserId) {
+      throw new CartError(
+        `Product requires sign-in and assessment approval: ${variant.product.slug}`
+      );
+    }
+
+    const isAuthorized = await hasActiveCheckoutAuthorization(prisma, {
+      productId: variant.product.id,
+      userId: actorUserId,
+      variantId: variant.id
+    });
+
+    if (!isAuthorized) {
+      throw new CartError(
+        `Product requires assessment approval before checkout: ${variant.product.slug}`
+      );
+    }
   }
 
   if (requestedQuantity > variant.inventoryQuantity) {

@@ -16,11 +16,11 @@ import {
 } from "./users.service.js";
 
 export const usersRoutes: FastifyPluginAsync = async (server) => {
-  server.get("/users", async () => {
+  server.get("/admin/users", async () => {
     return listUsers();
   });
 
-  server.post("/users", async (request, reply) => {
+  server.post("/admin/users", async (request, reply) => {
     const body = createUserSchema.parse(request.body);
     const user = await createUser(body);
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CustomerBrand } from "../../../src/components/CustomerBrand";
 import { CustomerNav } from "../../../src/components/CustomerNav";
@@ -10,8 +10,10 @@ import {
   AssessmentSubmission,
   AssessmentTemplate,
   Product,
+  addCartItem,
   getProduct,
   getProductAssessment,
+  getMyCart,
   getReadiness,
   submitProductAssessment
 } from "../../../src/lib/api";
@@ -27,6 +29,7 @@ type AssessmentDraft = {
 };
 
 const assessmentDraftStoragePrefix = "health.assessmentDraft.";
+const cartStorageKey = "health.cartId";
 
 function defaultAnswer(question: AssessmentQuestion): AssessmentAnswer {
   if (question.type === "MULTI_SELECT") {
@@ -50,6 +53,7 @@ function isAnswered(question: AssessmentQuestion, answer: AssessmentAnswer | und
 
 export default function IntakePage() {
   const params = useParams<{ slug: string }>();
+  const router = useRouter();
   const slug = decodeURIComponent(params.slug);
   const [product, setProduct] = useState<Product | null>(null);
   const [assessment, setAssessment] = useState<AssessmentTemplate | null>(null);
@@ -58,6 +62,7 @@ export default function IntakePage() {
   const [submission, setSubmission] = useState<AssessmentSubmission | null>(null);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isStartingCheckout, setIsStartingCheckout] = useState(false);
   const [isStartingLogin, setIsStartingLogin] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [shouldSubmitAfterLogin, setShouldSubmitAfterLogin] = useState(false);
@@ -242,6 +247,35 @@ export default function IntakePage() {
     }
   }
 
+  async function handleApprovedCheckout() {
+    const variant = product?.variants[0];
+
+    if (!variant) {
+      setSubmitError("This program does not have an available checkout option");
+      return;
+    }
+
+    if (!getSession()) {
+      setSubmitError("Sign in again to continue to checkout");
+      return;
+    }
+
+    setIsStartingCheckout(true);
+    setSubmitError(null);
+
+    try {
+      const savedCartId = window.localStorage.getItem(cartStorageKey);
+      const cart = await getMyCart(savedCartId ?? undefined);
+      const updatedCart = await addCartItem(cart.id, variant.id, 1);
+      window.localStorage.setItem(cartStorageKey, updatedCart.id);
+      router.push("/cart");
+    } catch (caught) {
+      setSubmitError(caught instanceof Error ? caught.message : "Could not prepare checkout");
+    } finally {
+      setIsStartingCheckout(false);
+    }
+  }
+
   useEffect(() => {
     if (
       !shouldSubmitAfterLogin ||
@@ -378,12 +412,18 @@ export default function IntakePage() {
 
           {submission ? (
             <div className="success intake-next-step">
-              <strong>Assessment submitted</strong>
-              <p>
-                Your answers were saved. Checkout stays locked until this flow is connected to
-                review.
-              </p>
+              <strong>{getSubmissionResultTitle(submission)}</strong>
+              <p>{getSubmissionResultMessage(submission)}</p>
               <p>Submission {submission.id.slice(0, 8)}</p>
+              {submission.status === "APPROVED" ? (
+                <button
+                  type="button"
+                  disabled={isStartingCheckout}
+                  onClick={() => void handleApprovedCheckout()}
+                >
+                  {isStartingCheckout ? "Preparing Cart" : "Continue to Cart"}
+                </button>
+              ) : null}
             </div>
           ) : null}
         </section>
@@ -500,6 +540,38 @@ function AssessmentQuestionField({
 
 function getAssessmentDraftStorageKey(slug: string) {
   return `${assessmentDraftStoragePrefix}${slug}`;
+}
+
+function getSubmissionResultTitle(submission: AssessmentSubmission) {
+  if (submission.status === "APPROVED") {
+    return "Eligible to continue";
+  }
+
+  if (submission.status === "REVIEW_REQUIRED") {
+    return "Review required";
+  }
+
+  if (submission.status === "REJECTED") {
+    return "Not eligible";
+  }
+
+  return "Assessment submitted";
+}
+
+function getSubmissionResultMessage(submission: AssessmentSubmission) {
+  if (submission.status === "APPROVED") {
+    return "Your answers passed the automated review. You can continue to checkout now.";
+  }
+
+  if (submission.status === "REVIEW_REQUIRED") {
+    return "Your answers need manual review before checkout can open.";
+  }
+
+  if (submission.status === "REJECTED") {
+    return "This program is not available based on the submitted answers.";
+  }
+
+  return "Your answers were saved.";
 }
 
 function readAssessmentDraft(slug: string, defaultAnswers: Record<string, AssessmentAnswer>) {

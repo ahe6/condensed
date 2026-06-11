@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import {
   AdminOrdersResponse,
   ApiStatus,
+  AssessmentSubmission,
   Category,
   CreateProductInput,
   Order,
@@ -29,24 +30,26 @@ import {
   createShipment,
   getReadiness,
   listAdminProducts,
+  listAdminAssessmentSubmissions,
   listAdminOrders,
   listCategories,
   markPaymentFailed,
   markPaymentPaid,
+  markPaymentRefunded,
   markShipmentDelivered,
   markShipmentReturned,
   markShipmentShipped,
   publishProduct,
-  refundPayment,
   removeProductCategory,
   assignProductCategory,
   setVariantInventory,
   syncStripePayment,
+  syncUnsettledStripePayments,
   updateProduct,
   updateProductVariant,
   updateShipmentTracking
 } from "../../src/lib/api";
-import { getSession, isAuthConfigured, signOut, startLogin } from "../../src/lib/auth";
+import { getCurrentReturnTo, getSession, isAuthConfigured, signOut, startLogin } from "../../src/lib/auth";
 import {
   actionButtonClass,
   formatDateTime,
@@ -97,7 +100,7 @@ const productStatusOptions: ProductStatus[] = ["DRAFT", "ACTIVE", "ARCHIVED"];
 const productPurchaseModeOptions: ProductPurchaseMode[] = ["DIRECT", "ASSESSMENT_REQUIRED"];
 type DateFilterField = (typeof dateFilterOptions)[number]["value"];
 type OrderSortField = (typeof orderSortOptions)[number]["value"];
-type AdminView = "orders" | "catalog";
+type AdminView = "orders" | "catalog" | "assessments";
 
 const emptyProductDraft = {
   slug: "",
@@ -183,6 +186,30 @@ function totalInventory(product: Product) {
 
 function productCategoryNames(product: Product) {
   return product.categories.map((item) => item.category.name).join(", ") || "No categories";
+}
+
+function assessmentSubject(submission: AssessmentSubmission) {
+  return submission.product?.name ?? submission.goalKey?.replace(/-/g, " ") ?? "Assessment";
+}
+
+function assessmentTypeLabel(submission: AssessmentSubmission) {
+  return submission.template.type === "GOAL_INTAKE" ? "Goal intake" : "Product intake";
+}
+
+function answerText(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.join(", ");
+  }
+
+  if (typeof value === "boolean") {
+    return value ? "Yes" : "No";
+  }
+
+  if (value === null || value === undefined || value === "") {
+    return "Not answered";
+  }
+
+  return String(value);
 }
 
 function eventSourceLabel(source: string) {
@@ -311,7 +338,7 @@ function paymentWarnings(order: Order, payment: Payment) {
   }
 
   if (attempt?.status === "OPEN" && attempt.expiresAt && new Date(attempt.expiresAt).getTime() < Date.now()) {
-    warnings.push("Latest Stripe checkout attempt is past its expiry time; run Sync Stripe or the expiry job.");
+    warnings.push("Latest Stripe checkout attempt is past its expiry time; run Sync Stripe or the reconciliation job.");
   }
 
   if (attempt?.status === "COMPLETED" && !isCompletedPaymentStatus(payment.status)) {
@@ -687,6 +714,7 @@ export default function AdminPage() {
   const [adminOrderTotal, setAdminOrderTotal] = useState(0);
   const [adminOrderPageCount, setAdminOrderPageCount] = useState(1);
   const [selectedAdminOrderId, setSelectedAdminOrderId] = useState("");
+  const [assessmentSubmissions, setAssessmentSubmissions] = useState<AssessmentSubmission[]>([]);
   const [adminProducts, setAdminProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedProductId, setSelectedProductId] = useState("");
@@ -759,10 +787,11 @@ export default function AdminPage() {
         }
 
         await getReadiness();
-        const [ordersResponse, productsResponse, categoriesResponse] = await Promise.all([
+        const [ordersResponse, productsResponse, categoriesResponse, submissionsResponse] = await Promise.all([
           listAdminOrders(adminOrderQuery(1)),
           listAdminProducts(),
-          listCategories()
+          listCategories(),
+          listAdminAssessmentSubmissions()
         ]);
 
         if (!isMounted) {
@@ -771,6 +800,7 @@ export default function AdminPage() {
 
         applyAdminOrders(ordersResponse);
         applyCatalog(productsResponse, categoriesResponse);
+        setAssessmentSubmissions(submissionsResponse.submissions);
         setStatus("online");
         setError(null);
       } catch (caught) {
@@ -979,6 +1009,30 @@ export default function AdminPage() {
     }
   }
 
+  async function syncAllStripePayments() {
+    setPendingAction("sync-all-stripe");
+    setError(null);
+    setNotice(null);
+
+    try {
+      const result = await syncUnsettledStripePayments();
+
+      await reloadAdminOrders(selectedAdminOrder?.id);
+
+      if (result.candidateCount === 0) {
+        setNotice("No unsettled Stripe payments to sync");
+      } else if (result.failedCount > 0) {
+        setError(`Synced ${result.syncedCount} Stripe payments; ${result.failedCount} failed`);
+      } else {
+        setNotice(`Synced ${result.syncedCount} Stripe payments; ${result.settledCount} settled`);
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not sync Stripe payments");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
   async function refreshCatalog() {
     setPendingAction("catalog");
     setError(null);
@@ -989,6 +1043,22 @@ export default function AdminPage() {
       setStatus("online");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not refresh catalog");
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function refreshAssessmentSubmissions() {
+    setPendingAction("admin-assessments");
+    setError(null);
+    setNotice(null);
+
+    try {
+      const response = await listAdminAssessmentSubmissions();
+      setAssessmentSubmissions(response.submissions);
+      setStatus("online");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not refresh assessments");
     } finally {
       setPendingAction(null);
     }
@@ -1548,6 +1618,107 @@ export default function AdminPage() {
       ...current,
       [orderId]: !(current[orderId] ?? false)
     }));
+  }
+
+  function renderAssessmentSection() {
+    const reviewRequired = assessmentSubmissions.filter(
+      (submission) => submission.status === "REVIEW_REQUIRED"
+    );
+
+    return (
+      <section className="catalog" aria-label="Assessments">
+        <section className="panel admin-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Assessment Review</h2>
+              <p>{reviewRequired.length} review-required submissions</p>
+            </div>
+            <button
+              className="secondary"
+              type="button"
+              disabled={pendingAction === "admin-assessments"}
+              onClick={() => void refreshAssessmentSubmissions()}
+            >
+              {pendingAction === "admin-assessments" ? "Refreshing" : "Refresh"}
+            </button>
+          </div>
+
+          <div className="admin-order-list" aria-label="Recent assessment submissions">
+            {assessmentSubmissions.length === 0 ? (
+              <div className="empty-state compact">No assessment submissions</div>
+            ) : null}
+
+            {assessmentSubmissions.map((submission) => (
+              <article className="admin-order-row" key={submission.id}>
+                <div className="admin-order-row-main">
+                  <div>
+                    <strong>{assessmentSubject(submission)}</strong>
+                    <span>{assessmentTypeLabel(submission)}</span>
+                    <small>{submission.user?.email ?? submission.email ?? "No email"}</small>
+                  </div>
+                  <span className={`pill ${statusClass(submission.status)}`}>
+                    {submission.status}
+                  </span>
+                </div>
+
+                <div className="admin-order-row-meta">
+                  <span>{formatDateTime(submission.submittedAt)}</span>
+                  <span>{submission.decisionReason ?? "No decision reason"}</span>
+                </div>
+
+                <div className="admin-detail-grid">
+                  <section>
+                    <h4>Answers</h4>
+                    <div className="timeline-list">
+                      {submission.answers.map((answer) => (
+                        <div className="timeline-event" key={answer.id}>
+                          <span>{answer.questionKey}</span>
+                          <strong>{answerText(answer.value)}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section>
+                    <h4>
+                      {submission.template.type === "GOAL_INTAKE"
+                        ? "Recommendations"
+                        : "Checkout Authorization"}
+                    </h4>
+                    {submission.template.type === "GOAL_INTAKE" ? (
+                      <div className="timeline-list">
+                        {submission.recommendations.map((recommendation) => (
+                          <div className="timeline-event" key={recommendation.id}>
+                            <span>#{recommendation.rank} {recommendation.reasonCode}</span>
+                            <strong>{recommendation.product.name}</strong>
+                            {recommendation.reasonText ? <small>{recommendation.reasonText}</small> : null}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="timeline-list">
+                        {submission.checkoutAuthorizations.length === 0 ? (
+                          <div className="timeline-event">
+                            <span>No active authorization created</span>
+                            <strong>Checkout locked</strong>
+                          </div>
+                        ) : null}
+                        {submission.checkoutAuthorizations.map((authorization) => (
+                          <div className="timeline-event" key={authorization.id}>
+                            <span>{authorization.status}</span>
+                            <strong>Expires {formatDateTime(authorization.expiresAt)}</strong>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      </section>
+    );
   }
 
   function renderCatalogSection() {
@@ -2200,7 +2371,7 @@ export default function AdminPage() {
             </details>
           ) : (
             order.payments.map((payment) => {
-                const isBusy = pendingAction === `payment-${payment.id}`;
+                const isBusy = pendingAction === `payment-${payment.id}` || pendingAction === "sync-all-stripe";
                 const isHistoryOpen = paymentHistoryOpen[payment.id] ?? false;
 
                 return (
@@ -2249,6 +2420,9 @@ export default function AdminPage() {
                       </div>
                       <details className="manual-payment-actions">
                         <summary>Manual actions</summary>
+                        <p className="warning compact">
+                          Manual status changes are local only. Mark Refunded does not refund in Stripe.
+                        </p>
                         <div className="payment-controls">
                           <button
                             className={actionButtonClass(payment.status === "AUTHORIZED")}
@@ -2278,9 +2452,9 @@ export default function AdminPage() {
                             className={actionButtonClass(payment.status === "REFUNDED")}
                             type="button"
                             disabled={isPaymentActionDisabled(payment, "REFUNDED", isBusy)}
-                            onClick={() => void handlePaymentAction(payment.id, refundPayment)}
+                            onClick={() => void handlePaymentAction(payment.id, markPaymentRefunded)}
                           >
-                            Refund
+                            Mark Refunded
                           </button>
                         </div>
                       </details>
@@ -2637,7 +2811,11 @@ export default function AdminPage() {
                 Sign Out
               </button>
             ) : (
-              <button className="secondary" type="button" onClick={() => void startLogin()}>
+              <button
+                className="secondary"
+                type="button"
+                onClick={() => void startLogin({ returnTo: getCurrentReturnTo() })}
+              >
                 Sign In
               </button>
             )
@@ -2663,8 +2841,20 @@ export default function AdminPage() {
           <strong>{adminProducts.length}</strong>
         </div>
         <div className="metric">
+          <span>Reviews</span>
+          <strong>
+            {assessmentSubmissions.filter((submission) => submission.status === "REVIEW_REQUIRED").length}
+          </strong>
+        </div>
+        <div className="metric">
           <span>View</span>
-          <strong>{activeView === "orders" ? "Orders" : "Catalog"}</strong>
+          <strong>
+            {activeView === "orders"
+              ? "Orders"
+              : activeView === "catalog"
+                ? "Catalog"
+                : "Review"}
+          </strong>
         </div>
       </section>
 
@@ -2692,23 +2882,43 @@ export default function AdminPage() {
             >
               Catalog
             </button>
+            <button
+              className={activeView === "assessments" ? "status-action active" : "status-action"}
+              type="button"
+              onClick={() => setActiveView("assessments")}
+            >
+              Review
+            </button>
           </nav>
 
           {activeView === "catalog" ? renderCatalogSection() : null}
+          {activeView === "assessments" ? renderAssessmentSection() : null}
 
           {activeView === "orders" ? (
         <section className="catalog" aria-label="Orders">
           <section className="panel admin-panel">
             <div className="panel-heading">
               <h2>Recent Orders</h2>
-              <button
-                className="secondary"
-                type="button"
-                disabled={pendingAction === "admin-orders"}
-                onClick={() => void refreshAdminOrders()}
-              >
-                {pendingAction === "admin-orders" ? "Refreshing" : "Refresh"}
-              </button>
+              <div className="panel-actions">
+                <button
+                  className="secondary"
+                  type="button"
+                  disabled={pendingAction === "sync-all-stripe"}
+                  onClick={() => void syncAllStripePayments()}
+                >
+                  {pendingAction === "sync-all-stripe"
+                    ? "Syncing Stripe"
+                    : "Sync Stripe"}
+                </button>
+                <button
+                  className="secondary"
+                  type="button"
+                  disabled={pendingAction === "admin-orders"}
+                  onClick={() => void refreshAdminOrders()}
+                >
+                  {pendingAction === "admin-orders" ? "Refreshing" : "Refresh"}
+                </button>
+              </div>
             </div>
 
             <>
