@@ -1,0 +1,29 @@
+<svg
+  width="420"
+  height="48"
+  viewBox="0 0 420 48"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+  role="img"
+  aria-labelledby="logoTitle"
+>
+  <title id="logoTitle">Condensed Health</title>
+
+  <!-- Plus mark: same visual size, slightly thinner bars -->
+  <g transform="translate(0 8)">
+    <rect x="11.75" y="0" width="8.5" height="32" rx="2.1" fill="#426F4F"/>
+    <rect x="0" y="11.75" width="32" height="8.5" rx="2.1" fill="#426F4F"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text
+    x="46"
+    y="39"
+    font-family="Inter, Geist, Arial, sans-serif"
+    font-size="40"
+    letter-spacing="-0.03em"
+  >
+    <tspan font-weight="600" fill="#171C1A">Condensed</tspan>
+    <tspan dx="2" font-weight="400" fill="#637267">Health</tspan>
+  </text>
+</svg>
