@@ -1,8 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { CustomerBrand } from "./CustomerBrand";
-import { CustomerNav } from "./CustomerNav";
-import { TopicNav } from "./TopicNav";
+import { SiteHeader } from "./SiteHeader";
 import { TopicPage } from "../lib/topicPages";
 
 type TopicProgramPageProps = {
@@ -13,14 +11,7 @@ type TopicProgramPageProps = {
 export function TopicProgramPage({ topic, children }: TopicProgramPageProps) {
   return (
     <main className="shell">
-      <section className="topbar" aria-label="Customer navigation">
-        <CustomerBrand />
-        <div className="nav-actions">
-          <CustomerNav />
-        </div>
-      </section>
-
-      <TopicNav />
+      <SiteHeader ariaLabel="Customer navigation" />
 
       <section className="topic-page-hero" aria-label={topic.label}>
         <div className="topic-page-copy">

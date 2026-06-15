@@ -265,6 +265,5 @@ export const topicNavLinks = [
   { href: "/labs", label: topicPages.labs.label },
   { href: "/genetic-testing", label: topicPages["genetic-testing"].label },
   { href: "/health-areas", label: topicPages["health-areas"].label },
-  { href: "/shop", label: "Products" },
   { href: "/library", label: "Library" }
 ];

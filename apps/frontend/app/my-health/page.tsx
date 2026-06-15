@@ -28,23 +28,23 @@ function formatPortalDate(value: string | null | undefined) {
 
 const careModules = [
   {
-    title: "Start guided care",
-    detail: "Begin from a goal, symptom, lab question, or condition and answer only what that path needs.",
-    href: "/",
-    action: "Choose Goal",
+    title: "Start with a health area",
+    detail: "Begin from a goal, symptom, lab question, or condition and keep the related next steps together.",
+    href: "/health-areas",
+    action: "Browse Areas",
     status: "Ready"
   },
   {
-    title: "Medical history",
-    detail: "Conditions, medications, allergies, surgeries, family history, and clinical context will live here.",
+    title: "Medical context",
+    detail: "Conditions, medications, allergies, surgeries, family history, and care notes will live here.",
     href: "/account",
     action: "Account Settings",
     status: "Planned"
   },
   {
-    title: "Labs and results",
-    detail: "Lab orders, result summaries, clinician interpretation, and follow-up recommendations will collect here.",
-    href: "/goals/wellness-labs",
+    title: "Labs and diagnostics",
+    detail: "Orders, saved results, clinician interpretation, and follow-up recommendations will collect here.",
+    href: "/labs",
     action: "Explore Labs",
     status: "Care Path"
   },
@@ -54,6 +54,24 @@ const careModules = [
     href: "/my-health",
     action: "Patient Portal",
     status: "Planned"
+  }
+];
+
+const workspaceModules = [
+  {
+    title: "Recent results",
+    detail: "Lab values and reports will be grouped by health area as the results workspace comes online.",
+    status: "Planned"
+  },
+  {
+    title: "Saved tests",
+    detail: "Tests and products you are considering can be kept with the questions they are meant to answer.",
+    status: "Planned"
+  },
+  {
+    title: "Follow-up questions",
+    detail: "Track what still needs interpretation, clinician input, or a decision after checkout.",
+    status: "Ready"
   }
 ];
 
@@ -89,14 +107,15 @@ export default function MyHealthPage() {
   }, [orders]);
 
   const latestOrder = useMemo(() => [...orders].sort(newestFirst)[0] ?? null, [orders]);
+  const displayName = currentUser?.name ?? currentUser?.email ?? "Your health workspace";
 
   const nextActions = useMemo(() => {
     const actions = [
       {
-        title: "Start a care path",
-        detail: "Choose a goal like weight loss, hair loss, skin, or labs.",
-        href: "/",
-        action: "Choose Goal",
+        title: "Start with a health area",
+        detail: "Choose a concern like fatigue, metabolic health, hormones, genetics, skin, or labs.",
+        href: "/health-areas",
+        action: "Browse Areas",
         priority: "Primary"
       },
       {
@@ -183,9 +202,17 @@ export default function MyHealthPage() {
       {error ? <p className="error global-error">{error}</p> : null}
 
       <section className="portal-dashboard-header" aria-label="Patient Portal">
-        <div>
+        <div className="portal-header-copy">
           <p className="eyebrow">Patient Portal</p>
-          <h1>Dashboard</h1>
+          <h1>My Health</h1>
+          <p>
+            Keep orders, results, health areas, and follow-up questions connected so each next step has context.
+          </p>
+          <div className="portal-header-tags" aria-label="My Health workspace status">
+            <span>Orders</span>
+            <span>Results planned</span>
+            <span>Care paths</span>
+          </div>
         </div>
         <div className="portal-header-actions">
           {needsSignIn ? (
@@ -210,7 +237,7 @@ export default function MyHealthPage() {
           <span aria-hidden="true">{currentUser?.email?.slice(0, 1).toUpperCase() ?? "P"}</span>
           <div>
             <small>{currentUser ? "Signed in as" : "Portal access"}</small>
-            <strong>{currentUser?.email ?? "Sign in to personalize"}</strong>
+            <strong>{displayName}</strong>
           </div>
         </div>
         <div>
@@ -256,6 +283,16 @@ export default function MyHealthPage() {
               <strong>{formatMoney(portalStats.totalPaid, "USD")}</strong>
               <small>Completed orders</small>
             </div>
+          </section>
+
+          <section className="portal-workspace-grid" aria-label="Health workspace preview">
+            {workspaceModules.map((module) => (
+              <article className="portal-workspace-card" key={module.title}>
+                <span>{module.status}</span>
+                <h2>{module.title}</h2>
+                <p>{module.detail}</p>
+              </article>
+            ))}
           </section>
 
           <section className="portal-dashboard" aria-label="Patient portal dashboard">

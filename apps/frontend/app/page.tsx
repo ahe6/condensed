@@ -1,321 +1,140 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { CustomerBrand } from "../src/components/CustomerBrand";
-import { CustomerNav } from "../src/components/CustomerNav";
-import { TopicNav } from "../src/components/TopicNav";
+import { SiteHeader } from "../src/components/SiteHeader";
 
-const outcomes = [
-  {
-    title: "Weight and metabolic health",
-    detail: "Explore GLP-1 consults, metabolic labs, and everyday support without starting from a product grid.",
-    href: "/goals/weight-loss",
-    keywords: ["weight", "metabolic", "glp1", "labs", "weight loss"],
-    action: "Start weight intake",
-    badge: "Most guided",
-    proof: "Intake first"
-  },
-  {
-    title: "Hair loss support",
-    detail: "Match thinning, shedding, and routine goals to consult or direct-care options.",
-    href: "/goals/hair-loss",
-    keywords: ["hair", "hair loss", "thinning", "scalp"],
-    action: "Start hair intake",
-    badge: "Popular",
-    proof: "Goal matched"
-  },
-  {
-    title: "Skin and personal care",
-    detail: "Start with acne, texture, redness, or daily routine goals, then see the relevant next step.",
-    href: "/goals/skin-care",
-    keywords: ["skin", "care", "personal", "clear", "routine", "acne"],
-    action: "Start skin intake",
-    badge: "Routine focused",
-    proof: "Fast intake"
-  },
-  {
-    title: "Labs and health checks",
-    detail: "Find screening paths for metabolic, hormone, thyroid, and baseline wellness questions.",
-    href: "/goals/wellness-labs",
-    keywords: ["labs", "testing", "screening", "metabolic", "thyroid"],
-    action: "Start labs intake",
-    badge: "Data led",
-    proof: "Labs available"
-  }
-];
-
-const suggestions = ["Weight loss", "Hair loss", "Skin support", "Labs"];
 const startOptions = [
   {
     title: "I have symptoms or a concern",
-    detail: "Describe what changed or what feels off.",
+    detail: "Start with what’s going on, what changed, or what you’re worried about.",
     href: "/my-health"
   },
   {
-    title: "I know what I want to test",
-    detail: "Browse labs, genetics, hormones, and nutrients.",
+    title: "I want to get tested",
+    detail: "Find relevant labs based on what you want to understand.",
     href: "/labs"
   },
   {
-    title: "I already have results",
-    detail: "Add labs or records to organize and review.",
-    href: "/my-health"
-  },
-  {
-    title: "I want clinician input",
-    detail: "Prepare your information for review when appropriate.",
+    title: "I want a second look at my case",
+    detail: "Upload results, reports, symptoms, medications, supplements, and what you’ve tried.",
     href: "/my-health"
   }
 ];
 
-const healthAreas = [
+const commonHealthQuestions = [
   {
-    title: "Heart & metabolic",
-    detail: "Cholesterol · ApoB · A1c · Insulin",
-    href: "/metabolic"
+    title: "Not sure why you’re tired?",
+    detail: "Fatigue, thyroid, iron, B12, vitamin D, sleep, glucose.",
+    cta: "Start",
+    href: "/health-areas/energy-fatigue"
   },
   {
-    title: "Hormones & energy",
-    detail: "Thyroid · Testosterone · Cortisol",
-    href: "/hormones"
+    title: "Checking metabolic health?",
+    detail: "A1c, fasting insulin, lipids, CGM, weight, prevention.",
+    cta: "Explore",
+    href: "/health-areas/metabolic-health"
   },
   {
-    title: "Genetics",
-    detail: "WGS · Traits · Medication response",
+    title: "Have results you’re unsure about?",
+    detail: "Upload results, reports, and context for a clearer next step.",
+    cta: "Review",
+    href: "/results"
+  },
+  {
+    title: "Looking into genetic testing?",
+    detail: "Compare testing types and understand when review may help.",
+    cta: "Explore",
     href: "/genetics"
-  },
-  {
-    title: "Skin & hair",
-    detail: "Hair · Skin · Nutrients · Hormones",
-    href: "/skin-hair"
-  },
-  {
-    title: "Nutrients & inflammation",
-    detail: "Vitamin D · B12 · Iron · hs-CRP",
-    href: "/nutrients"
-  },
-  {
-    title: "Complete baseline",
-    detail: "Core labs · Trends · Follow-up",
-    href: "/baseline"
   }
 ];
 
-const howItWorksSteps = [
-  {
-    title: "Start with a concern, goal, test, or result.",
-    detail:
-      "Tell us what you are trying to understand, or browse directly if you already know what you want."
-  },
-  {
-    title: "Find relevant labs, products, or next steps.",
-    detail:
-      "Condensed Health helps organize possible options based on your goals and health information."
-  },
-  {
-    title: "Get results in My Health.",
-    detail:
-      "Your dashboard brings together orders, lab results, genetics, uploaded records, and recommendations."
-  },
-  {
-    title: "Review what may need follow-up.",
-    detail:
-      "See plain-English explanations, trends over time, and care options when clinician review may be appropriate."
-  }
+const dashboardPreviewItems = [
+  "Recent results",
+  "Saved tests",
+  "Follow-up questions",
+  "Health areas",
+  "Clinician notes"
 ];
 
-const dashboardFeatures = [
-  "View lab results and genetic reports",
-  "Track biomarkers over time",
-  "Add previous labs or records",
-  "See suggested next steps",
-  "Prepare information for clinician review when appropriate"
-];
-
-const trustItems = [
-  "Lab-based testing through qualified partners",
-  "Secure account and results dashboard",
-  "Clear explanations without replacing medical care",
-  "Clinician review available where appropriate",
-  "Services and availability may vary by location"
-];
-
-const popularProducts = [
+const libraryArticles = [
   {
-    title: "Complete Health Baseline",
-    meta: "Broad lab starting point",
-    href: "/labs"
+    category: "Iron status",
+    title: "What ferritin can and can't tell you",
+    excerpt: "How ferritin relates to iron stores, inflammation, fatigue, and follow-up testing.",
+    href: "/library/ferritin"
   },
   {
-    title: "Advanced Heart & Metabolic Panel",
-    meta: "Cardio-metabolic markers",
-    href: "/weight-loss"
+    category: "Metabolic health",
+    title: "A1c vs fasting glucose vs fasting insulin",
+    excerpt: "What each marker measures, where they differ, and why context matters.",
+    href: "/library/a1c-glucose-insulin"
   },
   {
-    title: "Hormone Panel",
-    meta: "Thyroid, sex hormones, stress",
-    href: "/hormones"
+    category: "Nutrients",
+    title: "When vitamin D testing is useful",
+    excerpt: "Common reasons to test, what results can suggest, and what they cannot prove.",
+    href: "/library/vitamin-d-testing"
   },
   {
-    title: "Whole Genome Sequencing",
-    meta: "Genetics review path",
-    href: "/genetic-testing"
-  },
-  {
-    title: "Hair & Skin Support",
-    meta: "Products and follow-up",
-    href: "/hair-loss"
-  },
-  {
-    title: "Daily Nutrient Essentials",
-    meta: "Wellness products",
-    href: "/shop"
-  }
-];
-
-const additionalOutcomes = [
-  {
-    title: "Genetics and inherited risk",
-    detail: "Look at family history, carrier screening, and inherited risk questions in one starting path.",
-    href: "/genetic-testing",
-    label: "Genetics",
-    meta: "Family context"
-  },
-  {
-    title: "Hormone questions",
-    detail: "Connect thyroid, testosterone, fertility, and cycle-related concerns to relevant testing.",
-    href: "/hormones",
-    label: "Hormones",
-    meta: "Panel guided"
-  },
-  {
-    title: "Medication fit",
-    detail: "Compare care paths where clinician review matters before a product or treatment decision.",
-    href: "/my-health",
-    label: "Review",
-    meta: "Clinician input"
-  },
-  {
-    title: "Recent lab follow-up",
-    detail: "Use existing results to decide whether to retest, monitor, or ask for a review.",
-    href: "/labs",
-    label: "Labs",
-    meta: "Result led"
-  },
-  {
-    title: "Routine products",
-    detail: "Browse direct-purchase products after you have a clear support category in mind.",
-    href: "/shop",
-    label: "Products",
-    meta: "Shop ready"
-  },
-  {
-    title: "Ongoing tracking",
-    detail: "Keep health goals, orders, tests, and next steps organized in one place.",
-    href: "/my-health",
-    label: "My Health",
-    meta: "Dashboard"
-  }
-];
-
-const outcomeSlides = [
-  {
-    title: "Metabolic reset",
-    detail: "A focused path for weight, glucose, energy, and long-term risk questions.",
-    href: "/weight-loss",
-    label: "Featured path",
-    stats: ["Labs", "Review", "Plan"]
-  },
-  {
-    title: "Results check-in",
-    detail: "Bring recent labs or outside results into a cleaner next-step view.",
-    href: "/my-health",
-    label: "Data first",
-    stats: ["Upload", "Compare", "Decide"]
-  },
-  {
-    title: "Skin and hair basics",
-    detail: "A lower-friction entry point for routine concerns and product-supported care.",
-    href: "/hair-loss",
-    label: "Everyday care",
-    stats: ["Concern", "Match", "Track"]
+    category: "Genetics",
+    title: "What to know before ordering genetic testing",
+    excerpt: "The differences between screening, sequencing, reports, and clinical interpretation.",
+    href: "/library/genetic-testing"
   }
 ];
 
 const faqs = [
   {
-    question: "Where should I start if I do not know what to test?",
+    question: "Do I need a doctor to order tests?",
     answer:
-      "Start with your concern, symptoms, goals, or recent results. The review path can help narrow whether labs, imaging, genetics, products, or clinician input make sense."
+      "Some tests may be available directly, while others may require review, eligibility checks, or a clinician order depending on the test type and location."
   },
   {
-    question: "Can I browse tests and products directly?",
+    question: "Can I upload results I already have?",
     answer:
-      "Yes. Labs and direct-purchase products can be browsed from the catalog areas. Some options, like imaging and genetics, start with review because eligibility, safety, and follow-up matter."
+      "Yes. My Health is designed to keep outside lab results, reports, notes, and follow-up questions organized in one place."
   },
   {
-    question: "What is the difference between labs, imaging, and genetics?",
+    question: "Can Condensed Health diagnose me?",
     answer:
-      "Labs usually measure blood, urine, stool, or similar samples. Imaging includes CT, MRI, ultrasound, DEXA, and X-ray. Genetics looks at inherited variants, sequencing, carrier status, medication response, or longer-term risk."
+      "No. Condensed Health helps organize information and find relevant options, but it does not replace emergency care or a clinician's diagnosis."
   },
   {
-    question: "Can I use results I already have?",
+    question: "How does clinician review work?",
     answer:
-      "Yes. Recent lab results, imaging reports, or genetic reports can be used as context for choosing a next step, deciding whether to retest, or asking for follow-up."
+      "When review is available, you can prepare relevant history, goals, results, and questions so a clinician has better context for follow-up."
   },
   {
-    question: "Do all options require clinician review?",
+    question: "Are tests covered by insurance?",
     answer:
-      "No. Some products and lab options can be direct. Imaging, genetics, and care-program paths are review-first because the right next step depends on health history, risk, and safety details."
+      "Coverage depends on the test, partner, plan, medical necessity, and location. Condensed Health should not be treated as a guarantee of reimbursement."
+  },
+  {
+    question: "How is my health data protected?",
+    answer:
+      "Health data should be handled carefully. Account, privacy, and security details will be shown clearly as services become available."
+  },
+  {
+    question: "What should I do if I have urgent symptoms?",
+    answer:
+      "Seek medical care directly. Condensed Health is not intended for emergencies, urgent symptoms, or situations where immediate care may be needed."
   }
 ];
 
-function matchesQuery(outcome: (typeof outcomes)[number], query: string) {
-  const normalizedQuery = query.trim().toLowerCase();
-
-  if (!normalizedQuery) {
-    return true;
-  }
-
-  const haystack = [outcome.title, outcome.detail, ...outcome.keywords].join(" ").toLowerCase();
-
-  return normalizedQuery
-    .split(/\s+/)
-    .filter(Boolean)
-    .some((term) => haystack.includes(term));
-}
-
 export default function Home() {
-  const [query, setQuery] = useState("");
-  const [activeOutcomeSlide, setActiveOutcomeSlide] = useState(0);
-  const visibleOutcomes = useMemo(() => {
-    const matches = outcomes.filter((outcome) => matchesQuery(outcome, query));
-
-    return matches.length > 0 ? matches : outcomes;
-  }, [query]);
-  const featuredOutcomes = visibleOutcomes.slice(0, 2);
-  const activeSlide = outcomeSlides[activeOutcomeSlide];
-
   return (
-    <main className="shell">
-      <section className="topbar" aria-label="Shop navigation">
-        <CustomerBrand />
-        <TopicNav />
-        <div className="nav-actions">
-          <CustomerNav />
-        </div>
-      </section>
+    <main className="shell landing-page">
+      <SiteHeader ariaLabel="Shop navigation" />
 
       <section className="home-hero" id="start-options" aria-labelledby="home-start-title">
         <div className="home-hero-inner">
           <div className="home-hero-card">
             <div className="home-hero-content">
               <div className="home-start-heading">
-                <h1 id="home-start-title">Find the right next step.</h1>
+                <h1 id="home-start-title">Find answers for your health</h1>
                 <p className="home-start-subtitle">
-                  Start with a concern, a goal, or existing results. We'll help you find relevant
-                  tests, products, or clinician review.
+                  Start with symptoms, lab results, or what you’ve already tried.
+                  We’ll help you find relevant labs, understand your options, and decide what to do next.
                 </p>
               </div>
 
@@ -336,131 +155,87 @@ export default function Home() {
             </div>
 
             <div className="home-hero-media" aria-hidden="true">
-              <img src="/home/health-hero.png" alt="" />
+              <img src="/heroimage9.png" alt="" />
             </div>
           </div>
 
         </div>
       </section>
 
-      <section className="home-search-band" aria-label="Search health topics">
-        <form className="home-search" role="search" onSubmit={(event) => event.preventDefault()}>
-          <div className="home-search-box">
-            <input
-              aria-label="Search care topics"
-              id="home-search"
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search symptoms, labs, products..."
-            />
-          </div>
-          <div className="search-suggestions" aria-label="Suggested searches">
-            {suggestions.map((suggestion) => (
-              <button key={suggestion} type="button" onClick={() => setQuery(suggestion)}>
-                {suggestion}
-              </button>
-            ))}
-          </div>
-        </form>
-      </section>
-
-      <section className="home-health-areas" aria-labelledby="health-areas-title">
+      <section className="home-content-section home-question-section" aria-labelledby="starting-points-title">
         <div className="home-section-header">
           <div>
-            <h2 id="health-areas-title">Popular health areas</h2>
-            <p>Testing, products, and follow-up organized around common health questions.</p>
+            <p className="home-section-eyebrow">Guided starting points</p>
+            <h2 id="starting-points-title">Common places to start</h2>
+            <p>
+              A few ways people use Condensed Health to choose labs, understand results, or get a
+              second look at their case.
+            </p>
           </div>
-          <Link href="/shop" className="home-section-link">
-            View all
-          </Link>
         </div>
 
-        <div className="home-health-area-grid">
-          {healthAreas.map((area) => (
-            <Link href={area.href} key={area.title} className="home-health-area-card">
-              <div className="home-health-area-card-top">
-                <span>{area.title}</span>
-                <span aria-hidden="true" className="home-health-area-arrow">
-                  →
-                </span>
+        <div className="home-question-list">
+          {commonHealthQuestions.map((question, index) => (
+            <Link href={question.href} key={question.title} className="home-question-row">
+              <span className="home-question-number">{String(index + 1).padStart(2, "0")}</span>
+              <div className="home-question-copy">
+                <h3>{question.title}</h3>
+                <p>{question.detail}</p>
               </div>
-              <p>{area.detail}</p>
+              <span className="home-question-cta">
+                {question.cta}
+                <span aria-hidden="true">→</span>
+              </span>
             </Link>
           ))}
         </div>
       </section>
 
-      <section className="how-it-works-section" aria-labelledby="how-it-works-title">
-        <div className="how-it-works-heading">
-          <p className="eyebrow">How Condensed Health works</p>
-          <h2 id="how-it-works-title">From question to next step.</h2>
-        </div>
-
-        <div className="how-it-works-grid">
-          {howItWorksSteps.map((step, index) => (
-            <article key={step.title} className="how-it-works-card">
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <h3>{step.title}</h3>
-              <p>{step.detail}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="dashboard-preview-section" aria-labelledby="dashboard-preview-title">
-        <div className="dashboard-preview-copy">
-          <p className="eyebrow">My Health dashboard</p>
-          <h2 id="dashboard-preview-title">Your health information, organized.</h2>
+      <section className="home-dashboard-section" aria-labelledby="my-health-preview-title">
+        <div className="home-dashboard-copy">
+          <h2 id="my-health-preview-title">
+            Your health information, organized around what you're trying to understand.
+          </h2>
           <p>
-            My Health helps you keep track of results, products, recommendations, and follow-up in
-            one place.
+            Keep results, saved tests, products, and follow-up questions connected to the same
+            health areas.
           </p>
-          <Link className="nav-link primary-link" href="/my-health">
+          <Link className="home-dashboard-cta" href="/my-health">
             Open My Health
           </Link>
         </div>
 
-        <div className="dashboard-preview-panel" aria-label="Dashboard features">
-          {dashboardFeatures.map((feature) => (
-            <article key={feature}>
-              <span aria-hidden="true">✓</span>
-              <p>{feature}</p>
-            </article>
-          ))}
+        <div className="home-dashboard-card" aria-label="My Health preview">
+          <div className="home-dashboard-card-header">
+            <span>My Health</span>
+            <strong>Active review</strong>
+          </div>
+          <div className="home-dashboard-card-main">
+            <p>Energy & fatigue</p>
+            <strong>3 recent results saved</strong>
+          </div>
+          <div className="home-dashboard-list">
+            {dashboardPreviewItems.map((item) => (
+              <span key={item}>{item}</span>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="trust-section" aria-labelledby="trust-title">
-        <div className="trust-copy">
-          <p className="eyebrow">Built for health decisions</p>
-          <h2 id="trust-title">Built for health decisions, not just shopping.</h2>
+      <section className="home-content-section" aria-labelledby="library-preview-title">
+        <div className="home-section-header">
+          <div>
+            <h2 id="library-preview-title">Learn before you test</h2>
+            <p>Plain-language guides to common labs, biomarkers, and health questions.</p>
+          </div>
         </div>
 
-        <div className="trust-list">
-          {trustItems.map((item) => (
-            <div key={item}>
-              <span aria-hidden="true">✓</span>
-              <p>{item}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="popular-products-section" aria-labelledby="popular-products-title">
-        <div className="popular-products-heading">
-          <p className="eyebrow">Popular tests and products</p>
-          <h2 id="popular-products-title">Frequently browsed starting points.</h2>
-        </div>
-
-        <div className="popular-products-grid">
-          {popularProducts.map((product) => (
-            <Link href={product.href} key={product.title} className="popular-product-card">
-              <div>
-                <span>{product.meta}</span>
-                <h3>{product.title}</h3>
-              </div>
-              <strong>View</strong>
+        <div className="home-library-grid">
+          {libraryArticles.map((article) => (
+            <Link href={article.href} key={article.title} className="home-library-card">
+              <span>{article.category}</span>
+              <h3>{article.title}</h3>
+              <p>{article.excerpt}</p>
             </Link>
           ))}
         </div>
@@ -468,8 +243,7 @@ export default function Home() {
 
       <section className="faq-section" aria-labelledby="faq-title">
         <div className="faq-heading">
-          <p className="eyebrow">Frequently asked questions</p>
-          <h2 id="faq-title">Common questions before you start.</h2>
+          <h2 id="faq-title">Questions people ask before getting started</h2>
         </div>
 
         <div className="faq-list">
