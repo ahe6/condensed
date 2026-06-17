@@ -48,38 +48,65 @@ const commonHealthQuestions = [
   }
 ];
 
-const dashboardPreviewItems = [
-  "Recent results",
-  "Saved tests",
-  "Follow-up questions",
-  "Health areas",
-  "Clinician notes"
+const myHealthValueProps = [
+  {
+    title: "Save results and reports",
+    detail: "Upload lab work, genetic reports, or other health documents."
+  },
+  {
+    title: "Connect the context",
+    detail: "Add symptoms, medications, supplements, and what you’ve tried."
+  },
+  {
+    title: "See possible next steps",
+    detail: "Find relevant labs, follow-up questions, and review options."
+  }
 ];
 
-const libraryArticles = [
+const myHealthCase = {
+  concern: "Energy crashes after meals",
+  question: "What should I check?",
+  context: [
+    "Afternoon tiredness",
+    "Cravings after lunch",
+    "A1c in range",
+    "Glucose in range",
+    "Tried walking after meals"
+  ],
+  answer:
+    "Your A1c and fasting glucose are in range, but they may not fully explain the post-meal crashes. Fasting insulin, ApoB, vitamin D, or optional CGM could add useful context.",
+  nextStep: "Build a metabolic follow-up lab plan.",
+  labs: ["Fasting insulin", "ApoB", "hs-CRP", "Vitamin D", "Optional CGM"],
+  actions: ["Compare labs", "Find nearby labs", "Clinician review"]
+};
+
+const realUseCases = [
   {
-    category: "Iron status",
-    title: "What ferritin can and can't tell you",
-    excerpt: "How ferritin relates to iron stores, inflammation, fatigue, and follow-up testing.",
-    href: "/library/ferritin"
+    category: "Fatigue & energy",
+    title: "Tired all the time, but basic labs look normal",
+    detail:
+      "Start with low energy, afternoon crashes, prior labs, and what you’ve already tried. Condensed helps organize what to review next.",
+    nextStep: "Build a lab follow-up plan",
+    cta: "Start with fatigue",
+    href: "/health-areas/energy-fatigue"
   },
   {
-    category: "Metabolic health",
-    title: "A1c vs fasting glucose vs fasting insulin",
-    excerpt: "What each marker measures, where they differ, and why context matters.",
-    href: "/library/a1c-glucose-insulin"
-  },
-  {
-    category: "Nutrients",
-    title: "When vitamin D testing is useful",
-    excerpt: "Common reasons to test, what results can suggest, and what they cannot prove.",
-    href: "/library/vitamin-d-testing"
+    category: "Lab results",
+    title: "Already tested, unsure what matters",
+    detail:
+      "Upload previous bloodwork and see what is out of range, what changed, and what may be worth asking a clinician about.",
+    nextStep: "Organize results and review questions",
+    cta: "Upload results",
+    href: "/results"
   },
   {
     category: "Genetics",
-    title: "What to know before ordering genetic testing",
-    excerpt: "The differences between screening, sequencing, reports, and clinical interpretation.",
-    href: "/library/genetic-testing"
+    title: "Thinking about genetic testing",
+    detail:
+      "Compare screening tests, sequencing reports, and clinician-ordered genetic tests before deciding what makes sense.",
+    nextStep: "Choose the right test before ordering",
+    cta: "Compare test types",
+    href: "/genetics"
   }
 ];
 
@@ -194,51 +221,98 @@ export default function Home() {
       <section className="home-dashboard-section" aria-labelledby="my-health-preview-title">
         <div className="home-dashboard-copy">
           <h2 id="my-health-preview-title">
-            Your health information, organized around what you're trying to understand.
+            One place for your health questions, results, and next steps.
           </h2>
           <p>
-            Keep results, saved tests, products, and follow-up questions connected to the same
-            health areas.
+            Keep symptoms, lab results, reports, and what you’ve tried connected to what you’re
+            trying to understand.
           </p>
+          <div className="home-dashboard-values">
+            {myHealthValueProps.map((item) => (
+              <article key={item.title}>
+                <h3>{item.title}</h3>
+                <p>{item.detail}</p>
+              </article>
+            ))}
+          </div>
           <Link className="home-dashboard-cta" href="/my-health">
             Open My Health
           </Link>
         </div>
 
-        <div className="home-dashboard-card" aria-label="My Health preview">
+        <article className="home-dashboard-card" aria-label="My Health case example">
           <div className="home-dashboard-card-header">
             <span>My Health</span>
-            <strong>Active review</strong>
+            <strong>Case answer</strong>
           </div>
-          <div className="home-dashboard-card-main">
-            <p>Energy & fatigue</p>
-            <strong>3 recent results saved</strong>
+
+          <div className="home-dashboard-question">
+            <div>
+              <h3>{myHealthCase.concern}</h3>
+              <p>{myHealthCase.question}</p>
+            </div>
+            <div className="home-dashboard-context" aria-label="Context added">
+              {myHealthCase.context.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
+            </div>
           </div>
-          <div className="home-dashboard-list">
-            {dashboardPreviewItems.map((item) => (
-              <span key={item}>{item}</span>
-            ))}
+
+          <div className="home-dashboard-answer">
+            <p>{myHealthCase.answer}</p>
           </div>
-        </div>
+
+          <section className="home-dashboard-next-step" aria-label="Suggested next step">
+            <h4>Suggested next step</h4>
+            <p>{myHealthCase.nextStep}</p>
+            <div aria-label="Labs to consider">
+              {myHealthCase.labs.map((lab) => (
+                <span key={lab}>{lab}</span>
+              ))}
+            </div>
+            <div className="home-dashboard-actions" aria-label="Next actions">
+              {myHealthCase.actions.map((action) => (
+                <span key={action}>{action}</span>
+              ))}
+            </div>
+          </section>
+        </article>
       </section>
 
-      <section className="home-content-section" aria-labelledby="library-preview-title">
+      <section className="home-content-section home-use-cases-section" aria-labelledby="use-cases-title">
         <div className="home-section-header">
           <div>
-            <h2 id="library-preview-title">Learn before you test</h2>
-            <p>Plain-language guides to common labs, biomarkers, and health questions.</p>
+            <p className="home-section-eyebrow">Example paths</p>
+            <h2 id="use-cases-title">Ways people use Condensed Health</h2>
+            <p>
+              Start with a symptom, lab result, or testing question. Condensed helps turn
+              scattered information into a clearer next step.
+            </p>
           </div>
         </div>
 
-        <div className="home-library-grid">
-          {libraryArticles.map((article) => (
-            <Link href={article.href} key={article.title} className="home-library-card">
-              <span>{article.category}</span>
-              <h3>{article.title}</h3>
-              <p>{article.excerpt}</p>
-            </Link>
+        <div className="home-use-case-grid">
+          {realUseCases.map((useCase) => (
+            <article className="home-use-case-card" key={useCase.title}>
+              <span className="home-use-case-label">{useCase.category}</span>
+              <h3>{useCase.title}</h3>
+              <p>{useCase.detail}</p>
+              <div className="home-use-case-footer">
+                <p>
+                  <span>Next step</span>
+                  {useCase.nextStep}
+                </p>
+                <Link href={useCase.href}>
+                  {useCase.cta}
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            </article>
           ))}
         </div>
+        <p className="home-use-case-disclaimer">
+          Examples only. Not diagnoses or medical advice.
+        </p>
       </section>
 
       <section className="faq-section" aria-labelledby="faq-title">
