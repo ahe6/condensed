@@ -2,17 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-const links = [
-  {
-    href: "/my-health",
-    label: "My Health",
-    match: (pathname: string) =>
-      pathname === "/my-health" ||
-      pathname === "/account" ||
-      pathname === "/addresses" ||
-      pathname.startsWith("/orders")
-  }
-];
 
 const utilityLinks = [
   { href: "/shop", label: "Products" },
@@ -23,23 +12,40 @@ const utilityLinks = [
 
 type CustomerNavProps = {
   cartItemCount?: number;
+  secondaryHref?: string;
+  secondaryLabel?: string;
+  primaryHref?: string;
+  primaryLabel?: string;
 };
 
-export function CustomerNav({ cartItemCount }: CustomerNavProps) {
+export function CustomerNav({
+  cartItemCount,
+  secondaryHref,
+  secondaryLabel,
+  primaryHref = "/my-health",
+  primaryLabel = "My Health"
+}: CustomerNavProps) {
   const pathname = usePathname();
   void cartItemCount;
+  const secondaryIsActive = Boolean(secondaryHref) && pathname === secondaryHref;
+  const primaryIsActive =
+    pathname === primaryHref ||
+    (primaryHref === "/my-health" &&
+      (pathname === "/account" || pathname === "/addresses" || pathname.startsWith("/orders")));
 
   return (
     <nav className="customer-nav customer-nav-layered" aria-label="Customer navigation">
-      {links.map((link) => (
+      {secondaryHref && secondaryLabel ? (
         <Link
-          key={link.href}
-          className={link.match(pathname) ? "customer-nav-link active" : "customer-nav-link"}
-          href={link.href}
+          className={secondaryIsActive ? "customer-nav-link customer-nav-secondary active" : "customer-nav-link customer-nav-secondary"}
+          href={secondaryHref}
         >
-          <span>{link.label}</span>
+          <span>{secondaryLabel}</span>
         </Link>
-      ))}
+      ) : null}
+      <Link className={primaryIsActive ? "customer-nav-link active" : "customer-nav-link"} href={primaryHref}>
+        <span>{primaryLabel}</span>
+      </Link>
       <details className="customer-menu">
         <summary className="customer-menu-toggle" aria-label="Open customer menu" title="Menu">
           <svg aria-hidden="true" viewBox="0 0 24 24">

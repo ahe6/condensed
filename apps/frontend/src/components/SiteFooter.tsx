@@ -21,7 +21,7 @@ const footerSections = [
     links: [
       { label: "Library", href: "/library" },
       { label: "Labs & Diagnostics", href: "/labs" },
-      { label: "Genetics", href: "/genetics" },
+      { label: "Genetics", href: "/genetic-testing" },
       { label: "Health Areas", href: "/health-areas" }
     ]
   }
@@ -34,8 +34,7 @@ export function SiteFooter() {
         <div className="site-footer-brand">
           <CustomerBrand />
           <p id="site-footer-title">
-            Condensed Health helps organize symptoms, lab results, testing options, and follow-up
-            questions in one place.
+            Condensed Health turns uploaded lab results into a clear written lab analysis.
           </p>
         </div>
 
@@ -56,8 +55,8 @@ export function SiteFooter() {
 
         <div className="site-footer-bottom">
           <p>
-            Condensed Health does not replace emergency care or a clinician’s diagnosis. For urgent
-            symptoms, seek medical care directly.
+            Condensed Health explains and organizes lab results. It does not diagnose, prescribe, or
+            replace medical care.
           </p>
           <span>© {new Date().getFullYear()} Condensed Health</span>
         </div>

@@ -262,8 +262,8 @@ export const topicPages = {
 } satisfies Record<string, TopicPage>;
 
 export const topicNavLinks = [
-  { href: "/labs", label: topicPages.labs.label },
-  { href: "/genetic-testing", label: topicPages["genetic-testing"].label },
-  { href: "/health-areas", label: topicPages["health-areas"].label },
-  { href: "/library", label: "Library" }
+  { href: "/#what-we-review", label: "Health review & testing" },
+  { href: "/health-areas", label: "Health areas" },
+  { href: "/library", label: "Health library" },
+  { href: "/#faq", label: "FAQ" }
 ];

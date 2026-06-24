@@ -5,7 +5,7 @@
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
 >
-  <rect width="96" height="96" rx="20" fill="#F7F1E6"/>
+  <rect width="96" height="96" rx="20" fill="#F6F4EE"/>
   <rect x="35" y="10" width="26" height="76" rx="5" fill="#426F4F"/>
   <rect x="10" y="35" width="76" height="26" rx="5" fill="#426F4F"/>
 </svg>
