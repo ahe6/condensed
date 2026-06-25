@@ -262,7 +262,7 @@ export const topicPages = {
 } satisfies Record<string, TopicPage>;
 
 export const topicNavLinks = [
-  { href: "/#what-we-review", label: "Health review & testing" },
+  { href: "/#services", label: "Services" },
   { href: "/health-areas", label: "Health areas" },
   { href: "/library", label: "Health library" },
   { href: "/#faq", label: "FAQ" }

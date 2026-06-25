@@ -48,70 +48,52 @@ const labAnalysisCategories = [
   }
 ];
 
-export type LabSectionVariant = "hidden" | "grid" | "list" | "bands";
-type ActiveReportSectionVariant = "viewer" | "toc" | "spread" | "explorer";
-type ReportSectionDisplayVariant = ActiveReportSectionVariant | "hidden";
-export type ReportSectionVariant =
-  | ReportSectionDisplayVariant
-  | "document"
-  | "cards"
-  | "outline";
+const services = [
+  {
+    title: "Health review",
+    detail: "Upload existing labs, records, or reports and get a clear written analysis of what stands out.",
+    href: "/my-health",
+    cta: "Start review",
+    chips: ["Labs", "Records", "Questions"]
+  },
+  {
+    title: "Testing",
+    detail: "Find lab and diagnostic options that match the question you are trying to answer.",
+    href: "/labs",
+    cta: "Explore testing",
+    chips: ["Missing labs", "Follow-up tests", "Diagnostics"]
+  },
+  {
+    title: "Preventive screening",
+    detail: "Compare baseline checks, risk markers, and screening paths before choosing a next step.",
+    href: "/health-areas",
+    cta: "View screenings",
+    chips: ["Risk markers", "Family history", "Baseline checks"]
+  },
+  {
+    title: "Follow-up",
+    detail: "Turn results into organized questions, repeat testing ideas, and clinician discussion points.",
+    href: "/library",
+    cta: "Plan follow-up",
+    chips: ["Trends", "Repeat results", "Next steps"]
+  }
+];
+
+export type ServicesSectionVariant = "hidden" | "cards" | "alternating";
+export type ReviewSectionVariant = "hidden" | "grid" | "list" | "bands";
+export type TrustRowVariant = "inline";
+export type HeroCopyVariant = "clinician-plan";
 export type FaqSectionVariant = "accordion" | "compact" | "columns";
 
-const labSectionVariantValues = ["hidden", "bands", "grid", "list"] as const;
-const reportSectionVariantValues = ["hidden", "viewer", "toc", "spread", "explorer"] as const;
+const servicesSectionVariantValues = ["hidden", "cards", "alternating"] as const;
+const reviewSectionVariantValues = ["hidden", "bands", "grid", "list"] as const;
+const trustRowVariantValues = ["inline"] as const;
+const heroCopyVariantValues = ["clinician-plan"] as const;
 const faqSectionVariantValues = ["accordion", "compact", "columns"] as const;
 
 function pickVariant<T extends string>(value: string | null, allowed: readonly T[], fallback: T): T {
   return allowed.includes(value as T) ? (value as T) : fallback;
 }
-
-function normalizeReportVariant(variant: ReportSectionVariant): ReportSectionDisplayVariant {
-  if (variant === "viewer" || variant === "toc" || variant === "spread" || variant === "explorer") {
-    return variant;
-  }
-
-  if (variant === "hidden") {
-    return variant;
-  }
-
-  if (variant === "outline") {
-    return "toc";
-  }
-
-  if (variant === "cards") {
-    return "explorer";
-  }
-
-  return "viewer";
-}
-
-const reportMockupSections = [
-  {
-    title: "Lab Summary",
-    detail: "A plain-English overview of what was reviewed and which results deserve attention."
-  },
-  {
-    title: "Results Reviewed",
-    detail: "Uploaded lab reports, portal screenshots, PDF results, dates, ranges, and available trends."
-  },
-  {
-    title: "Marker Groups",
-    detail: "Related labs organized by category, such as metabolic, thyroid, lipid, nutrient, liver, kidney, and blood count markers."
-  },
-  {
-    title: "Abnormal and Borderline Results",
-    detail: "Out-of-range and near-range values explained in context instead of one marker at a time."
-  },
-  {
-    title: "Missing or Follow-up Labs",
-    detail: "Markers that may be worth asking about when the uploaded results do not fully answer the question."
-  },
-  {
-    title: "Questions to Discuss",
-    detail: "A concise list of follow-up questions to bring to a clinician when interpretation or next steps are unclear."
-  }
-];
 
 const reportViewerSections = [
   {
@@ -202,20 +184,25 @@ const reportViewerSections = [
   }
 ];
 
-const reportTocRows = [
-  ["01", "Lab Summary", "1"],
-  ["02", "Results Reviewed", "2"],
-  ["03", "Marker Groups", "4"],
-  ["04", "Abnormal Results", "6"],
-  ["05", "Missing Labs", "8"],
-  ["06", "Questions to Discuss", "10"],
-  ["Appendix A", "Reference Ranges", "11"]
-];
-
-const heroContent = {
-  title: "Upload your records. Get a clear written analysis.",
-  primaryCta: "Get started"
+const heroContentByVariant: Record<
+  HeroCopyVariant,
+  {
+    title: string;
+    subtitle: string;
+    primaryCta: string;
+    secondaryCta: string;
+  }
+> = {
+  "clinician-plan": {
+    title: "Get a clinician-reviewed plan for your health questions.",
+    subtitle:
+      "Share your symptoms, labs, records, history, and prior care. We review the full picture and give you written next steps — what may matter, what may be missing, and what to ask or test next.",
+    primaryCta: "Start a review",
+    secondaryCta: "See testing options"
+  }
 };
+
+const trustItems = ["Clinician-reviewed", "Written next steps", "Testing guidance", "Private upload"];
 
 const faqs = [
   {
@@ -260,7 +247,58 @@ const faqs = [
   }
 ];
 
-function LabCategoriesSection({ variant }: { variant: LabSectionVariant }) {
+function ServicesSection({ variant }: { variant: Exclude<ServicesSectionVariant, "hidden"> }) {
+  return (
+    <section className="home-content-section home-services-section" id="services" aria-labelledby="services-title">
+      <div className="home-services-inner">
+        <div className="home-services-header">
+          <h2 id="services-title">Services</h2>
+          <p>
+            Start with the kind of support you need. Each path keeps records, testing, and follow-up
+            organized around a clear next step.
+          </p>
+        </div>
+
+        <div className={`home-services-grid home-services-grid-${variant}`}>
+          {services.map((service) => (
+            <Link className="home-service-card" href={service.href} key={service.title}>
+              <div>
+                <h3>{service.title}</h3>
+                <p>{service.detail}</p>
+                <span className="home-service-chips" aria-label={`${service.title} topics`}>
+                  {service.chips.map((chip) => (
+                    <span key={chip}>{chip}</span>
+                  ))}
+                </span>
+                <span className="home-service-cta">
+                  {service.cta}
+                  <span aria-hidden="true">→</span>
+                </span>
+              </div>
+              <span className="home-service-visual" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HeroTrustRow({ variant }: { variant: TrustRowVariant }) {
+  return (
+    <ul className={`home-hero-trust-row home-hero-trust-row-${variant}`} aria-label="Trust and review details">
+      {trustItems.map((item) => (
+        <li key={item}>{item}</li>
+      ))}
+    </ul>
+  );
+}
+
+function ReviewTestingSection({ variant }: { variant: Exclude<ReviewSectionVariant, "hidden"> }) {
   return (
     <section
       className="home-content-section home-problem-section"
@@ -269,10 +307,10 @@ function LabCategoriesSection({ variant }: { variant: LabSectionVariant }) {
     >
       <div className="home-lab-category-section">
         <div className="home-lab-category-header">
-          <h3 id="lab-categories-title">Health review & testing</h3>
+          <h3 id="lab-categories-title">Areas we cover</h3>
           <p>
-            Upload the results you already have. Condensed Health organizes related markers,
-            explains what stands out, and shows what may be missing or worth asking about.
+            Explore common health areas where records, testing, screening, and follow-up can be
+            organized into a clearer next step.
           </p>
         </div>
 
@@ -317,7 +355,7 @@ function LabCategoriesSection({ variant }: { variant: LabSectionVariant }) {
 
         <div className="home-lab-category-footer">
           <Link href="/labs">
-            View all review areas
+            View all health areas
             <span aria-hidden="true">→</span>
           </Link>
         </div>
@@ -365,157 +403,6 @@ export function ReportPreviewVariantA() {
   );
 }
 
-export function ReportPreviewVariantB() {
-  return (
-    <div className="home-report-toc-layout" aria-label="Sample report table of contents">
-      <article className="home-report-toc-page">
-        <div className="home-report-toc-heading">
-          <span>Condensed Health</span>
-          <h3>Health Data Analysis</h3>
-        </div>
-
-        <ol className="home-report-toc-list">
-          {reportTocRows.map(([number, label, page]) => (
-            <li key={label}>
-              <span>{number}</span>
-              <strong>{label}</strong>
-              <i aria-hidden="true" />
-              <b>{page}</b>
-            </li>
-          ))}
-        </ol>
-      </article>
-
-      <aside className="home-report-toc-summary" aria-label="Report summary">
-        <dl>
-          <div>
-            <dt>Pages</dt>
-            <dd>12</dd>
-          </div>
-          <div>
-            <dt>Records Reviewed</dt>
-            <dd>8</dd>
-          </div>
-          <div>
-            <dt>Key Findings</dt>
-            <dd>7</dd>
-          </div>
-          <div>
-            <dt>Open Questions</dt>
-            <dd>3</dd>
-          </div>
-        </dl>
-      </aside>
-    </div>
-  );
-}
-
-export function ReportPreviewVariantC() {
-  return (
-    <div className="home-report-spread" aria-label="Two-page sample report spread">
-      <article className="home-report-spread-page">
-        <div className="home-report-page-meta">
-          <span>Page 1</span>
-          <p>Lab Summary</p>
-        </div>
-        <h3>Lab Summary</h3>
-        <section>
-          <h4>Records Reviewed</h4>
-          <ul>
-            <li>CBC</li>
-            <li>CMP</li>
-            <li>Lipid Panel</li>
-            <li>Iron Studies</li>
-          </ul>
-        </section>
-        <section>
-          <h4>Key observations</h4>
-          <p>LDL cholesterol is elevated across repeat testing. Ferritin is low-normal while hemoglobin remains normal.</p>
-        </section>
-      </article>
-
-      <article className="home-report-spread-page">
-        <div className="home-report-page-meta">
-          <span>Page 10</span>
-          <p>Visit Prep</p>
-        </div>
-        <h3>Questions to Discuss</h3>
-        <ul className="home-report-question-list">
-          <li>Would repeat ferritin testing be helpful?</li>
-          <li>Is additional lipid testing warranted?</li>
-          <li>Are symptoms consistent with lab findings?</li>
-          <li>Which markers should be tracked over time?</li>
-        </ul>
-      </article>
-    </div>
-  );
-}
-
-export function ReportPreviewVariantD() {
-  const [expandedId, setExpandedId] = useState(reportViewerSections[3].id);
-  const expandedSection =
-    reportViewerSections.find((section) => section.id === expandedId) ?? reportViewerSections[3];
-
-  return (
-    <div className="home-report-explorer" aria-label="Expandable sample report section explorer">
-      <div className="home-report-explorer-grid">
-        {reportViewerSections.map((section) => (
-          <button
-            aria-expanded={expandedSection.id === section.id}
-            className="home-report-explorer-tile"
-            key={section.id}
-            type="button"
-            onClick={() => setExpandedId(section.id)}
-          >
-            <span>{section.label}</span>
-            <p>{section.blocks[0].value}</p>
-            <small>{section.blocks[0].label}</small>
-          </button>
-        ))}
-      </div>
-
-      <article className="home-report-explorer-preview">
-        <div className="home-report-page-meta">
-          <span>{expandedSection.eyebrow}</span>
-          <p>{expandedSection.page}</p>
-        </div>
-        <h3>{expandedSection.title}</h3>
-        {expandedSection.blocks.map((block) => (
-          <section key={block.label}>
-            <h4>{block.label}</h4>
-            <p>{block.value}</p>
-          </section>
-        ))}
-      </article>
-    </div>
-  );
-}
-
-function ReportSection({ variant }: { variant: ActiveReportSectionVariant }) {
-  return (
-    <section
-      className="home-content-section home-report-artifact-section"
-      id="whats-included"
-      aria-labelledby="features-title"
-    >
-      <span id="sample-report" className="home-section-anchor" aria-hidden="true" />
-      <div className="home-artifact-header">
-        <h2 id="features-title">See what’s inside a report</h2>
-        <p>
-          Explore a lightweight preview of how the written report is organized: reviewed records,
-          findings, missing context, and the questions that can help make the next visit more
-          focused.
-        </p>
-      </div>
-
-      {variant === "toc" ? <ReportPreviewVariantB /> : null}
-      {variant === "spread" ? <ReportPreviewVariantC /> : null}
-      {variant === "explorer" ? <ReportPreviewVariantD /> : null}
-      {variant === "viewer" ? <ReportPreviewVariantA /> : null}
-    </section>
-  );
-}
-
 function FaqSection({ variant }: { variant: FaqSectionVariant }) {
   return (
     <section className="faq-section" id="faq" aria-labelledby="faq-title">
@@ -556,22 +443,33 @@ function FaqSection({ variant }: { variant: FaqSectionVariant }) {
 }
 
 function LandingPageContent({
-  labVariant = "bands",
-  reportVariant = "hidden",
+  servicesVariant = "cards",
+  reviewVariant = "bands",
+  trustVariant = "inline",
+  heroVariant = "clinician-plan",
   faqVariant = "accordion"
 }: {
-  labVariant?: LabSectionVariant;
-  reportVariant?: ReportSectionVariant;
+  servicesVariant?: ServicesSectionVariant;
+  reviewVariant?: ReviewSectionVariant;
+  trustVariant?: TrustRowVariant;
+  heroVariant?: HeroCopyVariant;
   faqVariant?: FaqSectionVariant;
 }) {
   const searchParams = useSearchParams();
-  const selectedLabVariant = pickVariant(searchParams.get("labs"), labSectionVariantValues, labVariant);
-  const selectedReportVariant = pickVariant(
-    searchParams.get("report"),
-    reportSectionVariantValues,
-    normalizeReportVariant(reportVariant)
+  const selectedHeroVariant = pickVariant(searchParams.get("hero"), heroCopyVariantValues, heroVariant);
+  const selectedServicesVariant = pickVariant(
+    searchParams.get("services"),
+    servicesSectionVariantValues,
+    servicesVariant
   );
+  const selectedReviewVariant = pickVariant(
+    searchParams.get("review"),
+    reviewSectionVariantValues,
+    reviewVariant
+  );
+  const selectedTrustVariant = pickVariant(searchParams.get("trust"), trustRowVariantValues, trustVariant);
   const selectedFaqVariant = pickVariant(searchParams.get("faq"), faqSectionVariantValues, faqVariant);
+  const heroContent = heroContentByVariant[selectedHeroVariant];
 
   return (
     <main className="shell landing-page">
@@ -585,15 +483,18 @@ function LandingPageContent({
         <div className="home-hero-centered-inner">
           <div className="home-hero-centered-copy">
             <h1 id="home-start-title">{heroContent.title}</h1>
+            <p className="home-start-subtitle">{heroContent.subtitle}</p>
 
             <div className="home-hero-actions home-hero-centered-actions">
               <Link className="home-primary-cta" href="/my-health">
                 {heroContent.primaryCta}
               </Link>
               <Link className="home-secondary-pill" href="/health-areas">
-                Explore care
+                {heroContent.secondaryCta}
               </Link>
             </div>
+
+            <HeroTrustRow variant={selectedTrustVariant} />
           </div>
 
           <div className="home-hero-centered-report">
@@ -602,9 +503,9 @@ function LandingPageContent({
         </div>
       </section>
 
-      {selectedLabVariant !== "hidden" ? <LabCategoriesSection variant={selectedLabVariant} /> : null}
+      {selectedServicesVariant !== "hidden" ? <ServicesSection variant={selectedServicesVariant} /> : null}
 
-      {selectedReportVariant !== "hidden" ? <ReportSection variant={selectedReportVariant} /> : null}
+      {selectedReviewVariant !== "hidden" ? <ReviewTestingSection variant={selectedReviewVariant} /> : null}
 
       <FaqSection variant={selectedFaqVariant} />
     </main>
@@ -612,8 +513,10 @@ function LandingPageContent({
 }
 
 export function LandingPage(props: {
-  labVariant?: LabSectionVariant;
-  reportVariant?: ReportSectionVariant;
+  servicesVariant?: ServicesSectionVariant;
+  reviewVariant?: ReviewSectionVariant;
+  trustVariant?: TrustRowVariant;
+  heroVariant?: HeroCopyVariant;
   faqVariant?: FaqSectionVariant;
 }) {
   return (

@@ -4,36 +4,42 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-const variantGroups = [
+const landingVariantGroups = [
   {
     param: "hero",
     label: "Hero",
-    fallback: "centered-viewer",
+    fallback: "clinician-plan",
     options: [
-      { value: "centered-viewer", label: "Interactive report" }
+      { value: "clinician-plan", label: "Clinician plan" }
     ]
   },
   {
-    param: "labs",
+    param: "trust",
+    label: "Trust row",
+    fallback: "inline",
+    options: [
+      { value: "inline", label: "Inline" }
+    ]
+  },
+  {
+    param: "services",
     label: "Section 1",
+    fallback: "cards",
+    options: [
+      { value: "hidden", label: "Hidden" },
+      { value: "cards", label: "Cards" },
+      { value: "alternating", label: "Alternating" }
+    ]
+  },
+  {
+    param: "review",
+    label: "Section 2",
     fallback: "bands",
     options: [
       { value: "hidden", label: "Hidden" },
       { value: "bands", label: "Bands" },
       { value: "grid", label: "Grid" },
       { value: "list", label: "List" }
-    ]
-  },
-  {
-    param: "report",
-    label: "Section 2",
-    fallback: "hidden",
-    options: [
-      { value: "hidden", label: "Hidden" },
-      { value: "viewer", label: "Viewer" },
-      { value: "toc", label: "Contents" },
-      { value: "spread", label: "Spread" },
-      { value: "explorer", label: "Explorer" }
     ]
   },
   {
@@ -48,19 +54,20 @@ const variantGroups = [
   }
 ];
 
+const pageLinks = [
+  { href: "/", label: "Landing", value: "landing" },
+  { href: "/my-health", label: "My Health", value: "my-health" }
+];
+
 export function VariantPreviewSelector() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
-  const rawHero = searchParams.get("hero") ?? variantGroups[0].fallback;
-  const activeHero = rawHero === "centered-viewer" ? rawHero : variantGroups[0].fallback;
+  const activePage = pathname === "/" ? "landing" : pathname === "/my-health" ? "my-health" : null;
+  const activeGroups = activePage === "landing" ? landingVariantGroups : [];
   const triggerLabel = "Section variants";
 
   function activeValue(param: string, fallback: string) {
-    if (param === "hero") {
-      return activeHero;
-    }
-
     return searchParams.get(param) ?? fallback;
   }
 
@@ -82,7 +89,22 @@ export function VariantPreviewSelector() {
           </div>
 
           <div className="variant-preview-groups">
-            {variantGroups.map((group) => {
+            <section className="variant-preview-group">
+              <h3>Pages</h3>
+              <div className="variant-preview-links">
+                {pageLinks.map((link) => (
+                  <Link
+                    aria-current={activePage === link.value ? "page" : undefined}
+                    href={link.href}
+                    key={link.href}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </section>
+
+            {activeGroups.map((group) => {
               const selectedValue = activeValue(group.param, group.fallback);
 
               return (
