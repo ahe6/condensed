@@ -52,7 +52,7 @@ const services = [
   {
     title: "Health review",
     detail: "Upload existing labs, records, or reports and get a clear written analysis of what stands out.",
-    href: "/my-health",
+    href: "/start-review",
     cta: "Start review",
     chips: ["Labs", "Records", "Questions"]
   },
@@ -81,15 +81,19 @@ const services = [
 
 export type ServicesSectionVariant = "hidden" | "cards" | "alternating";
 export type ReviewSectionVariant = "hidden" | "grid" | "list" | "bands";
-export type TrustRowVariant = "inline";
+export type TrustRowVariant = "hidden" | "inline";
 export type HeroCopyVariant = "clinician-plan";
 export type FaqSectionVariant = "accordion" | "compact" | "columns";
+export type TypographyVariant = "default" | "soft" | "editorial";
+export type ColorThemeVariant = "default" | "clinical" | "warm";
 
 const servicesSectionVariantValues = ["hidden", "cards", "alternating"] as const;
 const reviewSectionVariantValues = ["hidden", "bands", "grid", "list"] as const;
-const trustRowVariantValues = ["inline"] as const;
+const trustRowVariantValues = ["hidden", "inline"] as const;
 const heroCopyVariantValues = ["clinician-plan"] as const;
 const faqSectionVariantValues = ["accordion", "compact", "columns"] as const;
+const typographyVariantValues = ["default", "soft", "editorial"] as const;
+const colorThemeVariantValues = ["default", "clinical", "warm"] as const;
 
 function pickVariant<T extends string>(value: string | null, allowed: readonly T[], fallback: T): T {
   return allowed.includes(value as T) ? (value as T) : fallback;
@@ -97,89 +101,126 @@ function pickVariant<T extends string>(value: string | null, allowed: readonly T
 
 const reportViewerSections = [
   {
-    id: "lab-summary",
-    label: "Lab Summary",
-    page: "Page 1 of 12",
-    title: "Lab Summary",
-    eyebrow: "Sample Report",
+    id: "overview",
+    label: "Overview",
+    page: "Page 1 of 14",
+    title: "Overview",
+    eyebrow: "Sample written review",
     blocks: [
-      { label: "Records reviewed", value: "CBC · CMP · Lipid Panel · Iron Studies · Vitamin D" },
-      { label: "Primary pattern", value: "Lipids and iron markers are the clearest areas for follow-up discussion." },
-      { label: "Key observation", value: "LDL has been elevated across repeat testing while ferritin remains low-normal." },
-      { label: "Recent change", value: "Vitamin D improved after supplementation, while fatigue symptoms and afternoon crashes are still noted." },
-      { label: "Discussion points", value: "Ask whether ApoB, Lp(a), repeat ferritin, or a broader iron panel would add useful context." },
-      { label: "Clinician summary", value: "Main follow-up areas: lipid risk context, iron stores, symptom timeline, and whether repeat testing is appropriate." }
+      { label: "Reason for review", value: "Ongoing fatigue, lower exercise tolerance, and questions about prior lab results." },
+      { label: "Main takeaway", value: "Several findings are worth discussing together rather than viewing as isolated normal or abnormal values." },
+      { label: "Highest-yield areas", value: "Lipid risk context, iron status, thyroid follow-up, and whether additional metabolic markers would clarify symptoms." },
+      { label: "Important limitation", value: "This review can organize questions and next steps, but it does not diagnose a condition or replace medical care." }
     ]
   },
   {
-    id: "results-reviewed",
-    label: "Results Reviewed",
-    page: "Page 2 of 12",
-    title: "Results Reviewed",
-    eyebrow: "Source Material",
+    id: "what-reviewed",
+    label: "What We Reviewed",
+    page: "Page 2 of 14",
+    title: "What We Reviewed",
+    eyebrow: "Source material",
     blocks: [
       { label: "Uploads", value: "2 lab reports · 1 visit note · medication list · symptom timeline" },
       { label: "Date range", value: "March 2025 through June 2026" },
-      { label: "Included panels", value: "CBC, CMP, lipids, thyroid, iron studies, B12, and vitamin D." },
-      { label: "Medication context", value: "Current medication list was reviewed for possible overlap with fatigue, lipid, and liver marker interpretation." },
-      { label: "Symptoms included", value: "Afternoon tiredness, low energy with exercise, cold intolerance, and intermittent brain fog were included in the timeline." }
+      { label: "Labs included", value: "CBC, CMP, lipid panel, TSH, ferritin, B12, vitamin D, and A1c." },
+      { label: "Clinical context", value: "Symptoms, medication list, family history notes, and prior clinician comments were reviewed alongside the labs." },
+      { label: "Not included", value: "No exam findings, blood pressure log, sleep history, or complete iron/thyroid follow-up panel was available." }
     ]
   },
   {
-    id: "marker-groups",
-    label: "Marker Groups",
-    page: "Page 4 of 12",
-    title: "Marker Groups",
-    eyebrow: "Organization",
+    id: "key-findings",
+    label: "Key Findings",
+    page: "Page 4 of 14",
+    title: "Key Findings",
+    eyebrow: "Synthesis",
     blocks: [
-      { label: "Metabolic", value: "A1c, fasting glucose, triglycerides, ALT, and weight history." },
-      { label: "Cardiovascular", value: "LDL-C, HDL-C, triglycerides, non-HDL cholesterol, and family history." },
-      { label: "Nutrient status", value: "Ferritin, B12, vitamin D, hemoglobin, and MCV reviewed together." },
-      { label: "Thyroid context", value: "TSH was reviewed with symptoms and prior values; free T4 and thyroid antibodies were not present in the uploads." },
-      { label: "Inflammation", value: "No hs-CRP or ESR result was available, so inflammation context could not be assessed from the uploaded records." }
+      { label: "Persistent lipid pattern", value: "LDL-C has been elevated on more than one test, while HDL and triglycerides are not the main concern." },
+      { label: "Iron context", value: "Ferritin is low-normal, which may be relevant to fatigue for some people even when hemoglobin is normal." },
+      { label: "Thyroid context", value: "TSH alone does not fully answer thyroid-related questions when symptoms persist." },
+      { label: "Symptom fit", value: "The uploaded records do not point to one clear explanation; several follow-up areas may be reasonable to review." }
     ]
   },
   {
     id: "abnormal-results",
     label: "Abnormal Results",
-    page: "Page 6 of 12",
+    page: "Page 5 of 14",
     title: "Abnormal Results",
-    eyebrow: "Finding Detail",
+    eyebrow: "Finding detail",
     blocks: [
       { label: "LDL Cholesterol", value: "165 mg/dL · Above reference range" },
-      { label: "Context", value: "Elevated across multiple tests." },
-      { label: "Related markers", value: "HDL: 62 · Triglycerides: 81" },
-      { label: "Trend", value: "LDL was 151 mg/dL in 2025 and 165 mg/dL in 2026, suggesting a persistent pattern rather than a one-off value." },
-      { label: "Missing context", value: "ApoB, Lp(a), blood pressure, smoking status, and family history would affect how this result is discussed." },
-      { label: "Discussion point", value: "Would ApoB or Lp(a) testing add clarity?" }
+      { label: "Trend", value: "LDL was 151 mg/dL in 2025 and 165 mg/dL in 2026, suggesting a repeated pattern rather than a single outlier." },
+      { label: "Related markers", value: "HDL: 62 · Triglycerides: 81 · A1c: 5.4" },
+      { label: "Why it matters", value: "LDL interpretation depends on overall risk context, including family history, blood pressure, smoking status, and other markers." },
+      { label: "Reasonable follow-up", value: "Ask whether ApoB, Lp(a), or a more complete cardiovascular risk review would add clarity." }
     ]
   },
   {
-    id: "missing-labs",
-    label: "Missing Labs",
-    page: "Page 8 of 12",
-    title: "Missing Labs",
-    eyebrow: "Potential Gaps",
+    id: "possible-conditions",
+    label: "Possible Conditions",
+    page: "Page 7 of 14",
+    title: "Possible Conditions",
+    eyebrow: "Differential to discuss",
+    blocks: [
+      { label: "Iron deficiency without anemia", value: "Can be considered when ferritin is low or low-normal and fatigue is present, but full iron studies are needed." },
+      { label: "Thyroid dysfunction or autoimmunity", value: "Cannot be ruled in or out from TSH alone when symptoms persist." },
+      { label: "Cardiometabolic risk", value: "Repeated LDL elevation may warrant a broader risk discussion even if glucose and triglycerides look reassuring." },
+      { label: "Sleep, medication, or lifestyle contributors", value: "Symptoms may also relate to sleep quality, stress, medication effects, nutrition, or training load." }
+    ]
+  },
+  {
+    id: "treatment-options",
+    label: "Treatment Options",
+    page: "Page 8 of 14",
+    title: "Treatment Options",
+    eyebrow: "Options to discuss",
+    blocks: [
+      { label: "Clinician-directed care", value: "Medication, supplements, or referrals should be based on clinician assessment, medical history, and follow-up results." },
+      { label: "Lifestyle foundations", value: "Sleep, nutrition, activity level, alcohol intake, and stress are practical areas to review before assuming one lab explains symptoms." },
+      { label: "Lipid management", value: "Depending on risk, options may include dietary changes, exercise, additional risk testing, or medication discussion." },
+      { label: "Iron follow-up", value: "If iron deficiency is suspected, the next step is usually confirming status and identifying possible causes before supplementing." },
+      { label: "Symptom tracking", value: "A simple timeline of fatigue, sleep, exercise, medication changes, and cycle changes can make follow-up visits more useful." }
+    ]
+  },
+  {
+    id: "missing-context",
+    label: "Missing Labs & Context",
+    page: "Page 10 of 14",
+    title: "Missing Labs & Context",
+    eyebrow: "Potential gaps",
     blocks: [
       { label: "Cardiovascular context", value: "ApoB and Lp(a) were not included in the uploaded lipid panels." },
-      { label: "Iron context", value: "Ferritin was checked, but transferrin saturation was not available." },
-      { label: "Thyroid context", value: "Free T4, free T3, TPO antibodies, and thyroglobulin antibodies were not included with the uploaded TSH result." },
-      { label: "Metabolic context", value: "Fasting insulin was not available, so insulin resistance cannot be evaluated from the uploaded labs alone." },
-      { label: "Follow-up consideration", value: "Repeat testing may be useful if symptoms or medication changes continue." }
+      { label: "Iron context", value: "Transferrin saturation, serum iron, and TIBC were not available with ferritin." },
+      { label: "Thyroid context", value: "Free T4, free T3, TPO antibodies, and thyroglobulin antibodies were not included." },
+      { label: "Inflammation context", value: "No hs-CRP or ESR result was available, so inflammation context could not be assessed from uploads alone." },
+      { label: "History context", value: "Blood pressure, sleep quality, diet pattern, menstrual history if relevant, and family history would change interpretation." }
     ]
   },
   {
     id: "questions",
     label: "Questions to Discuss",
-    page: "Page 10 of 12",
+    page: "Page 12 of 14",
     title: "Questions to Discuss",
-    eyebrow: "Visit Prep",
+    eyebrow: "Visit prep",
     blocks: [
       { label: "Lipid follow-up", value: "Is additional lipid risk testing warranted given repeated LDL elevation?" },
       { label: "Iron status", value: "Would repeat ferritin or iron studies help explain fatigue symptoms?" },
       { label: "Thyroid context", value: "Should free T4, thyroid antibodies, or repeat TSH be considered given the symptom timeline?" },
       { label: "Metabolic follow-up", value: "Would fasting insulin, repeat A1c, or CGM data add context for afternoon crashes?" },
-      { label: "Trend review", value: "Which changes should be tracked before the next appointment?" }
+      { label: "Visit planning", value: "Which symptoms or timeline details would be most helpful to bring to the next appointment?" }
+    ]
+  },
+  {
+    id: "next-steps",
+    label: "Suggested Next Steps",
+    page: "Page 14 of 14",
+    title: "Suggested Next Steps",
+    eyebrow: "Action plan",
+    blocks: [
+      { label: "Prepare for review", value: "Bring the symptom timeline, prior labs, medication list, and the questions above to a clinician visit." },
+      { label: "Consider targeted testing", value: "Discuss whether lipid risk markers, complete iron studies, thyroid follow-up, or inflammation markers are appropriate." },
+      { label: "Track what changes", value: "Log fatigue severity, sleep, exercise tolerance, and any medication or supplement changes before repeating labs." },
+      { label: "Avoid overinterpreting", value: "Do not start or stop treatment based only on this review; use it to support a clearer clinical conversation." },
+      { label: "Escalate when needed", value: "Seek timely care for new chest pain, shortness of breath, fainting, neurological symptoms, severe weakness, or rapidly worsening symptoms." }
     ]
   }
 ];
@@ -288,7 +329,7 @@ function ServicesSection({ variant }: { variant: Exclude<ServicesSectionVariant,
   );
 }
 
-function HeroTrustRow({ variant }: { variant: TrustRowVariant }) {
+function HeroTrustRow({ variant }: { variant: Exclude<TrustRowVariant, "hidden"> }) {
   return (
     <ul className={`home-hero-trust-row home-hero-trust-row-${variant}`} aria-label="Trust and review details">
       {trustItems.map((item) => (
@@ -365,9 +406,9 @@ function ReviewTestingSection({ variant }: { variant: Exclude<ReviewSectionVaria
 }
 
 export function ReportPreviewVariantA() {
-  const [activeId, setActiveId] = useState(reportViewerSections[3].id);
+  const [activeId, setActiveId] = useState(reportViewerSections[0].id);
   const activeSection =
-    reportViewerSections.find((section) => section.id === activeId) ?? reportViewerSections[3];
+    reportViewerSections.find((section) => section.id === activeId) ?? reportViewerSections[0];
 
   return (
     <div className="home-report-viewer" aria-label="Interactive sample report viewer">
@@ -386,7 +427,7 @@ export function ReportPreviewVariantA() {
 
       <article className="home-report-viewer-page">
         <div className="home-report-page-meta">
-          <span>{activeSection.eyebrow}</span>
+          <span>Sample written review</span>
           <p>{activeSection.page}</p>
         </div>
         <h3>{activeSection.title}</h3>
@@ -398,6 +439,11 @@ export function ReportPreviewVariantA() {
             </section>
           ))}
         </div>
+        {activeSection.id === "possible-conditions" ? (
+          <p className="home-report-viewer-note">
+            These possibilities depend on your full history, exam, and any follow-up testing.
+          </p>
+        ) : null}
       </article>
     </div>
   );
@@ -445,15 +491,19 @@ function FaqSection({ variant }: { variant: FaqSectionVariant }) {
 function LandingPageContent({
   servicesVariant = "cards",
   reviewVariant = "bands",
-  trustVariant = "inline",
+  trustVariant = "hidden",
   heroVariant = "clinician-plan",
-  faqVariant = "accordion"
+  faqVariant = "accordion",
+  typographyVariant = "default",
+  colorThemeVariant = "default"
 }: {
   servicesVariant?: ServicesSectionVariant;
   reviewVariant?: ReviewSectionVariant;
   trustVariant?: TrustRowVariant;
   heroVariant?: HeroCopyVariant;
   faqVariant?: FaqSectionVariant;
+  typographyVariant?: TypographyVariant;
+  colorThemeVariant?: ColorThemeVariant;
 }) {
   const searchParams = useSearchParams();
   const selectedHeroVariant = pickVariant(searchParams.get("hero"), heroCopyVariantValues, heroVariant);
@@ -469,10 +519,14 @@ function LandingPageContent({
   );
   const selectedTrustVariant = pickVariant(searchParams.get("trust"), trustRowVariantValues, trustVariant);
   const selectedFaqVariant = pickVariant(searchParams.get("faq"), faqSectionVariantValues, faqVariant);
+  const selectedTypographyVariant = pickVariant(searchParams.get("type"), typographyVariantValues, typographyVariant);
+  const selectedColorThemeVariant = pickVariant(searchParams.get("theme"), colorThemeVariantValues, colorThemeVariant);
   const heroContent = heroContentByVariant[selectedHeroVariant];
 
   return (
-    <main className="shell landing-page">
+    <main
+      className={`shell landing-page landing-type-${selectedTypographyVariant} landing-theme-${selectedColorThemeVariant}`}
+    >
       <SiteHeader ariaLabel="Condensed Health navigation" actionHref="/my-health" actionLabel="My Health" />
 
       <section
@@ -486,7 +540,7 @@ function LandingPageContent({
             <p className="home-start-subtitle">{heroContent.subtitle}</p>
 
             <div className="home-hero-actions home-hero-centered-actions">
-              <Link className="home-primary-cta" href="/my-health">
+              <Link className="home-primary-cta" href="/start-review">
                 {heroContent.primaryCta}
               </Link>
               <Link className="home-secondary-pill" href="/health-areas">
@@ -494,7 +548,7 @@ function LandingPageContent({
               </Link>
             </div>
 
-            <HeroTrustRow variant={selectedTrustVariant} />
+            {selectedTrustVariant !== "hidden" ? <HeroTrustRow variant={selectedTrustVariant} /> : null}
           </div>
 
           <div className="home-hero-centered-report">
@@ -518,6 +572,8 @@ export function LandingPage(props: {
   trustVariant?: TrustRowVariant;
   heroVariant?: HeroCopyVariant;
   faqVariant?: FaqSectionVariant;
+  typographyVariant?: TypographyVariant;
+  colorThemeVariant?: ColorThemeVariant;
 }) {
   return (
     <Suspense fallback={null}>

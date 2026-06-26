@@ -6,6 +6,26 @@ import { useState } from "react";
 
 const landingVariantGroups = [
   {
+    param: "type",
+    label: "Typography",
+    fallback: "default",
+    options: [
+      { value: "default", label: "Default" },
+      { value: "soft", label: "Soft" },
+      { value: "editorial", label: "Editorial" }
+    ]
+  },
+  {
+    param: "theme",
+    label: "Color",
+    fallback: "default",
+    options: [
+      { value: "default", label: "Default" },
+      { value: "clinical", label: "Clinical" },
+      { value: "warm", label: "Warm" }
+    ]
+  },
+  {
     param: "hero",
     label: "Hero",
     fallback: "clinician-plan",
@@ -16,8 +36,9 @@ const landingVariantGroups = [
   {
     param: "trust",
     label: "Trust row",
-    fallback: "inline",
+    fallback: "hidden",
     options: [
+      { value: "hidden", label: "Hidden" },
       { value: "inline", label: "Inline" }
     ]
   },
@@ -54,8 +75,21 @@ const landingVariantGroups = [
   }
 ];
 
+const startReviewVariantGroups = [
+  {
+    param: "layout",
+    label: "Layout",
+    fallback: "split",
+    options: [
+      { value: "split", label: "Split" },
+      { value: "report", label: "Report" }
+    ]
+  }
+];
+
 const pageLinks = [
   { href: "/", label: "Landing", value: "landing" },
+  { href: "/start-review", label: "Start Review", value: "start-review" },
   { href: "/my-health", label: "My Health", value: "my-health" }
 ];
 
@@ -63,9 +97,11 @@ export function VariantPreviewSelector() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
-  const activePage = pathname === "/" ? "landing" : pathname === "/my-health" ? "my-health" : null;
-  const activeGroups = activePage === "landing" ? landingVariantGroups : [];
-  const triggerLabel = "Section variants";
+  const activePage =
+    pathname === "/" ? "landing" : pathname === "/start-review" ? "start-review" : pathname === "/my-health" ? "my-health" : null;
+  const activeGroups =
+    activePage === "landing" ? landingVariantGroups : activePage === "start-review" ? startReviewVariantGroups : [];
+  const triggerLabel = "Design variants";
 
   function activeValue(param: string, fallback: string) {
     return searchParams.get(param) ?? fallback;
