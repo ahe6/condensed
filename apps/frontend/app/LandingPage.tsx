@@ -271,7 +271,7 @@ const heroContentByVariant: Record<
   "consult-overlay": {
     title: "Your online health team for testing, results, and follow-up.",
     subtitle:
-      "We help identify testing options, review results, coordinate follow-up, and clarify your next steps.",
+      "We help sort through your information, clarify what matters, and guide the next step in your care.",
     primaryCta: "Start your free online consult",
     secondaryCta: "See testing options"
   },
