@@ -38,12 +38,12 @@ const landingVariantGroups = [
     ]
   },
   {
-    param: "trust",
-    label: "Trust row",
-    fallback: "hidden",
+    param: "topbar",
+    label: "Top bar",
+    fallback: "gutter",
     options: [
-      { value: "hidden", label: "Hidden" },
-      { value: "inline", label: "Inline" }
+      { value: "gutter", label: "Gutter lines" },
+      { value: "full", label: "Full lines" }
     ]
   },
   {
@@ -70,7 +70,7 @@ const landingVariantGroups = [
   {
     param: "faq",
     label: "FAQ",
-    fallback: "accordion",
+    fallback: "hidden",
     options: [
       { value: "hidden", label: "Hidden" },
       { value: "accordion", label: "Accordion" },

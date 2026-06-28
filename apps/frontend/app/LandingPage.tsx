@@ -89,6 +89,7 @@ const services = [
 export type ServicesSectionVariant = "hidden" | "cards" | "alternating";
 export type ReviewSectionVariant = "hidden" | "grid" | "list" | "bands";
 export type TrustRowVariant = "hidden" | "inline";
+export type TopBarLineVariant = "gutter" | "full";
 export type HeroCopyVariant =
   | "clinician-plan"
   | "start-review"
@@ -102,6 +103,7 @@ export type ColorThemeVariant = "default" | "clinical" | "warm";
 const servicesSectionVariantValues = ["hidden", "cards", "alternating"] as const;
 const reviewSectionVariantValues = ["hidden", "bands", "grid", "list"] as const;
 const trustRowVariantValues = ["hidden", "inline"] as const;
+const topBarLineVariantValues = ["gutter", "full"] as const;
 const heroCopyVariantValues = [
   "consult-overlay",
   "clinician-plan",
@@ -703,9 +705,12 @@ function ConsultExplainerHero() {
   );
 }
 
-function ConsultOverlayHeader() {
+function ConsultOverlayHeader({ lineVariant }: { lineVariant: TopBarLineVariant }) {
   return (
-    <header className="consult-overlay-header" aria-label="Condensed Health navigation">
+    <header
+      className={`consult-overlay-header consult-overlay-header-lines-${lineVariant}`}
+      aria-label="Condensed Health navigation"
+    >
       <div className="consult-overlay-primary-bar">
         <CustomerBrand />
       </div>
@@ -741,14 +746,16 @@ function LandingPageContent({
   servicesVariant = "cards",
   reviewVariant = "bands",
   trustVariant = "hidden",
+  topBarLineVariant = "gutter",
   heroVariant = "consult-overlay",
-  faqVariant = "accordion",
+  faqVariant = "hidden",
   typographyVariant = "default",
   colorThemeVariant = "default"
 }: {
   servicesVariant?: ServicesSectionVariant;
   reviewVariant?: ReviewSectionVariant;
   trustVariant?: TrustRowVariant;
+  topBarLineVariant?: TopBarLineVariant;
   heroVariant?: HeroCopyVariant;
   faqVariant?: FaqSectionVariant;
   typographyVariant?: TypographyVariant;
@@ -767,6 +774,11 @@ function LandingPageContent({
     reviewVariant
   );
   const selectedTrustVariant = pickVariant(searchParams.get("trust"), trustRowVariantValues, trustVariant);
+  const selectedTopBarLineVariant = pickVariant(
+    searchParams.get("topbar"),
+    topBarLineVariantValues,
+    topBarLineVariant
+  );
   const selectedFaqVariant = pickVariant(searchParams.get("faq"), faqSectionVariantValues, faqVariant);
   const selectedTypographyVariant = pickVariant(searchParams.get("type"), typographyVariantValues, typographyVariant);
   const selectedColorThemeVariant = pickVariant(searchParams.get("theme"), colorThemeVariantValues, colorThemeVariant);
@@ -777,7 +789,7 @@ function LandingPageContent({
       className={`shell landing-page landing-type-${selectedTypographyVariant} landing-theme-${selectedColorThemeVariant}`}
     >
       {selectedHeroVariant === "consult-overlay" ? (
-        <ConsultOverlayHeader />
+        <ConsultOverlayHeader lineVariant={selectedTopBarLineVariant} />
       ) : (
         <LandingHeader />
       )}
@@ -833,6 +845,7 @@ export function LandingPage(props: {
   servicesVariant?: ServicesSectionVariant;
   reviewVariant?: ReviewSectionVariant;
   trustVariant?: TrustRowVariant;
+  topBarLineVariant?: TopBarLineVariant;
   heroVariant?: HeroCopyVariant;
   faqVariant?: FaqSectionVariant;
   typographyVariant?: TypographyVariant;

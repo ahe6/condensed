@@ -31,6 +31,7 @@ COPY --from=build /app/package.json /app/package-lock.json ./
 COPY --from=build /app/node_modules node_modules
 COPY --from=build /app/apps/frontend/package.json apps/frontend/package.json
 COPY --from=build /app/apps/frontend/.next apps/frontend/.next
+COPY --from=build /app/apps/frontend/public apps/frontend/public
 
 EXPOSE 3001
 CMD ["npm", "--workspace", "apps/frontend", "run", "start"]
