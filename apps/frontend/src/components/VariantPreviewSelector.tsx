@@ -99,6 +99,8 @@ const pageLinks = [
 ];
 
 export function VariantPreviewSelector() {
+  const shouldShow =
+    process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_SHOW_VARIANTS === "true";
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
@@ -107,6 +109,10 @@ export function VariantPreviewSelector() {
   const activeGroups =
     activePage === "landing" ? landingVariantGroups : activePage === "start-review" ? startReviewVariantGroups : [];
   const triggerLabel = "Design variants";
+
+  if (!shouldShow) {
+    return null;
+  }
 
   function activeValue(param: string, fallback: string) {
     return searchParams.get(param) ?? fallback;
