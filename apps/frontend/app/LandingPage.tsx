@@ -269,7 +269,7 @@ const heroContentByVariant: Record<
     secondaryCta: "See testing options"
   },
   "consult-overlay": {
-    title: "Your online health concierge for testing, results, and follow-up.",
+    title: "Your online health team for testing, results, and follow-up.",
     subtitle:
       "We help identify testing options, review results, coordinate follow-up, and clarify your next steps.",
     primaryCta: "Start your free online consult",
