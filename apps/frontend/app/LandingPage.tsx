@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { SiteHeader } from "../src/components/SiteHeader";
+import { CustomerBrand } from "../src/components/CustomerBrand";
+import { CustomerNav } from "../src/components/CustomerNav";
+import { TopicNav } from "../src/components/TopicNav";
+import { reviewStartPaths } from "../src/lib/reviewStartPaths";
 
 const labAnalysisCategories = [
   {
@@ -54,6 +57,7 @@ const services = [
     detail: "Upload existing labs, records, or reports and get a clear written analysis of what stands out.",
     href: "/start-review",
     cta: "Start review",
+    icon: "review",
     chips: ["Labs", "Records", "Questions"]
   },
   {
@@ -61,6 +65,7 @@ const services = [
     detail: "Find lab and diagnostic options that match the question you are trying to answer.",
     href: "/labs",
     cta: "Explore testing",
+    icon: "testing",
     chips: ["Missing labs", "Follow-up tests", "Diagnostics"]
   },
   {
@@ -68,6 +73,7 @@ const services = [
     detail: "Compare baseline checks, risk markers, and screening paths before choosing a next step.",
     href: "/health-areas",
     cta: "View screenings",
+    icon: "preventive",
     chips: ["Risk markers", "Family history", "Baseline checks"]
   },
   {
@@ -75,6 +81,7 @@ const services = [
     detail: "Turn results into organized questions, repeat testing ideas, and clinician discussion points.",
     href: "/library",
     cta: "Plan follow-up",
+    icon: "follow-up",
     chips: ["Trends", "Repeat results", "Next steps"]
   }
 ];
@@ -82,16 +89,27 @@ const services = [
 export type ServicesSectionVariant = "hidden" | "cards" | "alternating";
 export type ReviewSectionVariant = "hidden" | "grid" | "list" | "bands";
 export type TrustRowVariant = "hidden" | "inline";
-export type HeroCopyVariant = "clinician-plan";
-export type FaqSectionVariant = "accordion" | "compact" | "columns";
+export type HeroCopyVariant =
+  | "clinician-plan"
+  | "start-review"
+  | "consult-overlay"
+  | "consult-services"
+  | "consult-explainer";
+export type FaqSectionVariant = "hidden" | "accordion" | "compact" | "columns";
 export type TypographyVariant = "default" | "soft" | "editorial";
 export type ColorThemeVariant = "default" | "clinical" | "warm";
 
 const servicesSectionVariantValues = ["hidden", "cards", "alternating"] as const;
 const reviewSectionVariantValues = ["hidden", "bands", "grid", "list"] as const;
 const trustRowVariantValues = ["hidden", "inline"] as const;
-const heroCopyVariantValues = ["clinician-plan"] as const;
-const faqSectionVariantValues = ["accordion", "compact", "columns"] as const;
+const heroCopyVariantValues = [
+  "consult-overlay",
+  "clinician-plan",
+  "start-review",
+  "consult-services",
+  "consult-explainer"
+] as const;
+const faqSectionVariantValues = ["hidden", "accordion", "compact", "columns"] as const;
 const typographyVariantValues = ["default", "soft", "editorial"] as const;
 const colorThemeVariantValues = ["default", "clinical", "warm"] as const;
 
@@ -235,15 +253,70 @@ const heroContentByVariant: Record<
   }
 > = {
   "clinician-plan": {
-    title: "Get a clinician-reviewed plan for your health questions.",
+    title: "Get an online health consult for your health questions.",
     subtitle:
       "Share your symptoms, labs, records, history, and prior care. We review the full picture and give you written next steps — what may matter, what may be missing, and what to ask or test next.",
+    primaryCta: "Request a consult",
+    secondaryCta: "See testing options"
+  },
+  "start-review": {
+    title: "Start with your health question.",
+    subtitle:
+      "Choose the closest starting point. You can add symptoms, records, labs, history, and prior care in the next step.",
     primaryCta: "Start a review",
     secondaryCta: "See testing options"
+  },
+  "consult-overlay": {
+    title: "Find the right labs and understand what comes next.",
+    subtitle:
+      "Share your symptoms, prior results, records, and health goals. We review the full picture, help identify testing options when useful, and provide written guidance on what may matter, what may be missing, and what to do next.",
+    primaryCta: "Explore services",
+    secondaryCta: "See testing options"
+  },
+  "consult-services": {
+    title: "Online care for questions that need a closer look.",
+    subtitle:
+      "Share your symptoms, health history, labs, records, and prior care. We review the full picture and help you understand what may matter, what may be missing, and what to ask or test next.",
+    primaryCta: "Explore services",
+    secondaryCta: "See testing options"
+  },
+  "consult-explainer": {
+    title: "Online care that starts by reviewing the full picture.",
+    subtitle:
+      "Share what is going on, what you have already tried, and the records you already have. Your consult organizes the context, explains what stands out, and turns it into clear written next steps.",
+    primaryCta: "",
+    secondaryCta: ""
   }
 };
 
 const trustItems = ["Clinician-reviewed", "Written next steps", "Testing guidance", "Private upload"];
+
+const consultExplainerItems = [
+  {
+    title: "Review your context",
+    detail: "Symptoms, history, medications, labs, records, and prior care are looked at together."
+  },
+  {
+    title: "Explain what may matter",
+    detail: "The plan highlights patterns, abnormal results, risk factors, and findings worth discussing."
+  },
+  {
+    title: "Show what may be missing",
+    detail: "If important context is absent, the review calls out labs, records, or details that could clarify the next step."
+  },
+  {
+    title: "Organize next steps",
+    detail: "You get written guidance for what to ask, test, monitor, or follow up on when appropriate."
+  }
+];
+
+const consultOverlayNavLinks = [
+  { href: "/#services", label: "Services" },
+  { href: "/health-areas", label: "Health areas" },
+  { href: "/library", label: "Health library" },
+  { href: "/my-health", label: "My Health" },
+  { href: "/#faq", label: "Contact" }
+];
 
 const faqs = [
   {
@@ -488,11 +561,187 @@ function FaqSection({ variant }: { variant: FaqSectionVariant }) {
   );
 }
 
+function StartReviewHero({ trustVariant }: { trustVariant: TrustRowVariant }) {
+  const heroContent = heroContentByVariant["start-review"];
+
+  return (
+    <section className="home-hero home-hero-review-start" id="start-review" aria-labelledby="home-start-title">
+      <div className="home-hero-review-start-inner">
+        <div className="start-review-choice-panel">
+          <div className="start-review-copy">
+            <h1 id="home-start-title">{heroContent.title}</h1>
+            <p>{heroContent.subtitle}</p>
+          </div>
+
+          <div className="start-review-option-grid">
+            {reviewStartPaths.map((path) => (
+              <Link className="start-review-option" href={`/my-health?start=${path.id}`} key={path.id}>
+                <span>{path.title}</span>
+                <p>{path.detail}</p>
+                <small>
+                  Start
+                  <span aria-hidden="true">→</span>
+                </small>
+              </Link>
+            ))}
+          </div>
+
+          <p className="start-review-note">
+            Your review starts by collecting the context needed to produce a useful written plan.
+          </p>
+
+          {trustVariant !== "hidden" ? <HeroTrustRow variant={trustVariant} /> : null}
+        </div>
+
+        <aside className="start-review-visual" aria-hidden="true">
+          <div className="start-review-abstract-card">
+            <span />
+            <span />
+            <span />
+            <span />
+            <div>
+              <i />
+              <i />
+              <i />
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  );
+}
+
+function ConsultOverlayHero() {
+  const heroContent = heroContentByVariant["consult-overlay"];
+
+  return (
+    <section className="home-hero home-hero-consult-overlay" id="start-review" aria-labelledby="home-start-title">
+      <div className="home-hero-consult-stage">
+        <img
+          className="home-hero-consult-background"
+          src="/images/hero-architectural-bg.png"
+          alt=""
+          aria-hidden="true"
+        />
+
+        <div className="home-hero-consult-card">
+          <h1 id="home-start-title">{heroContent.title}</h1>
+          <p>{heroContent.subtitle}</p>
+          <Link className="home-primary-cta" href="#services">
+            {heroContent.primaryCta}
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ConsultServicesHero() {
+  const heroContent = heroContentByVariant["consult-services"];
+
+  return (
+    <section className="home-hero home-hero-consult-services" id="start-review" aria-labelledby="home-start-title">
+      <div className="home-hero-consult-services-inner">
+        <div className="home-hero-consult-services-copy">
+          <h1 id="home-start-title">{heroContent.title}</h1>
+          <p>{heroContent.subtitle}</p>
+          <Link className="home-primary-cta" href="#services">
+            {heroContent.primaryCta}
+          </Link>
+        </div>
+
+        <aside className="home-consult-services-panel" aria-labelledby="home-consult-services-title">
+          <div className="home-consult-services-heading">
+            <span>Choose a starting point</span>
+            <h2 id="home-consult-services-title">Online health consult</h2>
+          </div>
+
+          <div className="home-consult-services-list">
+            {services.map((service) => (
+              <Link className="home-consult-service-card" href={service.href} key={service.title}>
+                <span
+                  className={`home-consult-service-icon home-consult-service-icon-${service.icon}`}
+                  aria-hidden="true"
+                />
+                <span>
+                  <strong>{service.title}</strong>
+                  <small>{service.detail}</small>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </aside>
+      </div>
+    </section>
+  );
+}
+
+function ConsultExplainerHero() {
+  const heroContent = heroContentByVariant["consult-explainer"];
+
+  return (
+    <section className="home-hero home-hero-consult-explainer" id="start-review" aria-labelledby="home-start-title">
+      <div className="home-hero-consult-explainer-inner">
+        <div className="home-hero-consult-explainer-copy">
+          <h1 id="home-start-title">{heroContent.title}</h1>
+          <p>{heroContent.subtitle}</p>
+        </div>
+
+        <aside className="home-consult-explainer-panel" aria-label="What the consult includes">
+          <span>What your consult does</span>
+          <div className="home-consult-explainer-list">
+            {consultExplainerItems.map((item) => (
+              <article className="home-consult-explainer-item" key={item.title}>
+                <h2>{item.title}</h2>
+                <p>{item.detail}</p>
+              </article>
+            ))}
+          </div>
+        </aside>
+      </div>
+    </section>
+  );
+}
+
+function ConsultOverlayHeader() {
+  return (
+    <header className="consult-overlay-header" aria-label="Condensed Health navigation">
+      <div className="consult-overlay-primary-bar">
+        <CustomerBrand />
+      </div>
+      <nav className="consult-overlay-service-bar" aria-label="Site sections">
+        {consultOverlayNavLinks.map((link) => (
+          <Link href={link.href} key={link.href}>
+            {link.label}
+          </Link>
+        ))}
+      </nav>
+    </header>
+  );
+}
+
+function LandingHeader() {
+  return (
+    <section className="topbar site-header" aria-label="Condensed Health navigation">
+      <CustomerBrand />
+      <TopicNav />
+      <div className="nav-actions">
+        <CustomerNav
+          primaryHref="/my-health"
+          primaryLabel="My Health"
+          secondaryHref="/health-areas"
+          secondaryLabel="Contact"
+        />
+      </div>
+    </section>
+  );
+}
+
 function LandingPageContent({
   servicesVariant = "cards",
   reviewVariant = "bands",
   trustVariant = "hidden",
-  heroVariant = "clinician-plan",
+  heroVariant = "consult-overlay",
   faqVariant = "accordion",
   typographyVariant = "default",
   colorThemeVariant = "default"
@@ -527,41 +776,55 @@ function LandingPageContent({
     <main
       className={`shell landing-page landing-type-${selectedTypographyVariant} landing-theme-${selectedColorThemeVariant}`}
     >
-      <SiteHeader ariaLabel="Condensed Health navigation" actionHref="/my-health" actionLabel="My Health" />
+      {selectedHeroVariant === "consult-overlay" ? (
+        <ConsultOverlayHeader />
+      ) : (
+        <LandingHeader />
+      )}
 
-      <section
-        className="home-hero home-hero-centered"
-        id="start-review"
-        aria-labelledby="home-start-title"
-      >
-        <div className="home-hero-centered-inner">
-          <div className="home-hero-centered-copy">
-            <h1 id="home-start-title">{heroContent.title}</h1>
-            <p className="home-start-subtitle">{heroContent.subtitle}</p>
+      {selectedHeroVariant === "consult-overlay" ? (
+        <ConsultOverlayHero />
+      ) : selectedHeroVariant === "consult-services" ? (
+        <ConsultServicesHero />
+      ) : selectedHeroVariant === "consult-explainer" ? (
+        <ConsultExplainerHero />
+      ) : selectedHeroVariant === "start-review" ? (
+        <StartReviewHero trustVariant={selectedTrustVariant} />
+      ) : (
+        <section
+          className="home-hero home-hero-centered"
+          id="start-review"
+          aria-labelledby="home-start-title"
+        >
+          <div className="home-hero-centered-inner">
+            <div className="home-hero-centered-copy">
+              <h1 id="home-start-title">{heroContent.title}</h1>
+              <p className="home-start-subtitle">{heroContent.subtitle}</p>
 
-            <div className="home-hero-actions home-hero-centered-actions">
-              <Link className="home-primary-cta" href="/start-review">
-                {heroContent.primaryCta}
-              </Link>
-              <Link className="home-secondary-pill" href="/health-areas">
-                {heroContent.secondaryCta}
-              </Link>
+              <div className="home-hero-actions home-hero-centered-actions">
+                <Link className="home-primary-cta" href="/start-review">
+                  {heroContent.primaryCta}
+                </Link>
+                <Link className="home-secondary-pill" href="/health-areas">
+                  {heroContent.secondaryCta}
+                </Link>
+              </div>
+
+              {selectedTrustVariant !== "hidden" ? <HeroTrustRow variant={selectedTrustVariant} /> : null}
             </div>
 
-            {selectedTrustVariant !== "hidden" ? <HeroTrustRow variant={selectedTrustVariant} /> : null}
+            <div className="home-hero-centered-report">
+              <ReportPreviewVariantA />
+            </div>
           </div>
-
-          <div className="home-hero-centered-report">
-            <ReportPreviewVariantA />
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {selectedServicesVariant !== "hidden" ? <ServicesSection variant={selectedServicesVariant} /> : null}
 
       {selectedReviewVariant !== "hidden" ? <ReviewTestingSection variant={selectedReviewVariant} /> : null}
 
-      <FaqSection variant={selectedFaqVariant} />
+      {selectedFaqVariant !== "hidden" ? <FaqSection variant={selectedFaqVariant} /> : null}
     </main>
   );
 }

@@ -4,30 +4,10 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { ReportPreviewVariantA } from "../LandingPage";
-import { SiteHeader } from "../../src/components/SiteHeader";
-
-const reviewPaths = [
-  {
-    id: "symptoms",
-    title: "Symptoms or a concern",
-    detail: "Start with what changed, what feels off, or what you are trying to understand."
-  },
-  {
-    id: "results",
-    title: "Existing labs or records",
-    detail: "Upload results, visit notes, screenshots, or reports you already have."
-  },
-  {
-    id: "testing",
-    title: "Testing question",
-    detail: "Use this when you want to know which labs or diagnostics may fit the question."
-  },
-  {
-    id: "follow-up",
-    title: "Follow-up plan",
-    detail: "Prepare questions and next steps before or after a clinician visit."
-  }
-];
+import { CustomerBrand } from "../../src/components/CustomerBrand";
+import { CustomerNav } from "../../src/components/CustomerNav";
+import { TopicNav } from "../../src/components/TopicNav";
+import { reviewStartPaths } from "../../src/lib/reviewStartPaths";
 
 const reviewLayoutValues = ["split", "report"] as const;
 
@@ -43,7 +23,18 @@ function StartReviewContent() {
 
   return (
     <main className={`shell start-review-page start-review-page-${layout}`}>
-      <SiteHeader ariaLabel="Start review navigation" actionHref="/my-health" actionLabel="My Health" />
+      <section className="topbar site-header" aria-label="Start review navigation">
+        <CustomerBrand />
+        <TopicNav />
+        <div className="nav-actions">
+          <CustomerNav
+            primaryHref="/my-health"
+            primaryLabel="My Health"
+            secondaryHref="/health-areas"
+            secondaryLabel="Contact"
+          />
+        </div>
+      </section>
 
       <section className="start-review-chooser" aria-labelledby="start-review-title">
         <div className="start-review-choice-panel">
@@ -56,7 +47,7 @@ function StartReviewContent() {
           </div>
 
           <div className="start-review-option-grid">
-            {reviewPaths.map((path) => (
+            {reviewStartPaths.map((path) => (
               <Link className="start-review-option" href={`/my-health?start=${path.id}`} key={path.id}>
                 <span>{path.title}</span>
                 <p>{path.detail}</p>

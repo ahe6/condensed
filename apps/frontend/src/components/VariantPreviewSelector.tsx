@@ -28,9 +28,13 @@ const landingVariantGroups = [
   {
     param: "hero",
     label: "Hero",
-    fallback: "clinician-plan",
+    fallback: "consult-overlay",
     options: [
-      { value: "clinician-plan", label: "Clinician plan" }
+      { value: "consult-overlay", label: "Consult overlay" },
+      { value: "clinician-plan", label: "Clinician plan" },
+      { value: "start-review", label: "Start review" },
+      { value: "consult-services", label: "Consult services" },
+      { value: "consult-explainer", label: "Consult explainer" }
     ]
   },
   {
@@ -68,6 +72,7 @@ const landingVariantGroups = [
     label: "FAQ",
     fallback: "accordion",
     options: [
+      { value: "hidden", label: "Hidden" },
       { value: "accordion", label: "Accordion" },
       { value: "compact", label: "Compact" },
       { value: "columns", label: "Columns" }
