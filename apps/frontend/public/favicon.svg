@@ -1,0 +1,16 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="innerRecess" x1="256" y1="108" x2="256" y2="424" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#DCE8F5" />
+      <stop offset="0.5" stop-color="#EAF1F8" />
+      <stop offset="1" stop-color="#F1F6FB" />
+    </linearGradient>
+  </defs>
+  <path
+    d="M177 424V226C177 172 213 138 256 138C299 138 335 172 335 226V424"
+    stroke="url(#innerRecess)"
+    stroke-width="58"
+    stroke-linecap="butt"
+    stroke-linejoin="round"
+  />
+</svg>

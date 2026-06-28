@@ -8,9 +8,12 @@ export const metadata: Metadata = {
   title: "Condensed Health",
   description: "Online health concierge for labs, results, referrals, and next steps",
   icons: {
-    icon: "/brand/logo-mark.svg",
-    shortcut: "/brand/logo-mark.svg",
-    apple: "/brand/logo-mark.svg"
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.svg", type: "image/svg+xml" }
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/brand/app-icon.svg"
   }
 };
 
