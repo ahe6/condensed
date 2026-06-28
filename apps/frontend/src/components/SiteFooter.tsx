@@ -34,7 +34,7 @@ export function SiteFooter() {
         <div className="site-footer-brand">
           <CustomerBrand />
           <p id="site-footer-title">
-            Condensed Health turns uploaded lab results into a clear written lab analysis.
+            Your online health concierge for labs, results, referrals, and next steps.
           </p>
         </div>
 
@@ -54,10 +54,7 @@ export function SiteFooter() {
         </nav>
 
         <div className="site-footer-bottom">
-          <p>
-            Condensed Health explains and organizes lab results. It does not diagnose, prescribe, or
-            replace medical care.
-          </p>
+          <p>Condensed Health does not diagnose, prescribe, or replace medical care.</p>
           <span>© {new Date().getFullYear()} Condensed Health</span>
         </div>
       </div>

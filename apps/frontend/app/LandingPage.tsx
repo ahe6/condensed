@@ -269,10 +269,10 @@ const heroContentByVariant: Record<
     secondaryCta: "See testing options"
   },
   "consult-overlay": {
-    title: "Find the right labs and understand what comes next.",
+    title: "Your online health concierge for testing, results, and follow-up.",
     subtitle:
-      "Share your symptoms, prior results, records, and health goals. We review the full picture, help identify testing options when useful, and provide written guidance on what may matter, what may be missing, and what to do next.",
-    primaryCta: "Explore services",
+      "We help identify testing options, review results, coordinate follow-up, and clarify your next steps.",
+    primaryCta: "Start your free online consult",
     secondaryCta: "See testing options"
   },
   "consult-services": {
@@ -313,10 +313,9 @@ const consultExplainerItems = [
 ];
 
 const consultOverlayNavLinks = [
-  { href: "/#services", label: "Services" },
-  { href: "/health-areas", label: "Health areas" },
-  { href: "/library", label: "Health library" },
   { href: "/my-health", label: "My Health" },
+  { href: "/#services", label: "Services" },
+  { href: "/library", label: "Health library" },
   { href: "/#faq", label: "Contact" }
 ];
 
@@ -632,6 +631,12 @@ function ConsultOverlayHero() {
           <Link className="home-primary-cta" href="#services">
             {heroContent.primaryCta}
           </Link>
+          <p className="home-hero-account-link">
+            No appointment required{" "}
+            <span className="home-hero-account-prompt">
+              <span aria-hidden="true">·</span> Already have an account? <Link href="/account">Sign in</Link>
+            </span>
+          </p>
         </div>
       </div>
     </section>
@@ -757,6 +762,9 @@ function ConsultOverlayHeader({ lineVariant }: { lineVariant: TopBarLineVariant 
           <span />
         </button>
         <CustomerBrand />
+        <Link className="consult-overlay-mobile-sign-in" href="/account">
+          Sign in
+        </Link>
       </div>
       <nav ref={menuRef} className="consult-overlay-service-bar" aria-label="Site sections">
         {consultOverlayNavLinks.map((link) => (

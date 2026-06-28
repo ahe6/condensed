@@ -3072,6 +3072,10 @@ h3 {
   display: none;
 }
 
+.consult-overlay-mobile-sign-in {
+  display: none;
+}
+
 .consult-overlay-service-bar {
   min-height: 52px;
   width: min(1440px, calc(100% - 176px));
@@ -3160,7 +3164,7 @@ h3 {
   color: var(--ink);
   font-family: var(--font-source-sans), "Source Sans 3", system-ui, sans-serif;
   font-size: clamp(1.85rem, 2.55vw, 2.85rem);
-  font-weight: 650;
+  font-weight: 560;
   letter-spacing: -0.022em;
   line-height: 1.08;
 }
@@ -3181,6 +3185,29 @@ h3 {
   font-size: 1.05rem;
   font-weight: 560;
   border-radius: 2px;
+}
+
+.home-hero-consult-card .home-hero-account-link {
+  margin: -10px 0 0;
+  color: #708092;
+  font-size: 0.84rem;
+  font-weight: 420;
+  line-height: 1.4;
+}
+
+.home-hero-account-prompt span {
+  margin: 0 5px;
+}
+
+.home-hero-account-link a {
+  color: var(--color-primary);
+  font-weight: 540;
+  text-decoration: none;
+}
+
+.home-hero-account-link a:hover,
+.home-hero-account-link a:focus-visible {
+  text-decoration: underline;
 }
 
 .home-hero-consult-services {
@@ -9455,6 +9482,23 @@ output {
     background: currentColor;
   }
 
+  .consult-overlay-mobile-sign-in {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    padding: 0 13px;
+    border: 1px solid rgba(47, 111, 159, 0.16);
+    border-radius: 2px;
+    background: #ffffff;
+    color: var(--color-text);
+    font-size: 0.9rem;
+    font-weight: 520;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
   .consult-overlay-header-lines-gutter::before,
   .consult-overlay-header-lines-gutter::after {
     right: 20px;
@@ -9551,6 +9595,17 @@ output {
   .home-hero-consult-card .home-primary-cta {
     margin-right: auto;
     margin-left: max(0px, calc((100% - 300px) / 2));
+  }
+
+  .home-hero-consult-card .home-hero-account-link {
+    width: min(100%, 300px);
+    max-width: 300px;
+    margin: -8px auto 0 max(0px, calc((100% - 300px) / 2));
+    text-align: left;
+  }
+
+  .home-hero-account-prompt {
+    display: none;
   }
 
   .home-hero-consult-services-inner {
@@ -9763,6 +9818,12 @@ output {
     min-height: 0;
     padding: 18px;
     text-align: left;
+  }
+
+  .home-lab-category-grid .home-lab-category-card:nth-child(n + 5),
+  .home-lab-category-list .home-lab-category-row:nth-child(n + 5),
+  .home-lab-category-bands .home-lab-category-band:nth-child(n + 5) {
+    display: none;
   }
 
   .home-path-cards,

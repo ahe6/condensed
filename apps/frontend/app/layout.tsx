@@ -6,7 +6,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Condensed Health",
-  description: "Plain-English lab analysis reports for uploaded bloodwork and lab results",
+  description: "Online health concierge for labs, results, referrals, and next steps",
   icons: {
     icon: "/brand/logo-mark.svg",
     shortcut: "/brand/logo-mark.svg",
