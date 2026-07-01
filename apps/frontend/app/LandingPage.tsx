@@ -199,40 +199,137 @@ const clinicianOptions = [
 
 const treatmentOptions = [
   {
-    title: "Medication review",
-    detail: "Talk through prescriptions, side effects, interactions, and questions to bring to a clinician.",
+    title: "Weight loss treatment",
+    detail: "Review GLP-1, oral medication, lab, and follow-up questions before routing to care.",
     href: "/message-team",
-    meta: "Treatment"
+    meta: "Prescription",
+    cta: "Review weight options"
   },
   {
-    title: "Lifestyle plan",
-    detail: "Connect testing, symptoms, and goals to practical nutrition, sleep, exercise, or habit ideas.",
+    title: "Hair loss treatment",
+    detail: "Compare topical, oral, lab, and scalp-care questions for thinning, shedding, or pattern hair loss.",
     href: "/message-team",
-    meta: "Planning"
+    meta: "Hair",
+    cta: "Review hair options"
   },
   {
-    title: "Supplement review",
-    detail: "Review supplements in the context of labs, safety, evidence, and clinician follow-up questions.",
+    title: "Acne treatment",
+    detail: "Explore prescription and non-prescription acne paths, routine fit, photos, and follow-up needs.",
     href: "/message-team",
+    meta: "Skin",
+    cta: "Review acne options"
+  },
+  {
+    title: "Erectile dysfunction treatment",
+    detail: "Review ED medication questions, safety context, labs, and when clinician follow-up may be needed.",
+    href: "/message-team",
+    meta: "Men's health",
+    cta: "Review ED options"
+  },
+  {
+    title: "Smoking cessation",
+    detail: "Compare prescription and over-the-counter quit-support options with health history in mind.",
+    href: "/message-team",
+    meta: "Quit support",
+    cta: "Review quit options"
+  },
+  {
+    title: "Migraine treatment",
+    detail: "Review acute, preventive, trigger, and follow-up questions for recurring headaches or migraine.",
+    href: "/message-team",
+    meta: "Migraine",
+    cta: "Review migraine options"
+  }
+] as const;
+
+const productOptions = [
+  {
+    title: "Daily supplement packs",
+    detail: "Basic supplement options for daily routines, nutrient questions, and general wellness support.",
+    href: "/products/daily-multivitamin-pack",
     meta: "Supplements"
   },
   {
-    title: "Care plan check",
-    detail: "Get help understanding a care recommendation and what questions still need a decision.",
-    href: "/message-team",
-    meta: "Guidance"
+    title: "Skin care routines",
+    detail: "Simple cleanser, moisturizer, sunscreen, and skin-support products for everyday routines.",
+    href: "/products/skin-clarity-routine",
+    meta: "Skin care"
   },
   {
-    title: "Second opinion prep",
-    detail: "Organize results, records, and questions before speaking with another clinician.",
-    href: "/message-team",
-    meta: "Review"
+    title: "Hair support kits",
+    detail: "Hair and scalp support options that can sit alongside testing, analysis, or care guidance.",
+    href: "/products/hair-density-support-kit",
+    meta: "Hair"
   },
   {
-    title: "Follow-up timing",
-    detail: "Think through when repeat testing, monitoring, or a care visit might be worth discussing.",
+    title: "Digestive support",
+    detail: "Fiber and gut-support products for digestion, regularity, and nutrition follow-up questions.",
+    href: "/products/fiber-daily-pack",
+    meta: "Digestive"
+  },
+  {
+    title: "Hydration packs",
+    detail: "Electrolyte and hydration products for daily routines, exercise, and recovery support.",
+    href: "/products/electrolyte-hydration-pack",
+    meta: "Wellness"
+  },
+  {
+    title: "Sleep and stress support",
+    detail: "Non-prescription support products for sleep, stress, recovery, and daily routine planning.",
+    href: "/products/sleep-stress-support-kit",
+    meta: "Recovery"
+  }
+] as const;
+
+const advancedHealthOptions = [
+  {
+    title: "Stem Cell Therapy Review",
+    detail: "Review questions about stem-cell clinics, joint pain, injury recovery, aging claims, and what to ask before considering options.",
     href: "/message-team",
-    meta: "Next steps"
+    meta: "Regenerative",
+    cta: "Check stem cell options"
+  },
+  {
+    title: "PRP Therapy",
+    detail: "Platelet-rich plasma questions for joint pain, tendon issues, hair loss, skin, recovery, and clinician routing.",
+    href: "/message-team",
+    meta: "PRP",
+    cta: "Explore PRP"
+  },
+  {
+    title: "Exosome Therapy Review",
+    detail: "Inquiry-only review for exosome claims around injections, skin, hair, joints, and regenerative medicine marketing.",
+    href: "/message-team",
+    meta: "Exosomes",
+    cta: "Ask about exosomes"
+  },
+  {
+    title: "Microbiome Therapy",
+    detail: "Explore microbiome restoration, FMT-style questions, advanced probiotics, and when recurrent C. difficile context matters.",
+    href: "/message-team",
+    meta: "Microbiome",
+    cta: "Explore microbiome options"
+  },
+  {
+    title: "Peptide Therapy Review",
+    detail: "Review peptide questions around BPC-157, TB-500, sermorelin, CJC/ipamorelin, recovery, and safety evidence.",
+    href: "/message-team",
+    meta: "Peptides",
+    cta: "Review peptide options"
+  },
+  {
+    title: "IV Nutrient Therapy",
+    detail: "Explore questions about NAD+, glutathione, vitamin C, Myers cocktail, hydration, and recovery drips.",
+    href: "/message-team",
+    meta: "IV therapy",
+    cta: "Explore IV therapy"
+  },
+  {
+    title: "Hyperbaric Oxygen Therapy",
+    detail: "Check HBOT questions for wound healing, recovery, inflammation, and brain-injury-adjacent interest.",
+    href: "/message-team",
+    meta: "HBOT",
+    cta: "Check HBOT options"
   }
 ] as const;
 
@@ -241,6 +338,8 @@ const heroSearchCards = [
   { label: "Results review", icon: "results" },
   { label: "Clinicians", icon: "clinicians" },
   { label: "Treatments", icon: "treatments" },
+  { label: "Products", icon: "products" },
+  { label: "Advanced health", icon: "advanced" },
   { label: "Health concern", icon: "concern" },
   { label: "Not sure", icon: "question" }
 ] as const;
@@ -282,6 +381,33 @@ function HeroSearchIcon({ icon }: { icon: (typeof heroSearchCards)[number]["icon
     return (
       <svg aria-hidden="true" viewBox="0 0 24 24">
         <path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" />
+      </svg>
+    );
+  }
+
+  if (icon === "products") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M6 8h12l-1 13H7z" />
+        <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+        <path d="M10 13h4" />
+        <path d="M12 11v4" />
+      </svg>
+    );
+  }
+
+  if (icon === "advanced") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M12 3v4" />
+        <path d="M12 17v4" />
+        <path d="M3 12h4" />
+        <path d="M17 12h4" />
+        <path d="m6.6 6.6 2.8 2.8" />
+        <path d="m14.6 14.6 2.8 2.8" />
+        <path d="m17.4 6.6-2.8 2.8" />
+        <path d="m9.4 14.6-2.8 2.8" />
+        <path d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z" />
       </svg>
     );
   }
@@ -814,6 +940,7 @@ function ReviewTestingSection({ variant }: { variant: Exclude<ReviewSectionVaria
 }
 
 function SimpleLandingCarouselSection({
+  actionLabel = "Ask us",
   ariaLabel,
   footerHref,
   footerLabel,
@@ -824,6 +951,7 @@ function SimpleLandingCarouselSection({
   previousLabel,
   subtitle
 }: {
+  actionLabel?: string;
   ariaLabel: string;
   footerHref: string;
   footerLabel: string;
@@ -834,6 +962,7 @@ function SimpleLandingCarouselSection({
     detail: string;
     href: string;
     meta: string;
+    cta?: string;
   }[];
   nextLabel: string;
   previousLabel: string;
@@ -886,7 +1015,7 @@ function SimpleLandingCarouselSection({
                 <h3>{item.title}</h3>
                 <p>{item.detail}</p>
                 <small>
-                  Ask us
+                  {item.cta ?? actionLabel}
                   <span aria-hidden="true">→</span>
                 </small>
               </Link>
@@ -1069,9 +1198,10 @@ function ConsultOverlayHero() {
 function ConsultSearchHero() {
   const heroContent = heroContentByVariant["consult-search"];
   const [carouselIndex, setCarouselIndex] = useState(0);
-  const visibleHeroCards = visibleCarouselItems(heroSearchCards, carouselIndex, 5);
+  const [searchText, setSearchText] = useState("");
+  const visibleHeroCards = visibleCarouselItems(heroSearchCards, carouselIndex, 6);
   const canGoPrevious = carouselIndex > 0;
-  const canGoNext = carouselIndex < heroSearchCards.length - 5;
+  const canGoNext = carouselIndex < heroSearchCards.length - 6;
 
   return (
     <section className="home-hero home-hero-consult-search" id="start-review" aria-labelledby="home-start-title">
@@ -1111,10 +1241,20 @@ function ConsultSearchHero() {
           </button>
         </div>
 
-        <div className="home-hero-search-bar" aria-label="Message our team">
-          <span>What are you trying to figure out?</span>
-          <strong>{heroContent.primaryCta}</strong>
-        </div>
+        <form
+          className="home-hero-search-bar"
+          aria-label="Search services or ask our team"
+          onSubmit={(event) => event.preventDefault()}
+        >
+          <input
+            aria-label="Search services or describe what you need"
+            placeholder="Search services or describe what you need..."
+            type="search"
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+          />
+          <button type="submit">Ask our team</button>
+        </form>
       </div>
     </section>
   );
@@ -1287,6 +1427,18 @@ function LandingPageContent({
       <ConsultOverlayHeader lineVariant="gutter" />
       <ConsultSearchHero />
       <ServicesSection variant="carousel" />
+      <SimpleLandingCarouselSection
+        ariaLabel="Product options"
+        footerHref="/message-team"
+        footerLabel="View all products"
+        heading="Products"
+        id="products"
+        items={productOptions}
+        nextLabel="Next product options"
+        previousLabel="Previous product options"
+        subtitle="Browse supplements, skin care, hair care, and routine support products."
+        actionLabel="View product"
+      />
       <ReviewTestingSection variant="carousel" />
       <SimpleLandingCarouselSection
         ariaLabel="Clinician options"
@@ -1308,7 +1460,18 @@ function LandingPageContent({
         items={treatmentOptions}
         nextLabel="Next treatment options"
         previousLabel="Previous treatment options"
-        subtitle="Compare next steps after results, symptoms, or care guidance."
+        subtitle="Review treatment categories, eligibility questions, and clinician routing before this goes live."
+      />
+      <SimpleLandingCarouselSection
+        ariaLabel="Advanced health options"
+        footerHref="/message-team"
+        footerLabel="View all advanced health"
+        heading="Advanced Health"
+        id="advanced-health"
+        items={advancedHealthOptions}
+        nextLabel="Next advanced health options"
+        previousLabel="Previous advanced health options"
+        subtitle="Review regenerative, microbiome, peptide, IV, and hyperbaric therapy questions before taking a next step."
       />
 
     </main>

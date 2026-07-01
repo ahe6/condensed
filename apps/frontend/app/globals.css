@@ -3005,7 +3005,7 @@ h3 {
 }
 
 .home-hero-card-carousel {
-  width: min(760px, 100%);
+  width: min(900px, 100%);
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr) 44px;
   gap: 8px;
@@ -3405,7 +3405,7 @@ h3 {
   min-width: 0;
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(5, max-content);
+  grid-template-columns: repeat(6, max-content);
   gap: 8px;
   justify-content: center;
 }
@@ -3481,26 +3481,43 @@ h3 {
   text-decoration: none;
 }
 
-.home-hero-search-bar span {
+.home-hero-search-bar input {
   min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
   color: var(--muted);
   font-size: 1rem;
   font-weight: 440;
   line-height: 1.2;
 }
 
-.home-hero-search-bar strong {
+.home-hero-search-bar input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+.home-hero-search-bar button {
   min-height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0 18px;
+  border: 0;
   border-radius: 999px;
   background: var(--accent);
   color: #fff;
   font-size: 0.94rem;
   font-weight: 760;
   white-space: nowrap;
+}
+
+.home-hero-search-bar button:hover,
+.home-hero-search-bar button:focus-visible {
+  background: var(--accent-strong);
+  box-shadow: none;
+  transform: none;
 }
 
 .home-hero-consult-services {
@@ -11269,7 +11286,7 @@ output {
     border-radius: 14px;
   }
 
-  .home-hero-search-bar strong {
+  .home-hero-search-bar button {
     width: 100%;
   }
 
