@@ -55,7 +55,7 @@ const services = [
   {
     title: "Health review",
     detail: "Upload existing labs, records, or reports and get a clear written analysis of what stands out.",
-    href: "/start-review",
+    href: "/message-team",
     cta: "Start review",
     icon: "review",
     chips: ["Labs", "Records", "Questions"]
@@ -63,7 +63,7 @@ const services = [
   {
     title: "Testing",
     detail: "Find lab and diagnostic options that match the question you are trying to answer.",
-    href: "/labs",
+    href: "/message-team",
     cta: "Explore testing",
     icon: "testing",
     chips: ["Missing labs", "Follow-up tests", "Diagnostics"]
@@ -71,7 +71,7 @@ const services = [
   {
     title: "Preventive screening",
     detail: "Compare baseline checks, risk markers, and screening paths before choosing a next step.",
-    href: "/health-areas",
+    href: "/message-team",
     cta: "View screenings",
     icon: "preventive",
     chips: ["Risk markers", "Family history", "Baseline checks"]
@@ -86,26 +86,260 @@ const services = [
   }
 ];
 
-export type ServicesSectionVariant = "hidden" | "cards" | "alternating";
-export type ReviewSectionVariant = "hidden" | "grid" | "list" | "bands";
+const specificTestOptions = [
+  {
+    title: "General health panel",
+    detail: "Get help choosing a baseline lab panel for energy, metabolism, inflammation, and organ function.",
+    href: "/message-team",
+    meta: "Testing"
+  },
+  {
+    title: "Hormone testing",
+    detail: "Explore hormone labs for fertility, cycles, testosterone, thyroid context, or menopause questions.",
+    href: "/hormones",
+    meta: "Labs"
+  },
+  {
+    title: "STI testing",
+    detail: "Find testing options based on exposure, symptoms, timing, and whether home collection makes sense.",
+    href: "/message-team",
+    meta: "Screening"
+  },
+  {
+    title: "Genetic testing",
+    detail: "Explore genetics options for inherited risk, carrier screening, and medication response.",
+    href: "/genetic-testing",
+    meta: "Genetics"
+  },
+  {
+    title: "Thyroid testing",
+    detail: "Look at thyroid labs and antibodies when symptoms, medication, or prior results need context.",
+    href: "/message-team",
+    meta: "Thyroid"
+  },
+  {
+    title: "Fertility testing",
+    detail: "Compare fertility and reproductive hormone labs based on timing, goals, and prior history.",
+    href: "/message-team",
+    meta: "Fertility"
+  }
+] as const;
+
+const specificReviewServices = [
+  {
+    title: "Bloodwork analysis",
+    detail: "Review bloodwork patterns, abnormal values, borderline markers, and what may need follow-up.",
+    markers: "CBC, CMP, lipids, A1c, inflammation"
+  },
+  {
+    title: "Hormone analysis",
+    detail: "Make sense of reproductive, thyroid, adrenal, or sex hormone results with timing and context.",
+    markers: "TSH, estradiol, progesterone, testosterone, cortisol"
+  },
+  {
+    title: "Fertility analysis",
+    detail: "Review fertility labs and reproductive history so the next testing or care question is clearer.",
+    markers: "AMH, FSH, LH, estradiol, progesterone"
+  },
+  {
+    title: "Genetic analysis",
+    detail: "Understand genetic, carrier, risk, or medication-response reports without overinterpreting them.",
+    markers: "APOE, PGx, carrier screening, specialty panels"
+  },
+  {
+    title: "Nutrient analysis",
+    detail: "Look at deficiency patterns that can relate to energy, hair, mood, recovery, or diet questions.",
+    markers: "Ferritin, iron, B12, folate, vitamin D"
+  },
+  {
+    title: "Metabolic analysis",
+    detail: "Review blood sugar, insulin resistance, cholesterol, and weight-related risk markers together.",
+    markers: "A1c, fasting glucose, insulin, ApoB, triglycerides"
+  }
+] as const;
+
+const clinicianOptions = [
+  {
+    title: "Primary care",
+    detail: "Find a general clinician for broad concerns, routine follow-up, and next-step planning.",
+    href: "/message-team",
+    meta: "Clinicians"
+  },
+  {
+    title: "Women's health",
+    detail: "Get routed toward support for fertility, hormones, cycles, menopause, or pelvic health questions.",
+    href: "/message-team",
+    meta: "Specialty"
+  },
+  {
+    title: "Genetics guidance",
+    detail: "Talk through genetics results, inherited risk, carrier screening, or medication-response questions.",
+    href: "/message-team",
+    meta: "Genetics"
+  },
+  {
+    title: "Nutrition support",
+    detail: "Find help connecting labs, symptoms, and diet questions to a practical plan.",
+    href: "/message-team",
+    meta: "Nutrition"
+  },
+  {
+    title: "Mental health",
+    detail: "Explore clinician options for mood, stress, sleep, focus, and related care needs.",
+    href: "/message-team",
+    meta: "Care"
+  },
+  {
+    title: "Specialist routing",
+    detail: "Get help figuring out what type of clinician or specialist may make sense next.",
+    href: "/message-team",
+    meta: "Referral"
+  }
+] as const;
+
+const treatmentOptions = [
+  {
+    title: "Medication review",
+    detail: "Talk through prescriptions, side effects, interactions, and questions to bring to a clinician.",
+    href: "/message-team",
+    meta: "Treatment"
+  },
+  {
+    title: "Lifestyle plan",
+    detail: "Connect testing, symptoms, and goals to practical nutrition, sleep, exercise, or habit ideas.",
+    href: "/message-team",
+    meta: "Planning"
+  },
+  {
+    title: "Supplement review",
+    detail: "Review supplements in the context of labs, safety, evidence, and clinician follow-up questions.",
+    href: "/message-team",
+    meta: "Supplements"
+  },
+  {
+    title: "Care plan check",
+    detail: "Get help understanding a care recommendation and what questions still need a decision.",
+    href: "/message-team",
+    meta: "Guidance"
+  },
+  {
+    title: "Second opinion prep",
+    detail: "Organize results, records, and questions before speaking with another clinician.",
+    href: "/message-team",
+    meta: "Review"
+  },
+  {
+    title: "Follow-up timing",
+    detail: "Think through when repeat testing, monitoring, or a care visit might be worth discussing.",
+    href: "/message-team",
+    meta: "Next steps"
+  }
+] as const;
+
+const heroSearchCards = [
+  { label: "Testing", icon: "testing" },
+  { label: "Results review", icon: "results" },
+  { label: "Clinicians", icon: "clinicians" },
+  { label: "Treatments", icon: "treatments" },
+  { label: "Health concern", icon: "concern" },
+  { label: "Not sure", icon: "question" }
+] as const;
+
+function HeroSearchIcon({ icon }: { icon: (typeof heroSearchCards)[number]["icon"] }) {
+  if (icon === "testing") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M9 3h6" />
+        <path d="M10 3v6l-4 7a3 3 0 0 0 2.6 4.5h6.8A3 3 0 0 0 18 16l-4-7V3" />
+        <path d="M8 15h8" />
+      </svg>
+    );
+  }
+
+  if (icon === "results") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M7 3h7l3 3v15H7z" />
+        <path d="M14 3v4h4" />
+        <path d="M10 12h5" />
+        <path d="M10 16h4" />
+      </svg>
+    );
+  }
+
+  if (icon === "clinicians") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />
+        <path d="M5 21a7 7 0 0 1 14 0" />
+        <path d="M12 15v4" />
+        <path d="M10 17h4" />
+      </svg>
+    );
+  }
+
+  if (icon === "treatments") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" />
+      </svg>
+    );
+  }
+
+  if (icon === "concern") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+        <path d="M9 12h2l1-2 2 4 1-2h2" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d="M12 17h.01" />
+      <path d="M9.5 9a2.7 2.7 0 0 1 5.1 1.2c0 2-2.6 2.1-2.6 4" />
+      <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z" />
+    </svg>
+  );
+}
+
+function nextCarouselIndex(currentIndex: number, itemCount: number, visibleCount = 3) {
+  return Math.min(currentIndex + 1, Math.max(itemCount - visibleCount, 0));
+}
+
+function previousCarouselIndex(currentIndex: number) {
+  return Math.max(currentIndex - 1, 0);
+}
+
+function visibleCarouselItems<T>(items: readonly T[], startIndex: number, visibleCount = 3) {
+  return items.slice(startIndex, startIndex + visibleCount);
+}
+
+export type ServicesSectionVariant = "hidden" | "cards" | "alternating" | "carousel";
+export type ReviewSectionVariant = "hidden" | "grid" | "list" | "bands" | "carousel";
+export type SimpleCarouselSectionVariant = "hidden" | "carousel";
 export type TrustRowVariant = "hidden" | "inline";
 export type TopBarLineVariant = "gutter" | "full";
 export type HeroCopyVariant =
   | "clinician-plan"
   | "start-review"
   | "consult-overlay"
+  | "consult-search"
   | "consult-services"
   | "consult-explainer";
 export type FaqSectionVariant = "hidden" | "accordion" | "compact" | "columns";
 export type TypographyVariant = "default" | "soft" | "editorial";
 export type ColorThemeVariant = "default" | "clinical" | "warm";
 
-const servicesSectionVariantValues = ["hidden", "cards", "alternating"] as const;
-const reviewSectionVariantValues = ["hidden", "bands", "grid", "list"] as const;
+const servicesSectionVariantValues = ["hidden", "cards", "alternating", "carousel"] as const;
+const reviewSectionVariantValues = ["hidden", "bands", "grid", "list", "carousel"] as const;
+const simpleCarouselSectionVariantValues = ["hidden", "carousel"] as const;
 const trustRowVariantValues = ["hidden", "inline"] as const;
 const topBarLineVariantValues = ["gutter", "full"] as const;
 const heroCopyVariantValues = [
   "consult-overlay",
+  "consult-search",
   "clinician-plan",
   "start-review",
   "consult-services",
@@ -269,10 +503,17 @@ const heroContentByVariant: Record<
     secondaryCta: "See testing options"
   },
   "consult-overlay": {
-    title: "Your online health team for testing, results, and follow-up.",
+    title: "Healthcare services without the guesswork.",
     subtitle:
-      "We help sort through your information, clarify what matters, and guide the next step in your care.",
-    primaryCta: "Start your free online consult",
+      "Tell us what you're trying to figure out, or choose a service to start. We'll help you find the right option for testing, results, and next steps.",
+    primaryCta: "Message our team",
+    secondaryCta: "See testing options"
+  },
+  "consult-search": {
+    title: "Healthcare services without the guesswork.",
+    subtitle:
+      "Tell us what you're trying to figure out, or choose a service to start. We'll help you find the right option for testing, results, and next steps.",
+    primaryCta: "Message our team",
     secondaryCta: "See testing options"
   },
   "consult-services": {
@@ -315,8 +556,7 @@ const consultExplainerItems = [
 const consultOverlayNavLinks = [
   { href: "/my-health", label: "My Health" },
   { href: "/#services", label: "Services" },
-  { href: "/library", label: "Health library" },
-  { href: "/#faq", label: "Contact" }
+  { href: "/library", label: "Health library" }
 ];
 
 const faqs = [
@@ -363,41 +603,92 @@ const faqs = [
 ];
 
 function ServicesSection({ variant }: { variant: Exclude<ServicesSectionVariant, "hidden"> }) {
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const visibleTests = visibleCarouselItems(specificTestOptions, carouselIndex, 4);
+  const canGoPrevious = carouselIndex > 0;
+  const canGoNext = carouselIndex < specificTestOptions.length - 4;
+
   return (
     <section className="home-content-section home-services-section" id="services" aria-labelledby="services-title">
       <div className="home-services-inner">
         <div className="home-services-header">
-          <h2 id="services-title">Services</h2>
-          <p>
-            Start with the kind of support you need. Each path keeps records, testing, and follow-up
-            organized around a clear next step.
-          </p>
+          <div className="home-section-header-copy">
+            <h2 id="services-title">{variant === "carousel" ? "Tests" : "Services"}</h2>
+            <p>
+              {variant === "carousel"
+                ? "Find testing paths based on what you want to understand."
+                : "Start with the kind of support you need. Each path keeps records, testing, and follow-up organized around a clear next step."}
+            </p>
+          </div>
+          {variant === "carousel" ? (
+            <div className="home-section-header-action">
+              <Link href="/message-team">
+                View all tests
+              </Link>
+              <button
+                aria-label="Previous tests"
+                className="home-carousel-arrow"
+                disabled={!canGoPrevious}
+                type="button"
+                onClick={() => setCarouselIndex((index) => previousCarouselIndex(index))}
+              >
+                ←
+              </button>
+              <button
+                aria-label="Next tests"
+                className="home-carousel-arrow"
+                disabled={!canGoNext}
+                type="button"
+                onClick={() => setCarouselIndex((index) => nextCarouselIndex(index, specificTestOptions.length, 4))}
+              >
+                →
+              </button>
+            </div>
+          ) : null}
         </div>
 
-        <div className={`home-services-grid home-services-grid-${variant}`}>
-          {services.map((service) => (
-            <Link className="home-service-card" href={service.href} key={service.title}>
-              <div>
-                <h3>{service.title}</h3>
-                <p>{service.detail}</p>
-                <span className="home-service-chips" aria-label={`${service.title} topics`}>
-                  {service.chips.map((chip) => (
-                    <span key={chip}>{chip}</span>
-                  ))}
+        {variant === "carousel" ? (
+          <div className="home-arrow-carousel" aria-label="Testing options">
+            <div className="home-specific-carousel">
+              {visibleTests.map((service) => (
+                <Link className="home-specific-service-card" href={service.href} key={service.title}>
+                  <span>{service.meta}</span>
+                  <h3>{service.title}</h3>
+                  <p>{service.detail}</p>
+                  <small>
+                    Start here
+                    <span aria-hidden="true">→</span>
+                  </small>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className={`home-services-grid home-services-grid-${variant}`}>
+            {services.map((service) => (
+              <Link className="home-service-card" href={service.href} key={service.title}>
+                <div>
+                  <h3>{service.title}</h3>
+                  <p>{service.detail}</p>
+                  <span className="home-service-chips" aria-label={`${service.title} topics`}>
+                    {service.chips.map((chip) => (
+                      <span key={chip}>{chip}</span>
+                    ))}
+                  </span>
+                  <span className="home-service-cta">
+                    {service.cta}
+                    <span aria-hidden="true">→</span>
+                  </span>
+                </div>
+                <span className="home-service-visual" aria-hidden="true">
+                  <i />
+                  <i />
+                  <i />
                 </span>
-                <span className="home-service-cta">
-                  {service.cta}
-                  <span aria-hidden="true">→</span>
-                </span>
-              </div>
-              <span className="home-service-visual" aria-hidden="true">
-                <i />
-                <i />
-                <i />
-              </span>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -414,6 +705,11 @@ function HeroTrustRow({ variant }: { variant: Exclude<TrustRowVariant, "hidden">
 }
 
 function ReviewTestingSection({ variant }: { variant: Exclude<ReviewSectionVariant, "hidden"> }) {
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const visibleAnalysis = visibleCarouselItems(specificReviewServices, carouselIndex, 4);
+  const canGoPrevious = carouselIndex > 0;
+  const canGoNext = carouselIndex < specificReviewServices.length - 4;
+
   return (
     <section
       className="home-content-section home-problem-section"
@@ -422,14 +718,58 @@ function ReviewTestingSection({ variant }: { variant: Exclude<ReviewSectionVaria
     >
       <div className="home-lab-category-section">
         <div className="home-lab-category-header">
-          <h3 id="lab-categories-title">Areas we cover</h3>
-          <p>
-            Explore common health areas where records, testing, screening, and follow-up can be
-            organized into a clearer next step.
-          </p>
+          <div className="home-section-header-copy">
+            <h3 id="lab-categories-title">{variant === "carousel" ? "Analysis" : "Areas we cover"}</h3>
+            <p>
+              {variant === "carousel"
+                ? "Make sense of labs, genetics, hormones, and other results."
+                : "Explore common health areas where records, testing, screening, and follow-up can be organized into a clearer next step."}
+            </p>
+          </div>
+          <div className="home-section-header-action">
+            <Link href="/message-team">
+              {variant === "carousel" ? "View all analysis" : "View all areas"}
+            </Link>
+            {variant === "carousel" ? (
+              <>
+                <button
+                  aria-label="Previous analysis categories"
+                  className="home-carousel-arrow"
+                  disabled={!canGoPrevious}
+                  type="button"
+                  onClick={() => setCarouselIndex((index) => previousCarouselIndex(index))}
+                >
+                  ←
+                </button>
+                <button
+                  aria-label="Next analysis categories"
+                  className="home-carousel-arrow"
+                  disabled={!canGoNext}
+                  type="button"
+                  onClick={() =>
+                    setCarouselIndex((index) => nextCarouselIndex(index, specificReviewServices.length, 4))
+                  }
+                >
+                  →
+                </button>
+              </>
+            ) : null}
+          </div>
         </div>
 
-        {variant === "list" ? (
+        {variant === "carousel" ? (
+          <div className="home-arrow-carousel" aria-label="Analysis categories">
+            <div className="home-specific-carousel home-specific-carousel-review">
+              {visibleAnalysis.map((service) => (
+                <article className="home-specific-service-card home-specific-review-card" key={service.title}>
+                  <span>{service.markers}</span>
+                  <h4>{service.title}</h4>
+                  <p>{service.detail}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        ) : variant === "list" ? (
           <div className="home-lab-category-list">
             {labAnalysisCategories.map((category, index) => (
               <article className="home-lab-category-row" key={category.title}>
@@ -468,12 +808,92 @@ function ReviewTestingSection({ variant }: { variant: Exclude<ReviewSectionVaria
           </div>
         )}
 
-        <div className="home-lab-category-footer">
-          <Link href="/labs">
-            View all health areas
-            <span aria-hidden="true">→</span>
-          </Link>
+      </div>
+    </section>
+  );
+}
+
+function SimpleLandingCarouselSection({
+  ariaLabel,
+  footerHref,
+  footerLabel,
+  heading,
+  id,
+  items,
+  nextLabel,
+  previousLabel,
+  subtitle
+}: {
+  ariaLabel: string;
+  footerHref: string;
+  footerLabel: string;
+  heading: string;
+  id: string;
+  items: readonly {
+    title: string;
+    detail: string;
+    href: string;
+    meta: string;
+  }[];
+  nextLabel: string;
+  previousLabel: string;
+  subtitle: string;
+}) {
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const visibleItems = visibleCarouselItems(items, carouselIndex, 4);
+  const canGoPrevious = carouselIndex > 0;
+  const canGoNext = carouselIndex < items.length - 4;
+  const titleId = `${id}-title`;
+
+  return (
+    <section className="home-content-section home-problem-section" id={id} aria-labelledby={titleId}>
+      <div className="home-lab-category-section">
+        <div className="home-lab-category-header">
+          <div className="home-section-header-copy">
+            <h3 id={titleId}>{heading}</h3>
+            <p>{subtitle}</p>
+          </div>
+          <div className="home-section-header-action">
+            <Link href={footerHref}>
+              {footerLabel}
+            </Link>
+            <button
+              aria-label={previousLabel}
+              className="home-carousel-arrow"
+              disabled={!canGoPrevious}
+              type="button"
+              onClick={() => setCarouselIndex((index) => previousCarouselIndex(index))}
+            >
+              ←
+            </button>
+            <button
+              aria-label={nextLabel}
+              className="home-carousel-arrow"
+              disabled={!canGoNext}
+              type="button"
+              onClick={() => setCarouselIndex((index) => nextCarouselIndex(index, items.length, 4))}
+            >
+              →
+            </button>
+          </div>
         </div>
+
+        <div className="home-arrow-carousel" aria-label={ariaLabel}>
+          <div className="home-specific-carousel">
+            {visibleItems.map((item) => (
+              <Link className="home-specific-service-card" href={item.href} key={item.title}>
+                <span>{item.meta}</span>
+                <h3>{item.title}</h3>
+                <p>{item.detail}</p>
+                <small>
+                  Ask us
+                  <span aria-hidden="true">→</span>
+                </small>
+              </Link>
+            ))}
+          </div>
+        </div>
+
       </div>
     </section>
   );
@@ -628,15 +1048,72 @@ function ConsultOverlayHero() {
         <div className="home-hero-consult-card">
           <h1 id="home-start-title">{heroContent.title}</h1>
           <p>{heroContent.subtitle}</p>
-          <Link className="home-primary-cta" href="#services">
+          <Link className="home-primary-cta" href="/message-team">
             {heroContent.primaryCta}
           </Link>
           <p className="home-hero-account-link">
             No appointment required{" "}
+            <span className="home-hero-free-note">
+              <span aria-hidden="true">·</span> Free to start
+            </span>{" "}
             <span className="home-hero-account-prompt">
               <span aria-hidden="true">·</span> Already have an account? <Link href="/account">Sign in</Link>
             </span>
           </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ConsultSearchHero() {
+  const heroContent = heroContentByVariant["consult-search"];
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const visibleHeroCards = visibleCarouselItems(heroSearchCards, carouselIndex, 5);
+  const canGoPrevious = carouselIndex > 0;
+  const canGoNext = carouselIndex < heroSearchCards.length - 5;
+
+  return (
+    <section className="home-hero home-hero-consult-search" id="start-review" aria-labelledby="home-start-title">
+      <div className="home-hero-consult-search-inner">
+        <div className="home-hero-consult-search-copy">
+          <h1 id="home-start-title">{heroContent.title}</h1>
+        </div>
+
+        <div className="home-hero-card-carousel" aria-label="Common starting points">
+          <button
+            aria-label="Previous starting points"
+            className="home-carousel-arrow"
+            disabled={!canGoPrevious}
+            type="button"
+            onClick={() => setCarouselIndex((current) => previousCarouselIndex(current))}
+          >
+            ‹
+          </button>
+          <div className="home-hero-search-card-row">
+            {visibleHeroCards.map((card) => (
+              <div className="home-hero-search-card" key={card.label}>
+                <span className="home-hero-search-card-icon">
+                  <HeroSearchIcon icon={card.icon} />
+                </span>
+                <strong>{card.label}</strong>
+              </div>
+            ))}
+          </div>
+          <button
+            aria-label="Next starting points"
+            className="home-carousel-arrow"
+            disabled={!canGoNext}
+            type="button"
+            onClick={() => setCarouselIndex((current) => nextCarouselIndex(current, heroSearchCards.length, 5))}
+          >
+            ›
+          </button>
+        </div>
+
+        <div className="home-hero-search-bar" aria-label="Message our team">
+          <span>What are you trying to figure out?</span>
+          <strong>{heroContent.primaryCta}</strong>
         </div>
       </div>
     </section>
@@ -762,17 +1239,17 @@ function ConsultOverlayHeader({ lineVariant }: { lineVariant: TopBarLineVariant 
           <span />
         </button>
         <CustomerBrand />
+        <nav ref={menuRef} className="consult-overlay-service-bar" aria-label="Site sections">
+          {consultOverlayNavLinks.map((link) => (
+            <Link href={link.href} key={link.href} onClick={() => setIsMenuOpen(false)}>
+              {link.label}
+            </Link>
+          ))}
+        </nav>
         <Link className="consult-overlay-mobile-sign-in" href="/account">
           Sign in
         </Link>
       </div>
-      <nav ref={menuRef} className="consult-overlay-service-bar" aria-label="Site sections">
-        {consultOverlayNavLinks.map((link) => (
-          <Link href={link.href} key={link.href} onClick={() => setIsMenuOpen(false)}>
-            {link.label}
-          </Link>
-        ))}
-      </nav>
     </header>
   );
 }
@@ -786,8 +1263,6 @@ function LandingHeader() {
         <CustomerNav
           primaryHref="/my-health"
           primaryLabel="My Health"
-          secondaryHref="/health-areas"
-          secondaryLabel="Contact"
         />
       </div>
     </section>
@@ -795,111 +1270,52 @@ function LandingHeader() {
 }
 
 function LandingPageContent({
-  servicesVariant = "cards",
-  reviewVariant = "bands",
-  trustVariant = "hidden",
-  topBarLineVariant = "gutter",
-  heroVariant = "consult-overlay",
-  faqVariant = "hidden",
   typographyVariant = "default",
   colorThemeVariant = "default"
 }: {
-  servicesVariant?: ServicesSectionVariant;
-  reviewVariant?: ReviewSectionVariant;
-  trustVariant?: TrustRowVariant;
-  topBarLineVariant?: TopBarLineVariant;
-  heroVariant?: HeroCopyVariant;
-  faqVariant?: FaqSectionVariant;
   typographyVariant?: TypographyVariant;
   colorThemeVariant?: ColorThemeVariant;
 }) {
   const searchParams = useSearchParams();
-  const selectedHeroVariant = pickVariant(searchParams.get("hero"), heroCopyVariantValues, heroVariant);
-  const selectedServicesVariant = pickVariant(
-    searchParams.get("services"),
-    servicesSectionVariantValues,
-    servicesVariant
-  );
-  const selectedReviewVariant = pickVariant(
-    searchParams.get("review"),
-    reviewSectionVariantValues,
-    reviewVariant
-  );
-  const selectedTrustVariant = pickVariant(searchParams.get("trust"), trustRowVariantValues, trustVariant);
-  const selectedTopBarLineVariant = pickVariant(
-    searchParams.get("topbar"),
-    topBarLineVariantValues,
-    topBarLineVariant
-  );
-  const selectedFaqVariant = pickVariant(searchParams.get("faq"), faqSectionVariantValues, faqVariant);
   const selectedTypographyVariant = pickVariant(searchParams.get("type"), typographyVariantValues, typographyVariant);
   const selectedColorThemeVariant = pickVariant(searchParams.get("theme"), colorThemeVariantValues, colorThemeVariant);
-  const heroContent = heroContentByVariant[selectedHeroVariant];
 
   return (
     <main
       className={`shell landing-page landing-type-${selectedTypographyVariant} landing-theme-${selectedColorThemeVariant}`}
     >
-      {selectedHeroVariant === "consult-overlay" ? (
-        <ConsultOverlayHeader lineVariant={selectedTopBarLineVariant} />
-      ) : (
-        <LandingHeader />
-      )}
+      <ConsultOverlayHeader lineVariant="gutter" />
+      <ConsultSearchHero />
+      <ServicesSection variant="carousel" />
+      <ReviewTestingSection variant="carousel" />
+      <SimpleLandingCarouselSection
+        ariaLabel="Clinician options"
+        footerHref="/message-team"
+        footerLabel="View all clinicians"
+        heading="Clinicians"
+        id="clinicians"
+        items={clinicianOptions}
+        nextLabel="Next clinician options"
+        previousLabel="Previous clinician options"
+        subtitle="Find care support for the question you are trying to solve."
+      />
+      <SimpleLandingCarouselSection
+        ariaLabel="Treatment options"
+        footerHref="/message-team"
+        footerLabel="View all treatments"
+        heading="Treatments"
+        id="treatments"
+        items={treatmentOptions}
+        nextLabel="Next treatment options"
+        previousLabel="Previous treatment options"
+        subtitle="Compare next steps after results, symptoms, or care guidance."
+      />
 
-      {selectedHeroVariant === "consult-overlay" ? (
-        <ConsultOverlayHero />
-      ) : selectedHeroVariant === "consult-services" ? (
-        <ConsultServicesHero />
-      ) : selectedHeroVariant === "consult-explainer" ? (
-        <ConsultExplainerHero />
-      ) : selectedHeroVariant === "start-review" ? (
-        <StartReviewHero trustVariant={selectedTrustVariant} />
-      ) : (
-        <section
-          className="home-hero home-hero-centered"
-          id="start-review"
-          aria-labelledby="home-start-title"
-        >
-          <div className="home-hero-centered-inner">
-            <div className="home-hero-centered-copy">
-              <h1 id="home-start-title">{heroContent.title}</h1>
-              <p className="home-start-subtitle">{heroContent.subtitle}</p>
-
-              <div className="home-hero-actions home-hero-centered-actions">
-                <Link className="home-primary-cta" href="/start-review">
-                  {heroContent.primaryCta}
-                </Link>
-                <Link className="home-secondary-pill" href="/health-areas">
-                  {heroContent.secondaryCta}
-                </Link>
-              </div>
-
-              {selectedTrustVariant !== "hidden" ? <HeroTrustRow variant={selectedTrustVariant} /> : null}
-            </div>
-
-            <div className="home-hero-centered-report">
-              <ReportPreviewVariantA />
-            </div>
-          </div>
-        </section>
-      )}
-
-      {selectedServicesVariant !== "hidden" ? <ServicesSection variant={selectedServicesVariant} /> : null}
-
-      {selectedReviewVariant !== "hidden" ? <ReviewTestingSection variant={selectedReviewVariant} /> : null}
-
-      {selectedFaqVariant !== "hidden" ? <FaqSection variant={selectedFaqVariant} /> : null}
     </main>
   );
 }
 
 export function LandingPage(props: {
-  servicesVariant?: ServicesSectionVariant;
-  reviewVariant?: ReviewSectionVariant;
-  trustVariant?: TrustRowVariant;
-  topBarLineVariant?: TopBarLineVariant;
-  heroVariant?: HeroCopyVariant;
-  faqVariant?: FaqSectionVariant;
   typographyVariant?: TypographyVariant;
   colorThemeVariant?: ColorThemeVariant;
 }) {

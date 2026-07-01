@@ -10,10 +10,6 @@ export const assessmentProductSlugParamsSchema = z.object({
   slug: slugSchema
 });
 
-export const assessmentGoalKeyParamsSchema = z.object({
-  goalKey: slugSchema
-});
-
 const assessmentAnswerValueSchema = z.union([
   z.string(),
   z.number(),

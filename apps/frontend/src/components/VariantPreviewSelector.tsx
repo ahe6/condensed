@@ -24,79 +24,121 @@ const landingVariantGroups = [
       { value: "clinical", label: "Clinical" },
       { value: "warm", label: "Warm" }
     ]
-  },
+  }
+];
+
+const myHealthVariantGroups = [
   {
-    param: "hero",
-    label: "Hero",
-    fallback: "consult-overlay",
+    param: "layout",
+    label: "Experience",
+    fallback: "workspace",
     options: [
-      { value: "consult-overlay", label: "Consult overlay" },
-      { value: "clinician-plan", label: "Clinician plan" },
-      { value: "start-review", label: "Start review" },
-      { value: "consult-services", label: "Consult services" },
-      { value: "consult-explainer", label: "Consult explainer" }
+      { value: "workspace", label: "Health workspace" },
+      { value: "placeholder", label: "Simple placeholder" }
     ]
   },
   {
-    param: "topbar",
-    label: "Top bar",
-    fallback: "gutter",
+    param: "state",
+    label: "State",
+    fallback: "empty",
     options: [
-      { value: "gutter", label: "Gutter lines" },
-      { value: "full", label: "Full lines" }
-    ]
-  },
-  {
-    param: "services",
-    label: "Section 1",
-    fallback: "cards",
-    options: [
-      { value: "hidden", label: "Hidden" },
-      { value: "cards", label: "Cards" },
-      { value: "alternating", label: "Alternating" }
-    ]
-  },
-  {
-    param: "review",
-    label: "Section 2",
-    fallback: "bands",
-    options: [
-      { value: "hidden", label: "Hidden" },
-      { value: "bands", label: "Bands" },
-      { value: "grid", label: "Grid" },
-      { value: "list", label: "List" }
-    ]
-  },
-  {
-    param: "faq",
-    label: "FAQ",
-    fallback: "hidden",
-    options: [
-      { value: "hidden", label: "Hidden" },
-      { value: "accordion", label: "Accordion" },
-      { value: "compact", label: "Compact" },
-      { value: "columns", label: "Columns" }
+      { value: "empty", label: "Empty" },
+      { value: "active", label: "Active" }
     ]
   }
 ];
 
-const startReviewVariantGroups = [
+const globalVariantGroups = [
+  {
+    param: "signin",
+    label: "Sign in bypass",
+    fallback: "preview",
+    options: [
+      { value: "preview", label: "Bypass" },
+      { value: "block", label: "Block" }
+    ]
+  }
+];
+
+const messageTeamVariantGroups = [
   {
     param: "layout",
     label: "Layout",
-    fallback: "split",
+    fallback: "guided",
     options: [
-      { value: "split", label: "Split" },
-      { value: "report", label: "Report" }
+      { value: "guided", label: "Guided message" }
     ]
   }
 ];
 
-const pageLinks = [
+type VariantPageLink = {
+  href: string;
+  label: string;
+  value: string;
+  match?: (pathname: string) => boolean;
+};
+
+const experiencePageLinks: VariantPageLink[] = [
   { href: "/", label: "Landing", value: "landing" },
-  { href: "/start-review", label: "Start Review", value: "start-review" },
-  { href: "/my-health", label: "My Health", value: "my-health" }
+  { href: "/my-health", label: "My Health", value: "my-health" },
+  { href: "/message-team", label: "Message Team", value: "message-team" },
+  {
+    href: "/intake/general-health-check-labs",
+    label: "Intake",
+    value: "intake",
+    match: (pathname) => pathname.startsWith("/intake/")
+  },
+  {
+    href: "/products/general-health-check-labs",
+    label: "Product detail",
+    value: "product-detail",
+    match: (pathname) => pathname.startsWith("/products/")
+  },
 ];
+
+const campaignPageLinks: VariantPageLink[] = [
+  { href: "/hair-loss", label: "Hair loss", value: "hair-loss" },
+  { href: "/skin-care", label: "Skin care", value: "skin-care" },
+  { href: "/weight-loss", label: "Weight loss", value: "weight-loss" },
+  { href: "/hormones", label: "Hormones", value: "hormones" },
+  { href: "/genetic-testing", label: "Genetic testing", value: "genetic-testing" },
+  { href: "/library", label: "Library", value: "library" }
+];
+
+const operationalPageLinks: VariantPageLink[] = [
+  { href: "/cart", label: "Cart", value: "cart" },
+  { href: "/orders", label: "Orders", value: "orders" },
+  {
+    href: "/orders/CH-10024",
+    label: "Order detail",
+    value: "order-detail",
+    match: (pathname) => pathname.startsWith("/orders/")
+  },
+  { href: "/account", label: "Account", value: "account" },
+  { href: "/admin", label: "Admin", value: "admin" },
+  { href: "/auth/confirm", label: "Auth confirm", value: "auth-confirm" },
+  { href: "/auth/callback", label: "Auth callback", value: "auth-callback" }
+];
+
+const pageGroups = [
+  {
+    label: "Experience pages",
+    links: experiencePageLinks,
+    openByDefault: true
+  },
+  {
+    label: "Marketing pages",
+    links: campaignPageLinks,
+    openByDefault: false
+  },
+  {
+    label: "Operational pages",
+    links: operationalPageLinks,
+    openByDefault: false
+  }
+];
+
+const pageLinks = pageGroups.flatMap((group) => group.links);
 
 export function VariantPreviewSelector() {
   const shouldShow =
@@ -105,9 +147,15 @@ export function VariantPreviewSelector() {
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
   const activePage =
-    pathname === "/" ? "landing" : pathname === "/start-review" ? "start-review" : pathname === "/my-health" ? "my-health" : null;
+    pageLinks.find((link) => (link.match ? link.match(pathname) : pathname === link.href))?.value ?? null;
   const activeGroups =
-    activePage === "landing" ? landingVariantGroups : activePage === "start-review" ? startReviewVariantGroups : [];
+    activePage === "landing"
+      ? landingVariantGroups
+      : activePage === "my-health"
+        ? myHealthVariantGroups
+        : activePage === "message-team"
+          ? messageTeamVariantGroups
+          : [];
   const triggerLabel = "Design variants";
 
   if (!shouldShow) {
@@ -124,6 +172,16 @@ export function VariantPreviewSelector() {
     return `${pathname}?${params.toString()}`;
   }
 
+  function hrefForPage(href: string) {
+    const params = new URLSearchParams();
+    const signInMode = searchParams.get("signin") ?? "preview";
+
+    params.set("signin", signInMode);
+
+    const query = params.toString();
+    return query ? `${href}?${query}` : href;
+  }
+
   return (
     <div className="variant-preview-nav">
       {isOpen ? (
@@ -138,18 +196,54 @@ export function VariantPreviewSelector() {
           <div className="variant-preview-groups">
             <section className="variant-preview-group">
               <h3>Pages</h3>
-              <div className="variant-preview-links">
-                {pageLinks.map((link) => (
-                  <Link
-                    aria-current={activePage === link.value ? "page" : undefined}
-                    href={link.href}
-                    key={link.href}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
+              <div className="variant-preview-page-groups">
+                {pageGroups.map((group) => {
+                  const groupHasActivePage = group.links.some((link) => link.value === activePage);
+
+                  return (
+                    <details
+                      className="variant-preview-page-group"
+                      key={group.label}
+                      open={group.openByDefault || groupHasActivePage}
+                    >
+                      <summary>{group.label}</summary>
+                      <div className="variant-preview-links">
+                        {group.links.map((link) => (
+                          <Link
+                            aria-current={activePage === link.value ? "page" : undefined}
+                            href={hrefForPage(link.href)}
+                            key={link.href}
+                          >
+                            {link.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </details>
+                  );
+                })}
               </div>
             </section>
+
+            {globalVariantGroups.map((group) => {
+              const selectedValue = activeValue(group.param, group.fallback);
+
+              return (
+                <section className="variant-preview-group" key={group.param}>
+                  <h3>{group.label}</h3>
+                  <div className="variant-preview-links">
+                    {group.options.map((option) => (
+                      <Link
+                        aria-current={selectedValue === option.value ? "page" : undefined}
+                        href={hrefFor(group.param, option.value)}
+                        key={option.value}
+                      >
+                        {option.label}
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
 
             {activeGroups.map((group) => {
               const selectedValue = activeValue(group.param, group.fallback);

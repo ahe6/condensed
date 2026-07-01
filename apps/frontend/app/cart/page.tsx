@@ -396,7 +396,7 @@ export default function CartPage() {
             <div className="empty-state">
               <p>Cart is empty</p>
               <Link className="nav-link" href="/">
-                Continue Shopping
+                Back to home
               </Link>
             </div>
           ) : (
@@ -471,7 +471,7 @@ export default function CartPage() {
             <div className="empty-state">
               <p>Add items to your cart before checkout</p>
               <Link className="nav-link" href="/">
-                Shop Products
+                Back to home
               </Link>
             </div>
           ) : (

@@ -92,12 +92,10 @@ export type AssessmentQuestion = {
 
 export type AssessmentTemplate = {
   id: string;
-  productId: string | null;
-  goalKey: string | null;
+  productId: string;
   slug: string;
   title: string;
   description: string | null;
-  type: "PRODUCT_INTAKE" | "GOAL_INTAKE";
   status: "DRAFT" | "ACTIVE" | "ARCHIVED";
   version: number;
   createdAt: string;
@@ -135,30 +133,10 @@ export type CheckoutAuthorization = {
   updatedAt: string;
 };
 
-export type AssessmentRecommendationStatus = "RECOMMENDED" | "SELECTED" | "DISMISSED";
-
-export type AssessmentRecommendation = {
-  id: string;
-  assessmentSubmissionId: string;
-  productId: string;
-  status: AssessmentRecommendationStatus;
-  rank: number;
-  reasonCode: string;
-  reasonText: string | null;
-  sourcePolicyId: string;
-  sourcePolicyVersion: number;
-  selectedAt: string | null;
-  dismissedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  product: Product;
-};
-
 export type AssessmentSubmission = {
   id: string;
   templateId: string;
-  productId: string | null;
-  goalKey: string | null;
+  productId: string;
   userId: string | null;
   email: string | null;
   status: AssessmentSubmissionStatus;
@@ -174,7 +152,6 @@ export type AssessmentSubmission = {
   template: Omit<AssessmentTemplate, "product" | "questions">;
   answers: AssessmentSubmissionAnswer[];
   checkoutAuthorizations: CheckoutAuthorization[];
-  recommendations: AssessmentRecommendation[];
 };
 
 export type AdminAssessmentSubmissionsResponse = {
@@ -639,29 +616,12 @@ export async function getProductAssessment(slug: string) {
   return request<AssessmentTemplate>(`/products/${encodeURIComponent(slug)}/assessment`);
 }
 
-export async function getGoalAssessment(goalKey: string) {
-  return request<AssessmentTemplate>(`/goals/${encodeURIComponent(goalKey)}/assessment`);
-}
-
 export async function submitProductAssessment(
   slug: string,
   input: { answers: Record<string, AssessmentAnswerValue>; email?: string }
 ) {
   return request<AssessmentSubmission>(
     `/products/${encodeURIComponent(slug)}/assessment/submissions`,
-    {
-      method: "POST",
-      body: JSON.stringify(input)
-    }
-  );
-}
-
-export async function submitGoalAssessment(
-  goalKey: string,
-  input: { answers: Record<string, AssessmentAnswerValue>; email?: string }
-) {
-  return request<AssessmentSubmission>(
-    `/goals/${encodeURIComponent(goalKey)}/assessment/submissions`,
     {
       method: "POST",
       body: JSON.stringify(input)

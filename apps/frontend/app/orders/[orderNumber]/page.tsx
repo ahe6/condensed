@@ -2,7 +2,7 @@
 
 import { CheckoutElementsProvider } from "@stripe/react-stripe-js/checkout";
 import { loadStripe } from "@stripe/stripe-js";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CustomerBrand } from "../../../src/components/CustomerBrand";
 import { CustomerNav } from "../../../src/components/CustomerNav";
@@ -15,6 +15,7 @@ import { StripePaymentForm } from "../../../src/components/StripePaymentForm";
 import { Order, createStripeCheckoutSession, getOrder } from "../../../src/lib/api";
 import { getCurrentReturnTo, getSession, isAuthConfigured, startLogin } from "../../../src/lib/auth";
 import { formatDateTime, formatMoney, statusClass, trackingUrl } from "../../../src/lib/format";
+import { getPreviewOrder } from "../../../src/lib/previewOrders";
 
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
@@ -32,7 +33,11 @@ function addressLabel(address: Order["addresses"][number]) {
 
 export default function OrderDetailPage() {
   const params = useParams<{ orderNumber: string }>();
+  const searchParams = useSearchParams();
   const orderNumber = decodeURIComponent(params.orderNumber);
+  const canPreviewWithoutBackend =
+    process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_SHOW_VARIANTS === "true";
+  const isBypassPreview = canPreviewWithoutBackend && searchParams.get("signin") !== "block";
   const [order, setOrder] = useState<Order | null>(null);
   const [needsSignIn, setNeedsSignIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,6 +53,13 @@ export default function OrderDetailPage() {
       setIsLoading(true);
       setError(null);
       setNeedsSignIn(false);
+
+      if (isBypassPreview) {
+        setOrder(getPreviewOrder(orderNumber));
+        setCheckoutClientSecret(null);
+        setIsLoading(false);
+        return;
+      }
 
       if (!isAuthConfigured()) {
         setOrder(null);
@@ -89,11 +101,18 @@ export default function OrderDetailPage() {
     return () => {
       isMounted = false;
     };
-  }, [orderNumber]);
+  }, [isBypassPreview, orderNumber]);
 
   async function refreshOrder() {
     setPendingAction("refresh");
     setError(null);
+
+    if (isBypassPreview) {
+      setOrder(getPreviewOrder(orderNumber));
+      setCheckoutClientSecret(null);
+      setPendingAction(null);
+      return;
+    }
 
     try {
       const nextOrder = await getOrder(orderNumber);

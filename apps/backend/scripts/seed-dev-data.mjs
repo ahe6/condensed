@@ -1283,51 +1283,6 @@ const standardOptions = {
   ]
 };
 
-const goalPriorityOptions = [
-  { label: "Understand my options", value: "understand-options" },
-  { label: "Find a likely next step", value: "find-next-step" },
-  { label: "Check if labs make sense", value: "consider-labs" }
-];
-
-const goalKeys = [
-  {
-    goalKey: "weight-loss",
-    slug: "goal-weight-loss",
-    title: "Weight Goal Intake",
-    topic: "weight and metabolic health"
-  },
-  {
-    goalKey: "hair-loss",
-    slug: "goal-hair-loss",
-    title: "Hair Goal Intake",
-    topic: "hair loss and scalp support"
-  },
-  {
-    goalKey: "sexual-health",
-    slug: "goal-sexual-health",
-    title: "Sexual Health Goal Intake",
-    topic: "sexual wellness"
-  },
-  {
-    goalKey: "skin-care",
-    slug: "goal-skin-care",
-    title: "Skin Care Goal Intake",
-    topic: "skin care"
-  },
-  {
-    goalKey: "hormone-health",
-    slug: "goal-hormone-health",
-    title: "Hormone Health Goal Intake",
-    topic: "hormone health"
-  },
-  {
-    goalKey: "wellness-labs",
-    slug: "goal-wellness-labs",
-    title: "Wellness Labs Goal Intake",
-    topic: "wellness labs and health checks"
-  }
-];
-
 function assessmentQuestions(topic) {
   return [
     {
@@ -1368,45 +1323,6 @@ function assessmentQuestions(topic) {
   ];
 }
 
-function goalAssessmentQuestions(topic) {
-  return [
-    {
-      key: "main_goal",
-      label: `What are you hoping to improve with ${topic}?`,
-      type: "TEXT",
-      sortOrder: 0
-    },
-    {
-      key: "priority",
-      label: "What would help most right now?",
-      type: "SINGLE_SELECT",
-      options: goalPriorityOptions,
-      sortOrder: 1
-    },
-    {
-      key: "timeframe",
-      label: "When would you like to take the next step?",
-      type: "SINGLE_SELECT",
-      options: standardOptions.timeframe,
-      sortOrder: 2
-    },
-    {
-      key: "prior_experience",
-      label: "Have you used similar support before?",
-      type: "SINGLE_SELECT",
-      options: standardOptions.experience,
-      sortOrder: 3
-    },
-    {
-      key: "notes",
-      label: "Anything else you want to mention?",
-      type: "TEXT",
-      required: false,
-      sortOrder: 4
-    }
-  ];
-}
-
 function assessmentTemplate(productSlug, slug, title, topic) {
   return {
     productSlug,
@@ -1414,16 +1330,6 @@ function assessmentTemplate(productSlug, slug, title, topic) {
     title,
     description: `A short intake for ${topic} goals and support preferences.`,
     questions: assessmentQuestions(topic)
-  };
-}
-
-function goalAssessmentTemplate(input) {
-  return {
-    goalKey: input.goalKey,
-    slug: input.slug,
-    title: input.title,
-    description: `A short intake to match ${input.topic} goals with recommended next steps.`,
-    questions: goalAssessmentQuestions(input.topic)
   };
 }
 
@@ -1522,8 +1428,6 @@ assessmentTemplates.push(
     assessmentTemplate(product.slug, `${product.slug}-assessment`, `${product.name} Assessment`, "genetics review")
   )
 );
-
-const goalAssessmentTemplates = goalKeys.map(goalAssessmentTemplate);
 
 try {
   const categoryBySlug = new Map();
@@ -1654,78 +1558,16 @@ try {
       },
       create: {
         productId: product.id,
-        goalKey: null,
         slug: templateInput.slug,
         title: templateInput.title,
         description: templateInput.description,
-        type: "PRODUCT_INTAKE",
         status: "ACTIVE",
         version: 1
       },
       update: {
         productId: product.id,
-        goalKey: null,
         title: templateInput.title,
         description: templateInput.description,
-        type: "PRODUCT_INTAKE",
-        status: "ACTIVE"
-      }
-    });
-
-    for (const question of templateInput.questions) {
-      await prisma.assessmentQuestion.upsert({
-        where: {
-          templateId_key: {
-            templateId: template.id,
-            key: question.key
-          }
-        },
-        create: {
-          templateId: template.id,
-          key: question.key,
-          label: question.label,
-          helpText: question.helpText,
-          type: question.type,
-          required: question.required ?? true,
-          options: question.options,
-          sortOrder: question.sortOrder
-        },
-        update: {
-          label: question.label,
-          helpText: question.helpText,
-          type: question.type,
-          required: question.required ?? true,
-          options: question.options,
-          sortOrder: question.sortOrder
-        }
-      });
-    }
-  }
-
-  for (const templateInput of goalAssessmentTemplates) {
-    const template = await prisma.assessmentTemplate.upsert({
-      where: {
-        slug_version: {
-          slug: templateInput.slug,
-          version: 1
-        }
-      },
-      create: {
-        goalKey: templateInput.goalKey,
-        productId: null,
-        slug: templateInput.slug,
-        title: templateInput.title,
-        description: templateInput.description,
-        type: "GOAL_INTAKE",
-        status: "ACTIVE",
-        version: 1
-      },
-      update: {
-        goalKey: templateInput.goalKey,
-        productId: null,
-        title: templateInput.title,
-        description: templateInput.description,
-        type: "GOAL_INTAKE",
         status: "ACTIVE"
       }
     });
@@ -1772,9 +1614,7 @@ try {
   });
 
   console.log(`Seeded dev catalog: ${products.length} products, ${categories.length} categories`);
-  console.log(
-    `Seeded assessment templates: ${assessmentTemplates.length} product, ${goalAssessmentTemplates.length} goal`
-  );
+  console.log(`Seeded assessment templates: ${assessmentTemplates.length} product`);
   if (archivedLegacyProducts.count > 0) {
     console.log(`Archived legacy placeholder products: ${archivedLegacyProducts.count}`);
   }

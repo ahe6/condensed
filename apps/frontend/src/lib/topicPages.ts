@@ -5,265 +5,290 @@ export type TopicPage = {
   title: string;
   summary: string;
   imageClass: string;
-  intakeHref?: string;
-  intakeLabel?: string;
-  secondaryHref: string;
-  secondaryLabel: string;
+  visualLabel: string;
+  visualTitle: string;
+  visualItems: string[];
   highlights: string[];
-  sections: Array<{
+  startingPointTitle: string;
+  startingPointSummary: string;
+  startingPoints: Array<{
     title: string;
     detail: string;
   }>;
+  sections: Array<{
+    title: string;
+    detail: string;
+    href: string;
+    cta: string;
+  }>;
+  finalTitle: string;
+  finalSummary: string;
 };
 
 export const topicPages = {
   "genetic-testing": {
     slug: "genetic-testing",
     label: "Genetics",
-    eyebrow: "Precision health",
-    title: "Genetic testing with the right scope.",
+    eyebrow: "Genetic testing",
+    title: "Thinking about genetic testing? Start with the question it needs to answer.",
     summary:
-      "Compare whole genome sequencing, exome sequencing, focused panels, carrier screening, and pharmacogenomics before starting review.",
+      "Carrier screening, inherited risk panels, pharmacogenomics, exome, and genome tests are built for different jobs. Compare the paths before buying the wrong kind of answer.",
     imageClass: "genetic",
-    secondaryHref: "/shop",
-    secondaryLabel: "Browse products",
-    highlights: ["30x WGS and exome", "Carrier and risk panels", "Medication response genetics"],
+    visualLabel: "Testing scope",
+    visualTitle: "Different genetics tests answer different questions.",
+    visualItems: ["Carrier and family planning", "Medication response", "Inherited risk", "Existing report review"],
+    highlights: ["Carrier screening", "Medication response", "Result interpretation"],
+    startingPointTitle: "Start with the reason you are considering genetics.",
+    startingPointSummary:
+      "A genetics test can be useful, but the best choice depends on whether you are screening, confirming, planning, or reviewing existing data.",
+    startingPoints: [
+      {
+        title: "I want to know inherited risk",
+        detail: "Compare focused panels, broader sequencing, and what may need clinician or genetic counselor follow-up."
+      },
+      {
+        title: "I have genetic results",
+        detail: "Understand what a report says, what it does not prove, and what questions to bring next."
+      },
+      {
+        title: "I am planning for family or medication decisions",
+        detail: "Look at carrier screening, pharmacogenomics, and limitations before choosing a path."
+      }
+    ],
     sections: [
       {
-        title: "Choose the test scope",
-        detail:
-          "Genome, exome, panel, chromosomal, and single-variant tests answer different questions and are not interchangeable."
+        title: "Testing options",
+        detail: "Compare genetics tests by purpose, scope, and result type.",
+        href: "/#services",
+        cta: "View testing"
       },
       {
-        title: "Review before ordering",
-        detail:
-          "Clinical genetics can involve secondary findings, family implications, privacy choices, and confirmatory follow-up."
+        title: "Records and results",
+        detail: "Prepare existing genetics reports or lab files for review.",
+        href: "/my-health",
+        cta: "Open workspace"
       },
       {
-        title: "Where it fits",
-        detail:
-          "Genetic testing should support care decisions and family planning discussions, not replace provider review."
+        title: "Clinician follow-up",
+        detail: "Identify when genetics results may need specialist discussion.",
+        href: "/#clinicians",
+        cta: "View clinicians"
       }
-    ]
+    ],
+    finalTitle: "Use genetics as a targeted tool, not a guessing game.",
+    finalSummary: "Start by comparing the testing path to the actual question you want answered."
   },
   "weight-loss": {
     slug: "weight-loss",
-    label: "Metabolic Health",
-    eyebrow: "Metabolic care",
-    title: "Weight loss support that starts with context.",
+    label: "Weight Loss",
+    eyebrow: "Weight loss",
+    title: "Trying to lose weight? Compare the medical, lab, and follow-up paths first.",
     summary:
-      "Learn about metabolic health paths before beginning an intake for GLP-1 care, labs, or non-medication support.",
+      "Medication, metabolic labs, nutrition support, and follow-up are not the same path. Start by sorting what information you need before choosing what to do next.",
     imageClass: "weight",
-    intakeHref: "/goals/weight-loss",
-    intakeLabel: "Start weight intake",
-    secondaryHref: "/shop",
-    secondaryLabel: "View shop",
-    highlights: ["GLP-1 consult paths", "Metabolic lab support", "Lifestyle and follow-up planning"],
+    visualLabel: "Metabolic context",
+    visualTitle: "Weight questions often overlap with labs, medications, and follow-up.",
+    visualItems: ["A1c and glucose", "Lipids and liver markers", "GLP-1 questions", "Lifestyle and monitoring"],
+    highlights: ["Medication questions", "Metabolic labs", "Follow-up planning"],
+    startingPointTitle: "Start with what you are trying to change.",
+    startingPointSummary:
+      "The right next step may be testing, medication discussion, nutrition support, or a review of prior results.",
+    startingPoints: [
+      {
+        title: "I am considering medication",
+        detail: "Compare GLP-1 and non-GLP-1 questions with safety, eligibility, and follow-up in mind."
+      },
+      {
+        title: "I want labs before deciding",
+        detail: "Look at metabolic markers that can shape a more informed discussion."
+      },
+      {
+        title: "I have tried things already",
+        detail: "Organize what changed, what did not, and what information is still missing."
+      }
+    ],
     sections: [
       {
-        title: "Care fit",
-        detail:
-          "The intake should collect health history, medication goals, contraindications, and prior weight-management context."
+        title: "Testing",
+        detail: "Explore metabolic, thyroid, cholesterol, and general health lab paths.",
+        href: "/#services",
+        cta: "View tests"
       },
       {
-        title: "Labs and monitoring",
-        detail:
-          "Some paths may include baseline metabolic labs or follow-up checks before a recommendation is made."
+        title: "Analysis",
+        detail: "Review bloodwork patterns and markers related to metabolic health.",
+        href: "/#services",
+        cta: "View analysis"
       },
       {
-        title: "Next step",
-        detail:
-          "When ready, the intake route can collect the details needed to match the right care or checkout path."
+        title: "Treatments",
+        detail: "Compare care and treatment questions before choosing a next step.",
+        href: "/#treatments",
+        cta: "View treatments"
       }
-    ]
+    ],
+    finalTitle: "Make the next weight-loss step more specific.",
+    finalSummary: "Use testing, result review, and care navigation to narrow what is worth pursuing."
   },
   "hair-loss": {
     slug: "hair-loss",
-    label: "Skin & Hair Health",
-    eyebrow: "Hair health",
-    title: "Hair loss care for shedding, thinning, and scalp goals.",
+    label: "Hair Loss",
+    eyebrow: "Hair loss",
+    title: "Losing hair? Start with the pattern, not another random product.",
     summary:
-      "A dedicated overview for hair concerns before routing into the focused hair-loss intake.",
+      "Sudden shedding, gradual thinning, scalp irritation, and nutrient or hormone questions can point to different next steps. Compare the likely paths before you spend more.",
     imageClass: "hair",
-    intakeHref: "/goals/hair-loss",
-    intakeLabel: "Start hair intake",
-    secondaryHref: "/shop",
-    secondaryLabel: "Browse products",
-    highlights: ["Pattern and timeline", "Scalp and routine context", "Treatment fit"],
+    visualLabel: "Hair health",
+    visualTitle: "Timeline, pattern, scalp symptoms, and labs can point to different next steps.",
+    visualItems: ["Sudden shedding", "Gradual thinning", "Scalp irritation", "Iron, thyroid, and hormone questions"],
+    highlights: ["Pattern and timeline", "Lab questions", "Treatment fit"],
+    startingPointTitle: "Start with what changed.",
+    startingPointSummary:
+      "Hair loss can come from different causes, so useful next steps depend on the timeline, pattern, symptoms, and prior treatments.",
+    startingPoints: [
+      {
+        title: "Sudden shedding",
+        detail: "Think through timing, illness, stress, medications, nutrition, and whether labs may help."
+      },
+      {
+        title: "Gradual thinning",
+        detail: "Compare treatment questions, family history, scalp findings, and follow-up options."
+      },
+      {
+        title: "Scalp symptoms",
+        detail: "Itching, scaling, redness, pain, or patches may need a different care path."
+      }
+    ],
     sections: [
       {
-        title: "What the path should ask",
-        detail:
-          "Hair loss support needs timeline, pattern, triggers, medications, scalp symptoms, and prior treatments."
+        title: "Testing",
+        detail: "Look at lab paths that may be relevant to hair changes.",
+        href: "/#services",
+        cta: "View tests"
       },
       {
-        title: "Why context matters",
-        detail:
-          "Different hair concerns can point to different causes, so the page should separate education from the intake decision."
+        title: "Clinicians",
+        detail: "Find care support when symptoms or treatment questions need review.",
+        href: "/#clinicians",
+        cta: "View clinicians"
       },
       {
-        title: "Next step",
-        detail:
-          "The intake can then collect enough detail to recommend an appropriate consult or product path."
+        title: "Treatments",
+        detail: "Compare medication, supplement, and routine questions.",
+        href: "/#treatments",
+        cta: "View treatments"
       }
-    ]
-  },
-  "labs": {
-    slug: "labs",
-    label: "Labs & Diagnostics",
-    eyebrow: "Diagnostics",
-    title: "Labs and imaging with a clearer reason.",
-    summary:
-      "Use this page to compare lab and imaging paths before users begin wellness, metabolic, thyroid, hormone, CT, MRI, ultrasound, or DEXA review.",
-    imageClass: "labs",
-    intakeHref: "/goals/wellness-labs",
-    intakeLabel: "Start review",
-    secondaryHref: "/catalog",
-    secondaryLabel: "View catalog",
-    highlights: ["Lab panels", "CT, MRI, ultrasound", "Result review"],
-    sections: [
-      {
-        title: "Choose the question first",
-        detail:
-          "Diagnostics are most useful when tied to a care question, symptom pattern, risk factor, or monitoring need."
-      },
-      {
-        title: "Imaging needs context",
-        detail:
-          "CT, MRI, ultrasound, mammography, and DEXA paths should include eligibility, safety, and follow-up review before scheduling."
-      },
-      {
-        title: "Next step",
-        detail:
-          "The current review path can route users toward available lab panels, imaging requests, or clinician input."
-      }
-    ]
+    ],
+    finalTitle: "Match the hair-loss path to the pattern.",
+    finalSummary: "Start by comparing testing, clinician review, and treatment options around what changed."
   },
   "skin-care": {
     slug: "skin-care",
     label: "Skin Care",
-    eyebrow: "Skin support",
-    title: "Skin care paths for acne, texture, redness, and routine goals.",
+    eyebrow: "Skin care",
+    title: "Skin acting up? Separate routine problems from care questions.",
     summary:
-      "A full page for skin concerns before starting a focused intake or browsing care options.",
+      "Acne, redness, sensitivity, texture, medication questions, and reactions do not all need the same next step. Start by sorting the concern.",
     imageClass: "skin",
-    intakeHref: "/goals/skin-care",
-    intakeLabel: "Start skin intake",
-    secondaryHref: "/shop",
-    secondaryLabel: "Browse products",
-    highlights: ["Acne and texture", "Redness and sensitivity", "Routine planning"],
+    visualLabel: "Skin context",
+    visualTitle: "Routine questions and medical questions should not be mixed together.",
+    visualItems: ["Acne and texture", "Redness and sensitivity", "Medication history", "Clinician follow-up"],
+    highlights: ["Acne and texture", "Routine questions", "Clinician follow-up"],
+    startingPointTitle: "Start with the type of skin question.",
+    startingPointSummary:
+      "A routine question, a medication question, and a symptom flare can each point to a different path.",
+    startingPoints: [
+      {
+        title: "I want a better routine",
+        detail: "Organize current products, reactions, goals, and what has or has not helped."
+      },
+      {
+        title: "I have acne, redness, or irritation",
+        detail: "Separate everyday skin care from concerns that may need medical review."
+      },
+      {
+        title: "I have results or triggers",
+        detail: "Connect timing, medications, labs, or lifestyle changes to the next question."
+      }
+    ],
     sections: [
       {
-        title: "What the page should clarify",
-        detail:
-          "Skin care should distinguish everyday routine goals from concerns that need provider review."
+        title: "Clinicians",
+        detail: "Find care support when symptoms, prescriptions, or photos need review.",
+        href: "/#clinicians",
+        cta: "View clinicians"
       },
       {
-        title: "Intake context",
-        detail:
-          "Photos, medication history, sensitivity, pregnancy status, and prior treatments may change the recommendation."
+        title: "Treatments",
+        detail: "Compare medication, supplement, and routine-related questions.",
+        href: "/#treatments",
+        cta: "View treatments"
       },
       {
-        title: "Next step",
-        detail:
-          "The skin intake can collect the information needed to route users to the right care path."
+        title: "Records",
+        detail: "Keep notes, photos, prior treatments, and follow-up steps organized.",
+        href: "/my-health",
+        cta: "Open workspace"
       }
-    ]
+    ],
+    finalTitle: "Make the skin-care next step less random.",
+    finalSummary: "Start by sorting the concern into routine, testing, clinician review, or treatment follow-up."
   },
   "hormones": {
     slug: "hormones",
     label: "Hormones",
-    eyebrow: "Hormone health",
-    title: "Hormone health pages for symptoms, labs, and follow-up.",
+    eyebrow: "Hormones",
+    title: "Considering hormone testing? Timing and symptoms matter.",
     summary:
-      "A future overview for hormone-related questions, screening options, and provider-guided interpretation.",
+      "Hormone labs can be useful, but the wrong timing or missing context can create more confusion. Compare testing, results, and follow-up paths before ordering blindly.",
     imageClass: "hormones",
-    intakeHref: "/goals/hormone-health",
-    intakeLabel: "Start hormone intake",
-    secondaryHref: "/goals/wellness-labs",
-    secondaryLabel: "Explore labs",
-    highlights: ["Symptom context", "Hormone lab options", "Provider interpretation"],
+    visualLabel: "Hormone context",
+    visualTitle: "The same lab can mean different things depending on timing and symptoms.",
+    visualItems: ["Cycle timing", "Thyroid context", "Fertility questions", "Medication and life stage"],
+    highlights: ["Symptoms and timing", "Hormone labs", "Result follow-up"],
+    startingPointTitle: "Start with the hormone question you are trying to answer.",
+    startingPointSummary:
+      "Hormone testing is most useful when symptoms, timing, medications, and prior results are considered together.",
+    startingPoints: [
+      {
+        title: "I want to choose labs",
+        detail: "Compare hormone, thyroid, fertility, and related testing options with timing in mind."
+      },
+      {
+        title: "I have abnormal results",
+        detail: "Review what is out of range, what may need repeat testing, and what to ask next."
+      },
+      {
+        title: "I have symptoms but no plan",
+        detail: "Organize symptoms, cycle or age context, medications, and relevant prior testing."
+      }
+    ],
     sections: [
       {
-        title: "Start with symptoms",
-        detail:
-          "Hormone questions usually need symptom history, medication context, cycle or age context, and relevant risk factors."
+        title: "Testing",
+        detail: "Explore hormone, thyroid, fertility, and general lab paths.",
+        href: "/#services",
+        cta: "View tests"
       },
       {
-        title: "Labs are not standalone",
-        detail:
-          "Hormone labs should be interpreted with timing, symptoms, and clinical history."
+        title: "Analysis",
+        detail: "Review hormone and bloodwork patterns with timing and symptoms in mind.",
+        href: "/#services",
+        cta: "View analysis"
       },
       {
-        title: "Next step",
-        detail:
-          "This page can later connect hormone education, labs, and follow-up care into one path."
+        title: "Follow-up",
+        detail: "Plan what to do after testing, a result, or a care recommendation.",
+        href: "/my-health",
+        cta: "Open workspace"
       }
-    ]
-  },
-  "library": {
-    slug: "library",
-    label: "Health Library",
-    eyebrow: "Health library",
-    title: "Plain-language health guides, coming soon.",
-    summary:
-      "A future home for explainers on labs, biomarkers, symptoms, genetics, products, and follow-up decisions.",
-    imageClass: "labs",
-    secondaryHref: "/",
-    secondaryLabel: "Back home",
-    highlights: ["Lab explainers", "Health area guides", "Result follow-up"],
-    sections: [
-      {
-        title: "What will live here",
-        detail:
-          "Short, practical guides that help users understand common health questions before choosing a test, product, or review path."
-      },
-      {
-        title: "How it connects",
-        detail:
-          "Library content can link into labs, genetics, products, My Health records, and clinician review options."
-      },
-      {
-        title: "Next step",
-        detail:
-          "We can add articles and collections here as the content model takes shape."
-      }
-    ]
-  },
-  "health-areas": {
-    slug: "health-areas",
-    label: "Health Areas",
-    eyebrow: "Health areas",
-    title: "Browse common health starting points.",
-    summary:
-      "A grouped path for metabolic health, hormones, skin and hair, nutrients, baseline testing, and other common health questions.",
-    imageClass: "weight",
-    secondaryHref: "/shop",
-    secondaryLabel: "View products",
-    highlights: ["Metabolic health", "Hormones and energy", "Skin and hair"],
-    sections: [
-      {
-        title: "Metabolic health",
-        detail:
-          "Weight, glucose, cholesterol, insulin, inflammation, and related lab or product paths."
-      },
-      {
-        title: "Hormones and energy",
-        detail:
-          "Thyroid, testosterone, cortisol, reproductive hormones, fatigue, recovery, and follow-up questions."
-      },
-      {
-        title: "Skin, hair, and nutrients",
-        detail:
-          "Everyday care, nutrient status, inflammation markers, and product-supported health goals."
-      }
-    ]
+    ],
+    finalTitle: "Choose hormone testing with more context.",
+    finalSummary: "Start by comparing the test, result, and follow-up paths connected to your question."
   }
 } satisfies Record<string, TopicPage>;
 
 export const topicNavLinks = [
   { href: "/#services", label: "Services" },
-  { href: "/health-areas", label: "Health areas" },
-  { href: "/library", label: "Health library" },
-  { href: "/#faq", label: "FAQ" }
+  { href: "/library", label: "Health library" }
 ];

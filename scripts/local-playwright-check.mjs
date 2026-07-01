@@ -1,0 +1,360 @@
+import { chromium } from "playwright";
+
+const checks = {
+  async "my-health-rail"(page) {
+    await openMyHealthPreview(page);
+    const labels = await page
+      .getByLabel("Workspace sections")
+      .locator("button")
+      .evaluateAll((nodes) => nodes.map((node) => node.textContent));
+
+    return {
+      labels,
+      hasStartRequest: labels.includes("Start request"),
+      hasRecords: labels.includes("Records"),
+      lastLabel: labels[labels.length - 1]
+    };
+  },
+
+  async "my-health-signin-toggle"(page) {
+    await page.goto("http://localhost:3001/my-health?layout=workspace&signin=block", { waitUntil: "networkidle" });
+    await page.evaluate(() => localStorage.clear());
+    await page.reload({ waitUntil: "networkidle" });
+    const blockDialog = await page.getByRole("dialog", { name: "Sign in to continue" }).isVisible();
+    const blockWorkspace = await page.getByRole("region", { name: "Health workspace" }).isVisible().catch(() => false);
+
+    await openMyHealthPreview(page);
+    const previewDialog = await page.getByRole("dialog", { name: "Sign in to continue" }).isVisible().catch(() => false);
+    const previewWorkspace = await page.getByRole("region", { name: "Health workspace" }).isVisible();
+    const previewMode = await page.getByText("Preview mode").isVisible();
+
+    return {
+      blockDialog,
+      blockWorkspace,
+      previewDialog,
+      previewWorkspace,
+      previewMode
+    };
+  },
+
+  async "my-health-overview"(page) {
+    await openMyHealthPreview(page);
+    const overviewDetails = page.getByLabel("Overview details");
+    const startRequestLinks = await overviewDetails.getByRole("link", { name: "Start a request" }).count();
+    const nextStepLabels = await overviewDetails
+      .getByLabel("What do you need help with?")
+      .locator(".portal-action-row strong")
+      .evaluateAll((nodes) => nodes.map((node) => node.textContent));
+    const workspaceHeading = await page.getByRole("heading", { name: "Your workspace" }).isVisible();
+    const recentUpdates = await page.getByRole("heading", { name: "Recent updates" }).isVisible();
+    const overviewPill = await overviewDetails.locator("span", { hasText: "Overview" }).isVisible().catch(() => false);
+    const footerVisible = await page.locator(".site-footer").isVisible().catch(() => false);
+
+    return {
+      startRequestLinks,
+      nextStepLabels,
+      workspaceHeading,
+      recentUpdates,
+      overviewPill,
+      footerVisible
+    };
+  },
+
+  async "my-health-heading-actions"(page) {
+    await openMyHealthPreview(page);
+    const sectionNames = ["Records", "Testing", "Follow-up"];
+    const pills = {};
+    const startRequestButtons = {};
+
+    for (const sectionName of sectionNames) {
+      await page.getByLabel("Workspace sections").getByRole("button", { name: sectionName }).click();
+      pills[sectionName] = await page
+        .getByLabel(`${sectionName} details`)
+        .locator("span", { hasText: sectionName })
+        .isVisible()
+        .catch(() => false);
+      startRequestButtons[sectionName] = await page
+        .getByLabel(`${sectionName} details`)
+        .getByRole("link", { name: "Start a request" })
+        .isVisible()
+        .catch(() => false);
+    }
+
+    return { pills, startRequestButtons };
+  },
+
+  async "my-health-records"(page) {
+    await openMyHealthPreview(page);
+    await page.getByLabel("Workspace sections").getByRole("button", { name: "Records" }).click();
+
+    const intro = await page
+      .getByText("Keep your uploaded reports, result reviews, saved testing plans, and care timeline in one place.")
+      .isVisible();
+    const uploadButtonCount = await page.getByLabel("Records details").getByRole("button", { name: "Upload records" }).count();
+    const startRequestButton = await page.getByLabel("Records details").getByRole("link", { name: "Start a request" }).isVisible().catch(() => false);
+    const uploadButton = await page
+      .locator(".my-health-record-section")
+      .filter({ hasText: "Uploaded records" })
+      .getByRole("button", { name: "Upload records" })
+      .isVisible();
+    const sections = {};
+
+    for (const sectionName of ["Uploaded records", "Result reviews", "Saved testing plans", "Timeline"]) {
+      sections[sectionName] = await page.getByRole("heading", { name: sectionName }).isVisible();
+    }
+
+    const emptyStates = {
+      records: await page.getByText("No records uploaded yet.").isVisible(),
+      reviews: await page.getByText("No reviews yet.").isVisible(),
+      tests: await page.getByText("No saved tests yet.").isVisible(),
+      timeline: await page.getByText("No activity yet.").isVisible()
+    };
+
+    const recentResultsVisible = await page.getByText("Recent results").isVisible().catch(() => false);
+    const followUpQuestionsVisible = await page.getByText("Follow-up questions").isVisible().catch(() => false);
+
+    return {
+      intro,
+      uploadButton,
+      uploadButtonCount,
+      startRequestButton,
+      sections,
+      emptyStates,
+      recentResultsVisible,
+      followUpQuestionsVisible
+    };
+  },
+
+  async "my-health-testing"(page) {
+    await openMyHealthPreview(page);
+    await page.getByLabel("Workspace sections").getByRole("button", { name: "Testing" }).click();
+    const heading = await page.getByRole("heading", { name: "Testing options" }).isVisible();
+    const helper = await page
+      .getByText("Explore labs, genetics, and at-home testing options connected to what you're trying to understand.")
+      .isVisible();
+    const startQuestion = await page.getByRole("heading", { name: "Start from a question" }).isVisible();
+    const startRequestButton = await page.getByLabel("Start from a question").getByRole("link", { name: "Start a request" }).isVisible();
+    const rows = await page.locator(".my-health-testing-card h4").evaluateAll((nodes) =>
+      nodes.map((node) => node.textContent)
+    );
+    const browseAvailableTests = await page.getByRole("link", { name: "Browse available tests" }).isVisible();
+
+    return { heading, helper, startQuestion, startRequestButton, rows, browseAvailableTests };
+  },
+
+  async "my-health-follow-up"(page) {
+    await openMyHealthPreview(page);
+    await page.getByLabel("Workspace sections").getByRole("button", { name: "Follow-up" }).click();
+    const intro = await page
+      .getByText("Get help deciding what to do after results, testing, or a care recommendation.")
+      .isVisible();
+    const sections = {};
+
+    for (const sectionName of ["Active follow-up", "Guidance", "Care coordination", "Questions to resolve"]) {
+      sections[sectionName] = await page.getByRole("heading", { name: sectionName }).isVisible();
+    }
+
+    const emptyStates = {
+      active: await page.getByText("No follow-up active yet.").isVisible(),
+      guidance: await page.getByText("No guidance yet.").isVisible(),
+      coordination: await page.getByText("No care coordination active yet.").isVisible(),
+      questions: await page.getByText("No open questions yet.").isVisible()
+    };
+
+    const forbiddenLabels = {};
+    for (const label of ["Clinician updates", "Order updates", "Action reminders", "payment", "shipment", "fulfillment"]) {
+      forbiddenLabels[label] = await page.getByText(label, { exact: false }).isVisible().catch(() => false);
+    }
+
+    return { intro, sections, emptyStates, forbiddenLabels };
+  },
+
+  async "my-health-active"(page) {
+    await openMyHealthPreview(page, "&state=active");
+    const activeSummary = {
+      records: await page.getByRole("button", { name: /Records 3 uploaded/ }).isVisible(),
+      testing: await page.getByRole("button", { name: /Testing Plan saved/ }).isVisible(),
+      update: await page.getByText("Records uploaded").isVisible()
+    };
+
+    await page.getByLabel("Workspace sections").getByRole("button", { name: "Records" }).click();
+    const records = {
+      uploaded: await page.getByText("3 records uploaded").isVisible(),
+      review: await page.getByText("Metabolic panel review").isVisible(),
+      timeline: await page.getByText("Latest activity today").isVisible()
+    };
+
+    await page.getByLabel("Workspace sections").getByRole("button", { name: "Testing" }).click();
+    const testing = {
+      savedPlan: await page.getByText("Metabolic follow-up plan").isVisible(),
+      genetics: await page.getByText("Medication response panel").isVisible()
+    };
+
+    await page.getByLabel("Workspace sections").getByRole("button", { name: "Follow-up" }).click();
+    const followUp = {
+      active: await page.getByText("Metabolic results follow-up").isVisible(),
+      questions: await page.getByText("2 open questions").isVisible()
+    };
+
+    return { activeSummary, records, testing, followUp };
+  },
+
+  async "my-health-placeholder"(page) {
+    await page.goto("http://localhost:3001/my-health?layout=placeholder&signin=preview", { waitUntil: "networkidle" });
+    await page.evaluate(() => localStorage.clear());
+    await page.reload({ waitUntil: "networkidle" });
+    const placeholder = await page.getByRole("region", { name: "My Health placeholder" }).isVisible();
+    const heading = await page.getByRole("heading", { name: "My Health" }).isVisible();
+    const workspaceTabs = await page.getByLabel("Workspace sections").isVisible().catch(() => false);
+    const messageLink = await page.getByRole("link", { name: "Message our team" }).getAttribute("href");
+
+    return { placeholder, heading, workspaceTabs, messageLink };
+  },
+
+  async "message-team"(page) {
+    await page.goto("http://localhost:3001/message-team?layout=guided", { waitUntil: "networkidle" });
+    const heading = await page.getByRole("heading", { name: "What can we help you with?" }).isVisible();
+    const options = await page.locator(".message-team-option").evaluateAll((nodes) =>
+      nodes.map((node) => node.textContent)
+    );
+    const subtitle = await page
+      .getByText("Tell us what you're trying to figure out. We'll help you choose a test, understand results, or decide what to do next.")
+      .isVisible();
+    await page.getByRole("button", { name: /Understand my results/ }).click();
+    const messageBox = await page.getByText("What results do you want help with?").isVisible();
+    const selected = await page.getByText("You selected").isVisible();
+    const upload = await page.getByText("Have results or documents?").isVisible();
+    const contact = await page.getByRole("heading", { name: "Where should we reply?" }).isVisible();
+    const reassurance = await page.getByText("Free to send. No obligation. We'll reply with what we think makes sense.").isVisible();
+    const send = await page.getByRole("button", { name: "Send message" }).isVisible();
+    await page.getByRole("button", { name: /Something else/ }).click();
+    const secondaryPrompt = await page.getByText("What would you like to ask us?").isVisible();
+    const secondarySelected = await page.getByText("Something else", { exact: true }).isVisible();
+
+    return { heading, subtitle, options, selected, messageBox, upload, contact, reassurance, send, secondaryPrompt, secondarySelected };
+  },
+
+  async "landing-message-cta"(page) {
+    await page.goto("http://localhost:3001/?hero=consult-overlay", { waitUntil: "networkidle" });
+    const retiredHeroIgnored = await page
+      .getByRole("heading", { name: "Healthcare services without the guesswork." })
+      .isVisible();
+    const oldCtaCount = await page.getByRole("link", { name: "Message our team" }).count();
+
+    return { retiredHeroIgnored, oldCtaCount };
+  },
+
+  async "landing-search-hero"(page) {
+    await page.goto("http://localhost:3001/", { waitUntil: "networkidle" });
+    const heading = await page.getByRole("heading", { name: "Healthcare services without the guesswork." }).isVisible();
+    const subtitleVisible = await page
+      .getByText("Tell us what you're trying to figure out, or choose a service to start. We'll help you find the right option for testing, results, and next steps.")
+      .isVisible()
+      .catch(() => false);
+    const searchPrompt = await page.getByText("What are you trying to figure out?").isVisible();
+    const cards = await page.locator(".home-hero-search-card").evaluateAll((nodes) =>
+      nodes.map((node) => node.textContent)
+    );
+    const cardTags = await page.locator(".home-hero-search-card").evaluateAll((nodes) =>
+      nodes.map((node) => node.tagName)
+    );
+    const searchBarTag = await page.locator(".home-hero-search-bar").evaluate((node) => node.tagName);
+    const heroNavButtons = await page
+      .getByRole("button", { name: /starting points/i })
+      .count();
+
+    return { heading, subtitleVisible, searchPrompt, cards, cardTags, searchBarTag, heroNavButtons };
+  },
+
+  async "landing-service-carousels"(page) {
+    await page.goto("http://localhost:3001/", { waitUntil: "networkidle" });
+    const serviceCards = await page.locator(".home-specific-carousel").first().locator(".home-specific-service-card").evaluateAll((nodes) =>
+      nodes.map((node) => node.textContent)
+    );
+    const reviewCards = await page
+      .locator(".home-specific-carousel-review")
+      .locator(".home-specific-review-card")
+      .evaluateAll((nodes) => nodes.map((node) => node.textContent));
+    const testsHeading = await page.getByRole("heading", { name: "Tests" }).isVisible();
+    const analysisHeading = await page.getByRole("heading", { name: "Analysis", exact: true }).isVisible();
+    const cliniciansHeading = await page.getByRole("heading", { name: "Clinicians", exact: true }).isVisible();
+    const treatmentsHeading = await page.getByRole("heading", { name: "Treatments", exact: true }).isVisible();
+    const bloodworkAnalysis = await page.getByText("Bloodwork analysis").isVisible();
+    const hormoneAnalysis = await page.getByText("Hormone analysis").isVisible();
+    const primaryCare = await page.getByText("Primary care").isVisible();
+    const medicationReview = await page.getByText("Medication review").isVisible();
+    await page.getByRole("button", { name: "Next tests" }).click();
+    await page.getByRole("button", { name: "Next tests" }).click();
+    const thyroidTesting = await page.getByText("Thyroid testing").isVisible();
+    await page.getByRole("button", { name: "Next analysis categories" }).click();
+    const geneticAnalysis = await page.getByText("Genetic analysis").isVisible();
+    const viewAllTests = await page.getByRole("link", { name: /View all tests/ }).isVisible();
+    const viewAllAnalysis = await page.getByRole("link", { name: /View all analysis/ }).isVisible();
+
+    return {
+      serviceCount: serviceCards.length,
+      reviewCount: reviewCards.length,
+      testsHeading,
+      analysisHeading,
+      cliniciansHeading,
+      treatmentsHeading,
+      thyroidTesting,
+      bloodworkAnalysis,
+      hormoneAnalysis,
+      geneticAnalysis,
+      primaryCare,
+      medicationReview,
+      viewAllTests,
+      viewAllAnalysis
+    };
+  },
+
+  async "product-detail-preview"(page) {
+    await page.goto("http://localhost:3001/products/general-health-check-labs?signin=preview", { waitUntil: "networkidle" });
+    const heading = await page.getByRole("heading", { name: "General Health Check Labs" }).isVisible();
+    const previewDescription = await page
+      .getByText("A design preview for a baseline lab panel")
+      .isVisible();
+    const assessmentCta = await page.getByRole("link", { name: "Start Assessment" }).isVisible();
+    const backendError = await page.getByText("Product not found").isVisible().catch(() => false);
+
+    return { heading, previewDescription, assessmentCta, backendError };
+  },
+
+  async "product-intake-preview"(page) {
+    await page.goto("http://localhost:3001/intake/general-health-check-labs", { waitUntil: "networkidle" });
+    const heading = await page.getByRole("heading", { name: "General Health Check Labs intake" }).isVisible();
+    const firstQuestion = await page.getByText("What are you trying to understand?").isVisible();
+    await page.getByLabel("What are you trying to understand?").selectOption("baseline");
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByRole("button", { name: "Submit Assessment" }).click();
+    const reviewRequired = await page.getByText("Review required").isVisible();
+    const backendError = await page.getByText("Program not found").isVisible().catch(() => false);
+    const authGate = await page.getByRole("heading", { name: "Save your assessment" }).isVisible().catch(() => false);
+
+    return { heading, firstQuestion, reviewRequired, backendError, authGate };
+  }
+};
+
+async function openMyHealthPreview(page, extraParams = "") {
+  await page.goto(`http://localhost:3001/my-health?layout=workspace&signin=preview${extraParams}`, { waitUntil: "networkidle" });
+  await page.evaluate(() => localStorage.clear());
+  await page.reload({ waitUntil: "networkidle" });
+}
+
+const checkName = process.argv[2] ?? "my-health-rail";
+
+if (!checks[checkName]) {
+  console.error(`Unknown check "${checkName}". Available checks: ${Object.keys(checks).join(", ")}`);
+  process.exit(2);
+}
+
+const browser = await chromium.launch({ headless: true });
+
+try {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const result = await checks[checkName](page);
+  console.log(JSON.stringify({ check: checkName, ...result }));
+} finally {
+  await browser.close();
+}

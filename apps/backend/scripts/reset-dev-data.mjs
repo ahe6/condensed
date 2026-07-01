@@ -11,7 +11,6 @@ const prisma = await createPrismaClient();
 
 const tables = [
   "checkout_authorizations",
-  "assessment_recommendations",
   "assessment_answers",
   "assessment_submissions",
   "assessment_questions",

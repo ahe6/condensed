@@ -189,11 +189,11 @@ function productCategoryNames(product: Product) {
 }
 
 function assessmentSubject(submission: AssessmentSubmission) {
-  return submission.product?.name ?? submission.goalKey?.replace(/-/g, " ") ?? "Assessment";
+  return submission.product?.name ?? "Assessment";
 }
 
 function assessmentTypeLabel(submission: AssessmentSubmission) {
-  return submission.template.type === "GOAL_INTAKE" ? "Goal intake" : "Product intake";
+  return "Product intake";
 }
 
 function answerText(value: unknown) {
@@ -1680,37 +1680,21 @@ export default function AdminPage() {
                   </section>
 
                   <section>
-                    <h4>
-                      {submission.template.type === "GOAL_INTAKE"
-                        ? "Recommendations"
-                        : "Checkout Authorization"}
-                    </h4>
-                    {submission.template.type === "GOAL_INTAKE" ? (
-                      <div className="timeline-list">
-                        {submission.recommendations.map((recommendation) => (
-                          <div className="timeline-event" key={recommendation.id}>
-                            <span>#{recommendation.rank} {recommendation.reasonCode}</span>
-                            <strong>{recommendation.product.name}</strong>
-                            {recommendation.reasonText ? <small>{recommendation.reasonText}</small> : null}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="timeline-list">
-                        {submission.checkoutAuthorizations.length === 0 ? (
-                          <div className="timeline-event">
-                            <span>No active authorization created</span>
-                            <strong>Checkout locked</strong>
-                          </div>
-                        ) : null}
-                        {submission.checkoutAuthorizations.map((authorization) => (
-                          <div className="timeline-event" key={authorization.id}>
-                            <span>{authorization.status}</span>
-                            <strong>Expires {formatDateTime(authorization.expiresAt)}</strong>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <h4>Checkout Authorization</h4>
+                    <div className="timeline-list">
+                      {submission.checkoutAuthorizations.length === 0 ? (
+                        <div className="timeline-event">
+                          <span>No active authorization created</span>
+                          <strong>Checkout locked</strong>
+                        </div>
+                      ) : null}
+                      {submission.checkoutAuthorizations.map((authorization) => (
+                        <div className="timeline-event" key={authorization.id}>
+                          <span>{authorization.status}</span>
+                          <strong>Expires {formatDateTime(authorization.expiresAt)}</strong>
+                        </div>
+                      ))}
+                    </div>
                   </section>
                 </div>
               </article>
@@ -2803,7 +2787,7 @@ export default function AdminPage() {
         </div>
         <div className="nav-actions">
           <Link className="nav-link" href="/">
-            Shop
+            Home
           </Link>
           {isAuthConfigured() ? (
             hasSession ? (

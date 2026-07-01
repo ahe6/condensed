@@ -53,7 +53,7 @@ export default function AuthConfirmPage() {
         <div className="panel-heading">
           <h1>Confirm Account</h1>
           <Link className="nav-link" href="/">
-            Shop
+            Home
           </Link>
         </div>
 

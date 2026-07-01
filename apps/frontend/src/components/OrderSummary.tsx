@@ -1,10 +1,15 @@
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import type { Order } from "../lib/api";
 import { formatDateTime, formatMoney, statusClass, trackingUrl } from "../lib/format";
 import { OrderReservationStatus, canPayOrder, useReservationNow } from "./OrderReservationStatus";
 
 export function OrderSummary({ order }: { order: Order }) {
-  const orderHref = `/orders/${encodeURIComponent(order.orderNumber)}`;
+  const searchParams = useSearchParams();
+  const orderHref =
+    searchParams.get("signin") === "block"
+      ? `/orders/${encodeURIComponent(order.orderNumber)}?signin=block`
+      : `/orders/${encodeURIComponent(order.orderNumber)}`;
   const reservationNow = useReservationNow(order);
 
   return (

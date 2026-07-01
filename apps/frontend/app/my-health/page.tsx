@@ -1,154 +1,229 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { CustomerBrand } from "../../src/components/CustomerBrand";
-import { CustomerNav } from "../../src/components/CustomerNav";
-import { Order, User, getMe, getMyOrders } from "../../src/lib/api";
+import { getMe } from "../../src/lib/api";
 import { getSession, isAuthConfigured, startLogin } from "../../src/lib/auth";
-import { formatDateTime, formatMoney, statusClass } from "../../src/lib/format";
 
-function formatPortalDate(value: string | null | undefined) {
-  if (!value) {
-    return "Not set";
+const recordSections = [
+  {
+    title: "Uploaded records",
+    detail: "Lab reports, PDFs, screenshots, and notes you've added.",
+    empty: "No records uploaded yet."
+  },
+  {
+    title: "Result reviews",
+    detail: "Saved interpretations and written guidance from your health team.",
+    empty: "No reviews yet."
+  },
+  {
+    title: "Saved testing plans",
+    detail: "Tests you're considering or have discussed.",
+    empty: "No saved tests yet."
+  },
+  {
+    title: "Timeline",
+    detail: "Requests, uploads, reviews, and follow-up steps in order.",
+    empty: "No activity yet."
   }
+] as const;
 
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Invalid date";
+const testingModules = [
+  {
+    title: "Lab testing",
+    detail: "Bloodwork and diagnostic testing options when available."
+  },
+  {
+    title: "Genetic testing",
+    detail: "Genetics options for inherited risk, medication response, and long-term planning."
+  },
+  {
+    title: "At-home kits",
+    detail: "Testing that can be collected from home."
+  },
+  {
+    title: "Saved testing plans",
+    detail: "Tests you're considering or have discussed will appear here."
   }
+] as const;
 
-  return new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric"
-  }).format(date);
-}
-
-const careModules = [
+const followUpSections = [
   {
-    title: "Start with a health area",
-    detail: "Begin from a goal, symptom, lab question, or condition and keep the related next steps together.",
-    href: "/health-areas",
-    action: "Browse Areas",
-    status: "Ready"
+    title: "Active follow-up",
+    empty: "No follow-up active yet.",
+    detail: "Start a request, review results, or plan testing to create a next step."
   },
   {
-    title: "Medical context",
-    detail: "Conditions, medications, allergies, surgeries, family history, and care notes will live here.",
-    href: "/account",
-    action: "Account Settings",
-    status: "Planned"
+    title: "Guidance",
+    empty: "No guidance yet.",
+    detail: "Written next steps and care recommendations will appear here when they are ready."
   },
   {
-    title: "Labs and diagnostics",
-    detail: "Orders, saved results, clinician interpretation, and follow-up recommendations will collect here.",
-    href: "/labs",
-    action: "Explore Labs",
-    status: "Care Path"
+    title: "Care coordination",
+    empty: "No care coordination active yet.",
+    detail: "Clinician review, referrals, specialist routing, or scheduling support can be tracked here when needed."
   },
   {
-    title: "Clinician review",
-    detail: "Review-required care requests will show status, decision history, and next actions in this portal.",
-    href: "/my-health",
-    action: "Patient Portal",
-    status: "Planned"
+    title: "Questions to resolve",
+    empty: "No open questions yet.",
+    detail: "Questions that still need a decision will be grouped here so they do not get lost."
   }
-];
+] as const;
 
-const workspaceModules = [
-  {
-    title: "Recent results",
-    detail: "Lab values and reports will be grouped by health area as the results workspace comes online.",
-    status: "Planned"
+const activeRecordSections = {
+  "Uploaded records": {
+    summary: "3 records uploaded",
+    items: ["June lab panel.pdf", "Thyroid results screenshot", "Medication notes"]
   },
-  {
-    title: "Saved tests",
-    detail: "Tests and products you are considering can be kept with the questions they are meant to answer.",
-    status: "Planned"
+  "Result reviews": {
+    summary: "1 review saved",
+    items: ["Metabolic panel review"]
   },
-  {
-    title: "Follow-up questions",
-    detail: "Track what still needs interpretation, clinician input, or a decision after checkout.",
-    status: "Ready"
+  "Saved testing plans": {
+    summary: "2 tests saved",
+    items: ["Vitamin D recheck", "A1c and fasting insulin"]
+  },
+  Timeline: {
+    summary: "Latest activity today",
+    items: ["Records uploaded", "Testing plan saved", "Follow-up question drafted"]
   }
-];
+} as const;
 
-function isOpenOrder(order: Order) {
-  return order.status !== "CANCELLED" && order.fulfillmentStatus !== "FULFILLED";
-}
+const activeTestingDetails = {
+  "Lab testing": {
+    summary: "2 lab options saved",
+    items: ["A1c and fasting insulin", "Vitamin D recheck"]
+  },
+  "Genetic testing": {
+    summary: "1 genetics option discussed",
+    items: ["Medication response panel"]
+  },
+  "At-home kits": {
+    summary: "No kit selected yet",
+    items: ["Available when a testing plan needs home collection"]
+  },
+  "Saved testing plans": {
+    summary: "Metabolic follow-up plan",
+    items: ["Compare recent results", "Review timing with care team"]
+  }
+} as const;
 
-function needsPayment(order: Order) {
-  return order.paymentStatus === "UNPAID" || order.paymentStatus === "FAILED";
-}
+const activeFollowUpSections = {
+  "Active follow-up": {
+    summary: "Metabolic results follow-up",
+    detail: "Review recent lab changes and decide whether another test or care visit is needed."
+  },
+  Guidance: {
+    summary: "Written guidance in progress",
+    detail: "Your health team is preparing next steps for the uploaded lab panel."
+  },
+  "Care coordination": {
+    summary: "No referral needed yet",
+    detail: "Referral or scheduling support can be added if the guidance recommends it."
+  },
+  "Questions to resolve": {
+    summary: "2 open questions",
+    detail: "Clarify whether to repeat fasting labs and what to discuss with your clinician."
+  }
+} as const;
 
-function newestFirst(a: Order, b: Order) {
-  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-}
+const activeRecentUpdates = [
+  {
+    title: "Records uploaded",
+    detail: "Three files were added to Records for review.",
+    meta: "Today"
+  },
+  {
+    title: "Testing plan saved",
+    detail: "A metabolic follow-up plan is ready to review.",
+    meta: "Yesterday"
+  }
+] as const;
 
-export default function MyHealthPage() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [orders, setOrders] = useState<Order[]>([]);
+const overviewActionModules = [
+  {
+    title: "Start a request",
+    detail: "Not sure where to start? Describe what's going on and we'll help route the next step.",
+    href: "/message-team",
+    action: "Start request",
+    priority: "Primary"
+  },
+  {
+    title: "Review results",
+    detail: "Upload labs, reports, or documents and get help understanding what to consider next.",
+    section: "documents-results",
+    action: "Upload records",
+    priority: "Records"
+  },
+  {
+    title: "Find testing options",
+    detail: "Tell us what you're trying to learn and explore relevant lab, genetic, or at-home testing paths.",
+    section: "testing",
+    action: "Plan testing",
+    priority: "Testing"
+  },
+  {
+    title: "Plan follow-up",
+    detail: "Get help deciding what to do after a result, symptom, or care recommendation.",
+    section: "messages-updates",
+    action: "Request follow-up",
+    priority: "Follow-up"
+  }
+] as const;
+
+const newWorkspaceSections = [
+  {
+    id: "overview",
+    label: "Overview",
+    eyebrow: "Today",
+    title: "Health workspace",
+    detail: "A single place to track results, testing, follow-up, and questions that need a next step."
+  },
+  {
+    id: "documents-results",
+    label: "Records",
+    eyebrow: "Records",
+    title: "Records",
+    detail: "Keep your uploaded reports, result reviews, saved testing plans, and care timeline in one place."
+  },
+  {
+    id: "testing",
+    label: "Testing",
+    eyebrow: "Testing",
+    title: "Testing options",
+    detail: "Explore labs, genetics, and at-home testing options connected to what you're trying to understand."
+  },
+  {
+    id: "messages-updates",
+    label: "Follow-up",
+    eyebrow: "Follow-up",
+    title: "Follow-up",
+    detail: "Get help deciding what to do after results, testing, or a care recommendation."
+  }
+] as const;
+
+type WorkspaceSectionId = (typeof newWorkspaceSections)[number]["id"];
+
+function MyHealthPageContent() {
+  const searchParams = useSearchParams();
+  const selectedLayout = searchParams.get("layout") === "placeholder" ? "placeholder" : "workspace";
+  const selectedSignInBehavior = searchParams.get("signin") === "block" ? "block" : "preview";
+  const selectedWorkspaceState = searchParams.get("state") === "active" ? "active" : "empty";
+  const [activeWorkspaceSection, setActiveWorkspaceSection] = useState<WorkspaceSectionId>("overview");
   const [needsSignIn, setNeedsSignIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const canPreviewWithoutSignIn =
+    process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_SHOW_VARIANTS === "true";
 
-  const portalStats = useMemo(() => {
-    const paidOrders = orders.filter((order) => order.paymentStatus === "PAID");
-    const totalPaid = paidOrders.reduce((sum, order) => sum + Number(order.total), 0);
-
-    return {
-      openOrderCount: orders.filter(isOpenOrder).length,
-      unpaidOrderCount: orders.filter(needsPayment).length,
-      orderCount: orders.length,
-      totalPaid: totalPaid.toFixed(2)
-    };
-  }, [orders]);
-
-  const latestOrder = useMemo(() => [...orders].sort(newestFirst)[0] ?? null, [orders]);
-  const displayName = currentUser?.name ?? currentUser?.email ?? "Your health workspace";
-
-  const nextActions = useMemo(() => {
-    const actions = [
-      {
-        title: "Start with a health area",
-        detail: "Choose a concern like fatigue, metabolic health, hormones, genetics, skin, or labs.",
-        href: "/health-areas",
-        action: "Browse Areas",
-        priority: "Primary"
-      },
-      {
-        title: "Update account settings",
-        detail: "Keep name, phone, shipping addresses, and account details current.",
-        href: "/account",
-        action: "Settings",
-        priority: "Profile"
-      }
-    ];
-
-    if (portalStats.unpaidOrderCount > 0) {
-      actions.unshift({
-        title: "Complete payment",
-        detail: `${portalStats.unpaidOrderCount} order${portalStats.unpaidOrderCount === 1 ? "" : "s"} need payment.`,
-        href: "/orders",
-        action: "Review Orders",
-        priority: "Urgent"
-      });
-    }
-
-    if (latestOrder) {
-      actions.splice(1, 0, {
-        title: "Review latest order",
-        detail: `${latestOrder.orderNumber} is ${latestOrder.paymentStatus.toLowerCase()} and ${latestOrder.fulfillmentStatus.toLowerCase()}.`,
-        href: `/orders/${encodeURIComponent(latestOrder.orderNumber)}`,
-        action: "Open Order",
-        priority: "Order"
-      });
-    }
-
-    return actions.slice(0, 4);
-  }, [latestOrder, portalStats.unpaidOrderCount]);
+  const activeSection =
+    newWorkspaceSections.find((section) => section.id === activeWorkspaceSection) ?? newWorkspaceSections[0];
+  const isSignInPreview = canPreviewWithoutSignIn && selectedSignInBehavior === "preview";
+  const isActiveWorkspacePreview = canPreviewWithoutSignIn && selectedWorkspaceState === "active";
+  const shouldShowSignInDialog = needsSignIn && !isSignInPreview;
+  const canShowHealthContent = !needsSignIn || isSignInPreview;
 
   useEffect(() => {
     let isMounted = true;
@@ -165,11 +240,10 @@ export default function MyHealthPage() {
       }
 
       try {
-        const [user, nextOrders] = await Promise.all([getMe(), getMyOrders()]);
+        await getMe();
 
         if (isMounted) {
-          setCurrentUser(user);
-          setOrders(nextOrders);
+          setNeedsSignIn(false);
         }
       } catch (caught) {
         if (isMounted) {
@@ -191,68 +265,12 @@ export default function MyHealthPage() {
   }, []);
 
   return (
-    <main className="shell">
+    <main className="shell my-health-shell">
       <section className="topbar" aria-label="Patient Portal navigation">
         <CustomerBrand />
-        <div className="nav-actions">
-          <CustomerNav />
-        </div>
       </section>
 
       {error ? <p className="error global-error">{error}</p> : null}
-
-      <section className="portal-dashboard-header" aria-label="Patient Portal">
-        <div className="portal-header-copy">
-          <p className="eyebrow">Patient Portal</p>
-          <h1>My Health</h1>
-          <p>
-            Keep orders, results, health areas, and follow-up questions connected so each next step has context.
-          </p>
-          <div className="portal-header-tags" aria-label="My Health workspace status">
-            <span>Orders</span>
-            <span>Results planned</span>
-            <span>Care paths</span>
-          </div>
-        </div>
-        <div className="portal-header-actions">
-          {needsSignIn ? (
-            <button type="button" onClick={() => void startLogin()}>
-              Sign In
-            </button>
-          ) : (
-            <>
-              <Link className="nav-link primary-link" href="/">
-                Choose Goal
-              </Link>
-              <Link className="nav-link" href="/orders">
-                Orders
-              </Link>
-            </>
-          )}
-        </div>
-      </section>
-
-      <section className="portal-status-strip" aria-label="Portal status">
-        <div className="portal-identity-card">
-          <span aria-hidden="true">{currentUser?.email?.slice(0, 1).toUpperCase() ?? "P"}</span>
-          <div>
-            <small>{currentUser ? "Signed in as" : "Portal access"}</small>
-            <strong>{displayName}</strong>
-          </div>
-        </div>
-        <div>
-          <small>Portal Status</small>
-          <strong>{currentUser ? "Active" : "Sign-in required"}</strong>
-        </div>
-        <div>
-          <small>Last Updated</small>
-          <strong>{formatPortalDate(latestOrder?.updatedAt ?? currentUser?.updatedAt)}</strong>
-        </div>
-        <div>
-          <small>Care Records</small>
-          <strong>Planned</strong>
-        </div>
-      </section>
 
       {isLoading ? (
         <section className="panel">
@@ -260,143 +278,276 @@ export default function MyHealthPage() {
         </section>
       ) : null}
 
-      {!isLoading ? (
-        <>
-          <section className="portal-metric-grid" aria-label="Portal summary">
-            <Link className="metric metric-link" href="/orders">
-              <span>Orders</span>
-              <strong>{portalStats.orderCount}</strong>
-              <small>Total history</small>
-            </Link>
-            <Link className="metric metric-link" href="/orders">
-              <span>Open</span>
-              <strong>{portalStats.openOrderCount}</strong>
-              <small>Not fulfilled</small>
-            </Link>
-            <Link className="metric metric-link" href="/orders">
-              <span>Payment</span>
-              <strong>{portalStats.unpaidOrderCount}</strong>
-              <small>Need attention</small>
-            </Link>
-            <div className="metric">
-              <span>Paid Total</span>
-              <strong>{formatMoney(portalStats.totalPaid, "USD")}</strong>
-              <small>Completed orders</small>
+      {!isLoading && shouldShowSignInDialog ? (
+        <section className="my-health-sign-in-stage" aria-label="Sign in required">
+          <div className="my-health-sign-in-dialog" role="dialog" aria-modal="true" aria-labelledby="my-health-sign-in-title">
+            <p className="eyebrow">My Health</p>
+            <h1 id="my-health-sign-in-title">Sign in to continue</h1>
+            <p>Use your account to view My Health.</p>
+            <div className="my-health-sign-in-actions">
+              <button type="button" onClick={() => void startLogin()}>
+                Sign In
+              </button>
+              <Link className="nav-link" href="/message-team">
+                Message our team
+              </Link>
             </div>
-          </section>
+          </div>
+        </section>
+      ) : null}
 
-          <section className="portal-workspace-grid" aria-label="Health workspace preview">
-            {workspaceModules.map((module) => (
-              <article className="portal-workspace-card" key={module.title}>
-                <span>{module.status}</span>
-                <h2>{module.title}</h2>
-                <p>{module.detail}</p>
-              </article>
-            ))}
-          </section>
+      {!isLoading && canShowHealthContent && selectedLayout === "placeholder" ? (
+        <section className="my-health-placeholder" aria-label="My Health placeholder">
+          <p className="eyebrow">My Health</p>
+          <h1>My Health</h1>
+          <p>Your health workspace is being set up. Results, testing plans, follow-up, and messages will appear here.</p>
+          <Link className="nav-link primary-link" href="/message-team">
+            Message our team
+          </Link>
+        </section>
+      ) : null}
 
-          <section className="portal-dashboard" aria-label="Patient portal dashboard">
-            <div className="portal-main-column">
-              <section className="panel portal-panel" aria-label="Next actions">
-                <div className="panel-heading">
-                  <div>
-                    <p className="eyebrow">Next Actions</p>
-                    <h2>What needs attention</h2>
+      {!isLoading && canShowHealthContent && selectedLayout === "workspace" ? (
+        <section className="my-health-workspace" aria-label="Health workspace">
+          <section className="my-health-workspace-panel" aria-label={`${activeSection.label} details`}>
+            <div className="my-health-workspace-heading">
+              <div>
+                <h2>Health workspace</h2>
+                <p>A single place to track results, testing, follow-up, and questions that need a next step.</p>
+              </div>
+            </div>
+
+            <nav className="my-health-section-tabs" aria-label="Workspace sections">
+              {newWorkspaceSections.map((section) => (
+                <button
+                  aria-current={activeWorkspaceSection === section.id ? "page" : undefined}
+                  className={activeWorkspaceSection === section.id ? "active" : undefined}
+                  key={section.id}
+                  type="button"
+                  onClick={() => setActiveWorkspaceSection(section.id)}
+                >
+                  {section.label}
+                </button>
+              ))}
+            </nav>
+
+            {activeWorkspaceSection !== "overview" ? (
+              <div className="my-health-section-intro">
+                <p className="eyebrow">{activeSection.eyebrow}</p>
+                <h3>{activeSection.title}</h3>
+                <p>{activeSection.detail}</p>
+              </div>
+            ) : null}
+
+            {activeWorkspaceSection === "overview" ? (
+              <>
+                <section className="my-health-detail-section my-health-overview-actions-card" aria-label="What do you need help with?">
+                  <div className="panel-heading">
+                    <div>
+                      <h3>What do you need help with?</h3>
+                      <p>Start from a question, an existing result, or a testing goal.</p>
+                    </div>
+                  </div>
+                  <div className="portal-action-list">
+                    {overviewActionModules.map((item) => (
+                      "href" in item ? (
+                        <Link
+                          className="portal-action-row my-health-primary-action-row"
+                          href={item.href}
+                          key={`${item.priority}-${item.title}`}
+                        >
+                          <span>{item.priority}</span>
+                          <div>
+                            <strong>{item.title}</strong>
+                            <p>{item.detail}</p>
+                          </div>
+                          <small>{item.action}</small>
+                        </Link>
+                      ) : (
+                        <button
+                          className="portal-action-row"
+                          key={`${item.priority}-${item.title}`}
+                          type="button"
+                          onClick={() => setActiveWorkspaceSection(item.section)}
+                        >
+                          <span>{item.priority}</span>
+                          <div>
+                            <strong>{item.title}</strong>
+                            <p>{item.detail}</p>
+                          </div>
+                          <small>{item.action}</small>
+                        </button>
+                      )
+                    ))}
+                  </div>
+                </section>
+
+                <div className="my-health-overview-section-heading">
+                  <h3>Your workspace</h3>
+                </div>
+
+                <div className="my-health-summary-grid" aria-label="Workspace summary">
+                  <button className="my-health-summary-item" type="button" onClick={() => setActiveWorkspaceSection("documents-results")}>
+                    <span>Records</span>
+                    <strong>{isActiveWorkspacePreview ? "3 uploaded" : "Ready"}</strong>
+                    <small>{isActiveWorkspacePreview ? "Results and documents" : "Results and documents"}</small>
+                  </button>
+                  <button className="my-health-summary-item" type="button" onClick={() => setActiveWorkspaceSection("testing")}>
+                    <span>Testing</span>
+                    <strong>{isActiveWorkspacePreview ? "Plan saved" : "Available"}</strong>
+                    <small>{isActiveWorkspacePreview ? "Labs and genetics" : "Labs and genetics"}</small>
+                  </button>
+                  <div className="my-health-summary-item">
+                    <span>Last update</span>
+                    <strong>{isActiveWorkspacePreview ? "Today" : "None yet"}</strong>
+                    <small>Messages and status changes</small>
                   </div>
                 </div>
-                <div className="portal-action-list">
-                  {nextActions.map((item) => (
-                    <Link className="portal-action-row" href={item.href} key={`${item.priority}-${item.title}`}>
-                      <span>{item.priority}</span>
+
+                <section className="my-health-detail-section my-health-recent-updates-card" aria-label="Recent updates">
+                  <div className="panel-heading">
+                    <div>
+                      <h3>Recent updates</h3>
+                    </div>
+                  </div>
+                  {isActiveWorkspacePreview ? (
+                    <div className="my-health-card-item-list">
+                      {activeRecentUpdates.map((update) => (
+                        <div className="my-health-card-item" key={update.title}>
+                          <span>{update.meta}</span>
+                          <div>
+                            <strong>{update.title}</strong>
+                            <p>{update.detail}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="my-health-empty-update">
+                      <strong>No active request yet.</strong>
+                      <p>Start a request to get help with results, testing options, or follow-up.</p>
+                    </div>
+                  )}
+                </section>
+              </>
+            ) : null}
+
+            {activeWorkspaceSection === "documents-results" ? (
+              <>
+                <div className="my-health-record-grid">
+                  {recordSections.map((section) => (
+                    <article className="my-health-record-section" key={section.title}>
                       <div>
-                        <strong>{item.title}</strong>
-                        <p>{item.detail}</p>
+                        <h4>{section.title}</h4>
+                        <p>{section.detail}</p>
                       </div>
-                      <small>{item.action}</small>
-                    </Link>
+                      {isActiveWorkspacePreview ? (
+                        <div className="my-health-card-item-list compact">
+                          <strong>{activeRecordSections[section.title].summary}</strong>
+                          {activeRecordSections[section.title].items.map((item) => (
+                            <p key={item}>{item}</p>
+                          ))}
+                          {section.title === "Uploaded records" ? (
+                            <button className="my-health-record-link" type="button">
+                              Upload records
+                            </button>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <div className="my-health-record-empty">
+                          <strong>{section.empty}</strong>
+                          {section.title === "Uploaded records" ? (
+                            <button className="my-health-record-link" type="button">
+                              Upload records
+                            </button>
+                          ) : null}
+                        </div>
+                      )}
+                    </article>
                   ))}
                 </div>
-              </section>
+              </>
+            ) : null}
 
-              <section className="panel portal-panel" aria-label="Care workspace">
-                <div className="panel-heading">
+            {activeWorkspaceSection === "testing" ? (
+              <>
+                <section className="my-health-detail-section my-health-testing-question" aria-label="Start from a question">
                   <div>
-                    <p className="eyebrow">Care Workspace</p>
-                    <h2>Healthcare areas</h2>
+                    <h3>Start from a question</h3>
+                    <p>Not sure what to test? Tell us what you're trying to understand and we'll help organize the options.</p>
                   </div>
-                </div>
-                <div className="portal-care-table">
-                  {careModules.map((module) => (
-                    <Link className="portal-care-row" href={module.href} key={module.title}>
-                      <span>{module.status}</span>
+                  <Link className="nav-link primary-link" href="/message-team">
+                    Start a request
+                  </Link>
+                </section>
+
+                <div className="my-health-record-grid">
+                  {testingModules.map((module) => (
+                    <article className="my-health-record-section my-health-testing-card" key={module.title}>
                       <div>
-                        <strong>{module.title}</strong>
+                        <h4>{module.title}</h4>
                         <p>{module.detail}</p>
                       </div>
-                      <small>{module.action}</small>
-                    </Link>
+                      {isActiveWorkspacePreview ? (
+                        <div className="my-health-card-item-list compact">
+                          <strong>{activeTestingDetails[module.title].summary}</strong>
+                          {activeTestingDetails[module.title].items.map((item) => (
+                            <p key={item}>{item}</p>
+                          ))}
+                        </div>
+                      ) : null}
+                    </article>
                   ))}
                 </div>
-              </section>
-            </div>
 
-            <aside className="portal-side-column">
-              <section className="panel portal-panel" aria-label="Latest order">
-                <div className="panel-heading">
-                  <div>
-                    <p className="eyebrow">Latest Order</p>
-                    <h2>{latestOrder?.orderNumber ?? "No orders yet"}</h2>
-                  </div>
-                  {latestOrder ? <span className={`pill ${statusClass(latestOrder.paymentStatus)}`}>{latestOrder.paymentStatus}</span> : null}
+                <div className="my-health-secondary-action">
+                  <Link href="/message-team">Browse available tests</Link>
                 </div>
-                {latestOrder ? (
-                  <>
-                    <dl className="portal-detail-list">
-                      <div>
-                        <dt>Total</dt>
-                        <dd>{formatMoney(latestOrder.total, latestOrder.currency)}</dd>
-                      </div>
-                      <div>
-                        <dt>Fulfillment</dt>
-                        <dd>{latestOrder.fulfillmentStatus}</dd>
-                      </div>
-                      <div>
-                        <dt>Created</dt>
-                        <dd>{formatDateTime(latestOrder.createdAt)}</dd>
-                      </div>
-                    </dl>
-                    <Link className="nav-link primary-link" href={`/orders/${encodeURIComponent(latestOrder.orderNumber)}`}>
-                      Open Order
-                    </Link>
-                  </>
-                ) : (
-                  <div className="empty-state compact">
-                    <p>Orders and payment recovery will appear here after checkout.</p>
-                    <Link className="nav-link" href="/shop">
-                      Browse Products
-                    </Link>
-                  </div>
-                )}
-              </section>
+              </>
+            ) : null}
 
-              <section className="panel portal-panel" aria-label="Account tools">
-                <div className="panel-heading">
-                  <div>
-                    <p className="eyebrow">Account</p>
-                    <h2>Tools</h2>
-                  </div>
-                </div>
-                <div className="portal-tool-list">
-                  <Link href="/account">Profile settings</Link>
-                  <Link href="/addresses">Saved addresses</Link>
-                  <Link href="/orders">Order history</Link>
-                  <Link href="/cart">Cart</Link>
-                </div>
-              </section>
-            </aside>
+            {activeWorkspaceSection === "messages-updates" ? (
+              <div className="my-health-record-grid">
+                {followUpSections.map((section) => (
+                  <article className="my-health-record-section" key={section.title}>
+                    <div>
+                      <h4>{section.title}</h4>
+                      <p>{section.detail}</p>
+                    </div>
+                    {isActiveWorkspacePreview ? (
+                      <div className="my-health-record-empty">
+                        <strong>{activeFollowUpSections[section.title].summary}</strong>
+                        <p>{activeFollowUpSections[section.title].detail}</p>
+                      </div>
+                    ) : (
+                      <div className="my-health-record-empty">
+                        <strong>{section.empty}</strong>
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            ) : null}
           </section>
-        </>
+        </section>
       ) : null}
+
     </main>
+  );
+}
+
+export default function MyHealthPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="shell">
+          <section className="panel">
+            <div className="empty-state compact">Loading patient portal</div>
+          </section>
+        </main>
+      }
+    >
+      <MyHealthPageContent />
+    </Suspense>
   );
 }

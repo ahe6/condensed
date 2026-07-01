@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { CustomerBrand } from "../../src/components/CustomerBrand";
 import { CustomerNav } from "../../src/components/CustomerNav";
 import { OrderSummary } from "../../src/components/OrderSummary";
 import { Order, User, getMe, getMyOrders } from "../../src/lib/api";
 import { getCurrentReturnTo, getSession, isAuthConfigured, startLogin } from "../../src/lib/auth";
 import { formatMoney } from "../../src/lib/format";
+import { previewOrders, previewUser } from "../../src/lib/previewOrders";
 
 type OrderFilter = "ALL" | "OPEN" | "PAID" | "UNPAID" | "FULFILLED" | "CANCELLED";
 
@@ -42,7 +44,11 @@ function orderSearchText(order: Order) {
     .toLowerCase();
 }
 
-export default function OrdersPage() {
+function OrdersPageContent() {
+  const searchParams = useSearchParams();
+  const canPreviewWithoutBackend =
+    process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_SHOW_VARIANTS === "true";
+  const isBypassPreview = canPreviewWithoutBackend && searchParams.get("signin") !== "block";
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [needsSignIn, setNeedsSignIn] = useState(false);
@@ -76,12 +82,19 @@ export default function OrdersPage() {
 
   useEffect(() => {
     void loadOrders();
-  }, []);
+  }, [isBypassPreview]);
 
   async function loadOrders() {
     setIsLoading(true);
     setError(null);
     setNeedsSignIn(false);
+
+    if (isBypassPreview) {
+      setCurrentUser(previewUser);
+      setOrders(previewOrders);
+      setIsLoading(false);
+      return;
+    }
 
     if (!isAuthConfigured()) {
       setCurrentUser(null);
@@ -118,7 +131,7 @@ export default function OrdersPage() {
     setError(null);
 
     try {
-      setOrders(await getMyOrders());
+      setOrders(isBypassPreview ? previewOrders : await getMyOrders());
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not refresh orders");
     } finally {
@@ -223,7 +236,7 @@ export default function OrdersPage() {
               <div className="empty-state compact">
                 <p>No order history</p>
                 <Link className="nav-link" href="/">
-                  Shop Products
+                  Back to home
                 </Link>
               </div>
             ) : filteredOrders.length === 0 ? (
@@ -239,5 +252,21 @@ export default function OrdersPage() {
         </>
       ) : null}
     </main>
+  );
+}
+
+export default function OrdersPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="shell">
+          <section className="panel">
+            <div className="empty-state compact">Loading orders</div>
+          </section>
+        </main>
+      }
+    >
+      <OrdersPageContent />
+    </Suspense>
   );
 }

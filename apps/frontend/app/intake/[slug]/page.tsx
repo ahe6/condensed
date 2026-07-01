@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CustomerBrand } from "../../../src/components/CustomerBrand";
 import { CustomerNav } from "../../../src/components/CustomerNav";
@@ -31,6 +31,140 @@ type AssessmentDraft = {
 const assessmentDraftStoragePrefix = "health.assessmentDraft.";
 const cartStorageKey = "health.cartId";
 
+function previewProduct(slug: string): Product {
+  const now = new Date().toISOString();
+  const productId = "preview-product";
+  const categoryId = "preview-category";
+
+  return {
+    id: productId,
+    slug,
+    name: "General Health Check Labs",
+    description:
+      "A design preview for a baseline lab panel with metabolic, organ function, cholesterol, blood count, and nutrient markers.",
+    status: "ACTIVE",
+    purchaseMode: "ASSESSMENT_REQUIRED",
+    createdAt: now,
+    updatedAt: now,
+    images: [],
+    variants: [
+      {
+        id: "preview-variant",
+        productId,
+        sku: "PREVIEW-GENERAL-HEALTH",
+        title: "Standard panel",
+        price: "129.00",
+        currency: "USD",
+        inventoryQuantity: 12,
+        createdAt: now,
+        updatedAt: now
+      }
+    ],
+    categories: [
+      {
+        productId,
+        categoryId,
+        createdAt: now,
+        category: {
+          id: categoryId,
+          parentId: null,
+          slug: "labs",
+          name: "Labs",
+          createdAt: now,
+          updatedAt: now
+        }
+      }
+    ]
+  };
+}
+
+function previewProductAssessment(slug: string, product: Product): AssessmentTemplate {
+  const now = new Date().toISOString();
+  const templateId = `preview-product-intake-${slug}`;
+
+  return {
+    id: templateId,
+    productId: product.id,
+    slug,
+    title: `${product.name} intake`,
+    description:
+      "A design preview for collecting context before reviewing eligibility and next steps.",
+    status: "ACTIVE",
+    version: 1,
+    createdAt: now,
+    updatedAt: now,
+    product,
+    questions: [
+      {
+        id: "preview-product-question-1",
+        templateId,
+        key: "testing_goal",
+        label: "What are you trying to understand?",
+        helpText: "Choose the closest starting point for this testing request.",
+        type: "SINGLE_SELECT",
+        required: true,
+        options: [
+          { label: "Baseline health", value: "baseline" },
+          { label: "Hormones or thyroid", value: "hormones_thyroid" },
+          { label: "Nutrients or deficiencies", value: "nutrients" },
+          { label: "I am not sure yet", value: "not_sure" }
+        ],
+        sortOrder: 1,
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        id: "preview-product-question-2",
+        templateId,
+        key: "context",
+        label: "Anything else we should know?",
+        helpText: "Add symptoms, prior results, timing, medications, or questions.",
+        type: "TEXT",
+        required: false,
+        options: null,
+        sortOrder: 2,
+        createdAt: now,
+        updatedAt: now
+      }
+    ]
+  };
+}
+
+function previewProductSubmission(assessment: AssessmentTemplate, product: Product): AssessmentSubmission {
+  const now = new Date().toISOString();
+
+  return {
+    id: "preview-product-submission",
+    templateId: assessment.id,
+    productId: product.id,
+    userId: null,
+    email: null,
+    status: "REVIEW_REQUIRED",
+    decisionReason: null,
+    decisionPolicyId: null,
+    decisionPolicyVersion: null,
+    decidedAt: null,
+    submittedAt: now,
+    createdAt: now,
+    updatedAt: now,
+    user: null,
+    product,
+    template: {
+      id: assessment.id,
+      productId: assessment.productId,
+      slug: assessment.slug,
+      title: assessment.title,
+      description: assessment.description,
+      status: assessment.status,
+      version: assessment.version,
+      createdAt: assessment.createdAt,
+      updatedAt: assessment.updatedAt
+    },
+    answers: [],
+    checkoutAuthorizations: []
+  };
+}
+
 function defaultAnswer(question: AssessmentQuestion): AssessmentAnswer {
   if (question.type === "MULTI_SELECT") {
     return [];
@@ -54,7 +188,11 @@ function isAnswered(question: AssessmentQuestion, answer: AssessmentAnswer | und
 export default function IntakePage() {
   const params = useParams<{ slug: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const slug = decodeURIComponent(params.slug);
+  const canPreviewWithoutBackend =
+    process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_SHOW_VARIANTS === "true";
+  const isBypassPreview = canPreviewWithoutBackend && searchParams.get("signin") !== "block";
   const [product, setProduct] = useState<Product | null>(null);
   const [assessment, setAssessment] = useState<AssessmentTemplate | null>(null);
   const [answers, setAnswers] = useState<Record<string, AssessmentAnswer>>({});
@@ -75,6 +213,29 @@ export default function IntakePage() {
     async function load() {
       setIsLoading(true);
       setError(null);
+
+      if (isBypassPreview) {
+        const nextProduct = previewProduct(slug);
+        const nextAssessment = previewProductAssessment(slug, nextProduct);
+
+        if (isMounted) {
+          const defaultAnswers = Object.fromEntries(
+            nextAssessment.questions.map((question) => [question.key, defaultAnswer(question)])
+          );
+
+          setProduct(nextProduct);
+          setAssessment(nextAssessment);
+          setAnswers(defaultAnswers);
+          setCurrentQuestionIndex(0);
+          setSubmission(null);
+          setShowAuthGate(false);
+          setShouldSubmitAfterLogin(false);
+          setSubmitError(null);
+          setIsLoading(false);
+        }
+
+        return;
+      }
 
       try {
         await getReadiness();
@@ -127,9 +288,12 @@ export default function IntakePage() {
     return () => {
       isMounted = false;
     };
-  }, [slug]);
+  }, [isBypassPreview, slug]);
 
   const isProgram = product ? isAssessmentProduct(product) : false;
+  const productHref = searchParams.get("signin") === "block"
+    ? `/products/${product?.slug ?? slug}?signin=block`
+    : `/products/${product?.slug ?? slug}`;
   const questions = assessment?.questions ?? [];
   const currentQuestion = questions[currentQuestionIndex] ?? null;
   const currentQuestionAnswered = currentQuestion
@@ -195,6 +359,14 @@ export default function IntakePage() {
 
   async function submitAssessment() {
     if (!requiredQuestionsComplete || isSubmitting || submission) {
+      return;
+    }
+
+    if (isBypassPreview && assessment && product) {
+      setSubmission(previewProductSubmission(assessment, product));
+      setShowAuthGate(false);
+      setSubmitError(null);
+      clearAssessmentDraft(slug);
       return;
     }
 
@@ -316,7 +488,7 @@ export default function IntakePage() {
           <p className="eyebrow">Direct purchase</p>
           <h1>{product.name}</h1>
           <p>This item can be purchased directly from the product page.</p>
-          <Link className="nav-link primary-link" href={`/products/${product.slug}`}>
+          <Link className="nav-link primary-link" href={productHref}>
             View Product
           </Link>
         </section>

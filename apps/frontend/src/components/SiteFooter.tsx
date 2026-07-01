@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { topicNavLinks } from "../lib/topicPages";
 import { CustomerBrand } from "./CustomerBrand";
 
@@ -20,22 +23,23 @@ const footerSections = [
     title: "Learn",
     links: [
       { label: "Library", href: "/library" },
-      { label: "Labs & Diagnostics", href: "/labs" },
-      { label: "Genetics", href: "/genetic-testing" },
-      { label: "Health Areas", href: "/health-areas" }
+      { label: "Genetics", href: "/genetic-testing" }
     ]
   }
 ];
 
 export function SiteFooter() {
+  const pathname = usePathname();
+
+  if (pathname === "/my-health") {
+    return null;
+  }
+
   return (
-    <footer className="site-footer" aria-labelledby="site-footer-title">
+    <footer className="site-footer" aria-label="Site footer">
       <div className="site-footer-inner">
         <div className="site-footer-brand">
           <CustomerBrand />
-          <p id="site-footer-title">
-            Your online health concierge for labs, results, referrals, and next steps.
-          </p>
         </div>
 
         <nav className="site-footer-links" aria-label="Footer navigation">
@@ -54,7 +58,7 @@ export function SiteFooter() {
         </nav>
 
         <div className="site-footer-bottom">
-          <p>Condensed Health does not diagnose, prescribe, or replace medical care.</p>
+          <p>Condensed Health does not replace medical care.</p>
           <span>© {new Date().getFullYear()} Condensed Health</span>
         </div>
       </div>

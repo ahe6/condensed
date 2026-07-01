@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { CustomerBrand } from "../../../src/components/CustomerBrand";
 import { CustomerNav } from "../../../src/components/CustomerNav";
@@ -23,9 +23,60 @@ import { isAssessmentProduct, productDisplayLabel } from "../../../src/lib/produ
 
 const cartStorageKey = "health.cartId";
 
+function previewProduct(slug: string): Product {
+  const now = new Date().toISOString();
+  const productId = "preview-product";
+  const categoryId = "preview-category";
+
+  return {
+    id: productId,
+    slug,
+    name: "General Health Check Labs",
+    description:
+      "A design preview for a baseline lab panel with metabolic, organ function, cholesterol, blood count, and nutrient markers.",
+    status: "ACTIVE",
+    purchaseMode: "ASSESSMENT_REQUIRED",
+    createdAt: now,
+    updatedAt: now,
+    images: [],
+    variants: [
+      {
+        id: "preview-variant",
+        productId,
+        sku: "PREVIEW-GENERAL-HEALTH",
+        title: "Standard panel",
+        price: "129.00",
+        currency: "USD",
+        inventoryQuantity: 12,
+        createdAt: now,
+        updatedAt: now
+      }
+    ],
+    categories: [
+      {
+        productId,
+        categoryId,
+        createdAt: now,
+        category: {
+          id: categoryId,
+          parentId: null,
+          slug: "labs",
+          name: "Labs",
+          createdAt: now,
+          updatedAt: now
+        }
+      }
+    ]
+  };
+}
+
 export default function ProductDetailPage() {
   const params = useParams<{ slug: string }>();
+  const searchParams = useSearchParams();
   const slug = decodeURIComponent(params.slug);
+  const canPreviewWithoutBackend =
+    process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_SHOW_VARIANTS === "true";
+  const isBypassPreview = canPreviewWithoutBackend && searchParams.get("signin") !== "block";
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState("");
   const [cart, setCart] = useState<Cart | null>(null);
@@ -50,6 +101,9 @@ export default function ProductDetailPage() {
   const isSelectedVariantMaxed = selectedVariant
     ? selectedCartQuantity >= selectedVariant.inventoryQuantity
     : false;
+  const intakeHref = searchParams.get("signin") === "block"
+    ? `/intake/${product?.slug ?? slug}?signin=block`
+    : `/intake/${product?.slug ?? slug}`;
   const image = product?.images[0];
   const requiresAssessment = product ? isAssessmentProduct(product) : false;
 
@@ -59,6 +113,20 @@ export default function ProductDetailPage() {
     async function load() {
       setIsLoading(true);
       setError(null);
+
+      if (isBypassPreview) {
+        const nextProduct = previewProduct(slug);
+
+        if (isMounted) {
+          setProduct(nextProduct);
+          setSelectedVariantId(nextProduct.variants[0]?.id ?? "");
+          setCart(null);
+          setCurrentUser(null);
+          setIsLoading(false);
+        }
+
+        return;
+      }
 
       try {
         await getReadiness();
@@ -93,7 +161,7 @@ export default function ProductDetailPage() {
     return () => {
       isMounted = false;
     };
-  }, [slug]);
+  }, [isBypassPreview, slug]);
 
   async function loadSavedCart() {
     const savedCartId = window.localStorage.getItem(cartStorageKey);
@@ -211,8 +279,8 @@ export default function ProductDetailPage() {
 
           <article className="panel product-detail-panel">
             <div className="product-detail-copy">
-              <Link className="text-link" href="/catalog">
-                Back to catalog
+              <Link className="text-link" href="/">
+                Back to home
               </Link>
               <div>
                 <p className="eyebrow">{productDisplayLabel(product)}</p>
@@ -251,7 +319,7 @@ export default function ProductDetailPage() {
                       shopping cart.
                     </p>
                   </div>
-                  <Link className="nav-link primary-link" href={`/intake/${product.slug}`}>
+                  <Link className="nav-link primary-link" href={intakeHref}>
                     Start Assessment
                   </Link>
                 </div>

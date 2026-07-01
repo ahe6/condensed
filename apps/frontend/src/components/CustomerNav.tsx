@@ -4,8 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const utilityLinks = [
-  { href: "/shop", label: "Products" },
-  { href: "/catalog", label: "Full catalog" },
   { href: "/cart", label: "Cart" },
   { href: "/my-health", label: "Sign In" }
 ];
