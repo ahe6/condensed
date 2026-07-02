@@ -6600,22 +6600,18 @@ h3 {
 .services-catalog-controls,
 .services-catalog-results {
   margin-bottom: 18px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: #ffffff;
-  box-shadow: var(--shadow-soft);
 }
 
 .services-catalog-hero {
   display: grid;
-  gap: 12px;
-  margin: 22px 0 16px;
+  gap: 10px;
+  margin: 26px 0 18px;
   padding: 0;
 }
 
 .services-catalog-hero > div {
   display: grid;
-  gap: 7px;
+  gap: 8px;
 }
 
 .services-catalog-hero h1 {
@@ -6629,7 +6625,7 @@ h3 {
 }
 
 .services-catalog-hero p {
-  max-width: 760px;
+  max-width: 680px;
   margin: 0;
   color: var(--muted);
   font-size: 1rem;
@@ -6638,8 +6634,11 @@ h3 {
 
 .services-catalog-controls {
   display: grid;
+  grid-template-columns: minmax(320px, 0.72fr) minmax(0, 1fr);
   gap: 14px;
-  padding: 18px;
+  align-items: end;
+  padding: 14px 0 18px;
+  border-bottom: 1px solid rgba(47, 111, 159, 0.1);
 }
 
 .services-catalog-search {
@@ -6655,12 +6654,12 @@ h3 {
 }
 
 .services-catalog-search input {
-  min-height: 52px;
+  min-height: 48px;
   width: 100%;
   padding: 0 16px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface);
+  border: 1px solid rgba(47, 111, 159, 0.14);
+  border-radius: 8px;
+  background: #fff;
   color: var(--text);
   outline: 0;
 }
@@ -6674,30 +6673,37 @@ h3 {
 .services-catalog-category-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
+  justify-content: flex-end;
+  padding: 4px;
+  border: 1px solid rgba(47, 111, 159, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.62);
 }
 
 .services-catalog-category-row button {
-  min-height: 38px;
-  padding: 0 13px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: #ffffff;
+  min-height: 34px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
   color: var(--text);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 760;
 }
 
 .services-catalog-category-row button[aria-pressed="true"] {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #ffffff;
+  background: #ffffff;
+  color: var(--accent-strong);
+  box-shadow:
+    0 0 0 1px rgba(47, 111, 159, 0.12),
+    0 8px 18px rgba(31, 42, 51, 0.055);
 }
 
 .services-catalog-results {
   display: grid;
-  gap: 18px;
-  padding: clamp(18px, 3vw, 28px);
+  gap: 14px;
+  padding: 0 0 clamp(18px, 3vw, 28px);
 }
 
 .services-catalog-results-heading {
@@ -6710,19 +6716,20 @@ h3 {
 .services-catalog-results-heading h2 {
   margin: 0;
   color: var(--ink);
-  font-size: clamp(1.45rem, 2vw, 2.1rem);
+  font-size: clamp(1.25rem, 1.55vw, 1.62rem);
+  line-height: 1.08;
 }
 
 .services-catalog-results-heading span {
   width: fit-content;
-  min-height: 30px;
+  min-height: 28px;
   display: inline-flex;
   align-items: center;
-  padding: 0 10px;
+  padding: 0 9px;
   border-radius: 999px;
-  background: var(--accent-soft);
+  background: rgba(218, 236, 248, 0.72);
   color: var(--accent-strong);
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   font-weight: 850;
 }
 
@@ -6733,15 +6740,17 @@ h3 {
 }
 
 .services-catalog-card {
-  min-height: 230px;
+  min-height: 214px;
   display: grid;
-  align-content: start;
-  gap: 12px;
-  padding: 18px;
-  border: 1px solid rgba(47, 111, 159, 0.14);
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  align-content: stretch;
+  gap: 10px;
+  padding: 18px 18px 16px;
+  border: 1px solid rgba(47, 111, 159, 0.1);
   border-radius: 8px;
-  background: var(--surface);
+  background: #fff;
   color: var(--text);
+  box-shadow: none;
   text-decoration: none;
   transition:
     border-color 140ms ease,
@@ -6751,23 +6760,23 @@ h3 {
 
 .services-catalog-card:hover,
 .services-catalog-card:focus-visible {
-  border-color: rgba(47, 111, 159, 0.32);
-  box-shadow: 0 12px 26px rgba(31, 42, 51, 0.08);
+  border-color: rgba(47, 111, 159, 0.2);
+  box-shadow: 0 10px 22px rgba(31, 42, 51, 0.055);
   transform: translateY(-1px);
 }
 
 .services-catalog-card > span {
   width: fit-content;
-  min-height: 26px;
+  min-height: 24px;
   display: inline-flex;
   align-items: center;
-  padding: 0 9px;
+  padding: 0 8px;
   border-radius: 999px;
-  background: var(--accent-soft);
+  background: rgba(218, 236, 248, 0.74);
   color: var(--accent-strong);
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   font-weight: 850;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   line-height: 1;
   text-transform: uppercase;
 }
@@ -6775,14 +6784,15 @@ h3 {
 .services-catalog-card h3 {
   margin: 0;
   color: var(--ink);
-  font-size: 1.1rem;
+  font-size: 1.08rem;
   line-height: 1.18;
 }
 
 .services-catalog-card p {
   margin: 0;
   color: var(--muted);
-  line-height: 1.5;
+  font-size: 0.93rem;
+  line-height: 1.48;
 }
 
 .services-catalog-price {
@@ -6790,9 +6800,14 @@ h3 {
   display: inline-flex;
   align-items: center;
   color: var(--ink);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 850;
   line-height: 1.2;
+}
+
+.services-catalog-price-soft {
+  color: var(--muted);
+  font-weight: 760;
 }
 
 .services-catalog-card small {
@@ -6804,6 +6819,15 @@ h3 {
   color: var(--accent-strong);
   font-size: 0.86rem;
   font-weight: 850;
+}
+
+.services-catalog-card small span {
+  transition: transform 140ms ease;
+}
+
+.services-catalog-card:hover small span,
+.services-catalog-card:focus-visible small span {
+  transform: translateX(2px);
 }
 
 .topic-page-hero {
@@ -11496,6 +11520,15 @@ output {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .services-catalog-controls {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .services-catalog-category-row {
+    justify-content: flex-start;
+  }
+
   .home-path-cards article:nth-child(2)::after {
     content: none;
   }
@@ -12698,6 +12731,15 @@ output {
   .services-catalog-controls,
   .services-catalog-results {
     padding: 20px;
+  }
+
+  .services-catalog-hero,
+  .services-catalog-results {
+    padding: 0;
+  }
+
+  .services-catalog-controls {
+    padding: 8px 0 16px;
   }
 
   .campaign-hero-copy h1,

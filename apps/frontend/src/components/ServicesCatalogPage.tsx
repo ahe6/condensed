@@ -245,7 +245,9 @@ export function ServicesCatalogPage() {
               <span>{card.meta}</span>
               <h3>{card.title}</h3>
               <p>{card.detail}</p>
-              <strong className="services-catalog-price">{card.price}</strong>
+              <strong className={`services-catalog-price${card.price === "Free to ask" ? " services-catalog-price-soft" : ""}`}>
+                {card.price}
+              </strong>
               <small>
                 {card.cta}
                 <span aria-hidden="true">→</span>
