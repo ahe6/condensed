@@ -7,6 +7,14 @@ import { ConsultOverlayHeader } from "../../src/components/ConsultOverlayHeader"
 
 const messagePrimaryOptions = [
   {
+    title: "Talk through a concern",
+    detail: "Tell us what's going on and we'll help you think through next steps.",
+    prompt: "What is going on?",
+    placeholder:
+      'For example: "I\'ve had fatigue for months," "I\'m worried about a symptom," or "I want to know what next step makes sense."',
+    uploadMode: "secondary"
+  },
+  {
     title: "Find the right test",
     detail: "For labs, genetics, fertility, hormones, STI testing, or general screening.",
     prompt: "What are you trying to test or figure out?",
@@ -21,14 +29,6 @@ const messagePrimaryOptions = [
     placeholder:
       'For example: "I have bloodwork and don\'t know what\'s abnormal," or "I want a second look at my genetic results."',
     uploadMode: "prominent"
-  },
-  {
-    title: "Talk through a concern",
-    detail: "Tell us what's going on and we'll help you think through next steps.",
-    prompt: "What is going on?",
-    placeholder:
-      'For example: "I\'ve had fatigue for months," "I\'m worried about a symptom," or "I want to know what next step makes sense."',
-    uploadMode: "secondary"
   },
   {
     title: "I'm not sure what I need",
@@ -73,15 +73,15 @@ function pickInitialOption(requestText: string): (typeof messageStartOptions)[nu
     ) &&
     /\b(understand|understanding|review|analysis|analyze|look at|second look)\b/.test(normalizedRequest)
   ) {
-    return messagePrimaryOptions[1];
+    return messagePrimaryOptions[2];
   }
 
   if (/\b(test|testing|panel|screening|sti|std|genetic|hormone|fertility|thyroid)\b/.test(normalizedRequest)) {
-    return messagePrimaryOptions[0];
+    return messagePrimaryOptions[1];
   }
 
   if (/\b(symptom|symptoms|concern|pain|fatigue|worried|issue|problem)\b/.test(normalizedRequest)) {
-    return messagePrimaryOptions[2];
+    return messagePrimaryOptions[0];
   }
 
   return messagePrimaryOptions[3];
