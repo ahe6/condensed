@@ -88,37 +88,37 @@ const services = [
 const specificTestOptions = [
   {
     title: "General health panel",
-    detail: "Get help choosing a baseline lab panel for energy, metabolism, inflammation, and organ function.",
+    detail: "Check common markers for energy, metabolism, inflammation, and organ function.",
     href: "/message-team",
     meta: "Testing"
   },
   {
     title: "Hormone testing",
-    detail: "Explore hormone labs for fertility, cycles, testosterone, thyroid context, or menopause questions.",
+    detail: "Explore labs for fertility, cycles, thyroid context, testosterone, or menopause questions.",
     href: "/hormones",
     meta: "Labs"
   },
   {
     title: "STI testing",
-    detail: "Find testing options based on exposure, symptoms, timing, and whether home collection makes sense.",
+    detail: "Choose testing based on exposure, symptoms, timing, and whether home collection fits.",
     href: "/message-team",
     meta: "Screening"
   },
   {
     title: "Genetic testing",
-    detail: "Explore genetics options for inherited risk, carrier screening, and medication response.",
+    detail: "Review inherited risk, carrier screening, and medication-response testing options.",
     href: "/genetic-testing",
     meta: "Genetics"
   },
   {
     title: "Thyroid testing",
-    detail: "Look at thyroid labs and antibodies when symptoms, medication, or prior results need context.",
+    detail: "Check TSH, thyroid hormones, and antibodies when symptoms or prior labs need context.",
     href: "/message-team",
     meta: "Thyroid"
   },
   {
     title: "Fertility testing",
-    detail: "Compare fertility and reproductive hormone labs based on timing, goals, and prior history.",
+    detail: "Plan hormone and fertility labs around timing, goals, and prior history.",
     href: "/message-team",
     meta: "Fertility"
   }
@@ -127,70 +127,82 @@ const specificTestOptions = [
 const specificReviewServices = [
   {
     title: "Bloodwork analysis",
-    detail: "Review bloodwork patterns, abnormal values, borderline markers, and what may need follow-up.",
-    markers: "CBC, CMP, lipids, A1c, inflammation"
+    detail: "Turn abnormal, borderline, and trend changes into clear follow-up questions.",
+    markers: "Bloodwork",
+    href: "/message-team?request=I%20want%20help%20understanding%20my%20bloodwork",
+    cta: "Review bloodwork"
   },
   {
     title: "Hormone analysis",
-    detail: "Make sense of reproductive, thyroid, adrenal, or sex hormone results with timing and context.",
-    markers: "TSH, estradiol, progesterone, testosterone, cortisol"
+    detail: "Read hormone results with timing, symptoms, medications, and related markers in mind.",
+    markers: "Hormones",
+    href: "/message-team?request=I%20want%20help%20understanding%20hormone%20results",
+    cta: "Review hormones"
   },
   {
     title: "Fertility analysis",
-    detail: "Review fertility labs and reproductive history so the next testing or care question is clearer.",
-    markers: "AMH, FSH, LH, estradiol, progesterone"
+    detail: "Connect fertility labs and cycle history to the next testing or care question.",
+    markers: "Fertility",
+    href: "/message-team?request=I%20want%20help%20understanding%20fertility%20labs",
+    cta: "Review fertility"
   },
   {
     title: "Genetic analysis",
-    detail: "Understand genetic, carrier, risk, or medication-response reports without overinterpreting them.",
-    markers: "APOE, PGx, carrier screening, specialty panels"
+    detail: "Review genetic reports carefully, including what they can and cannot tell you.",
+    markers: "Genetics",
+    href: "/message-team?request=I%20want%20help%20understanding%20genetic%20results",
+    cta: "Review genetics"
   },
   {
     title: "Nutrient analysis",
-    detail: "Look at deficiency patterns that can relate to energy, hair, mood, recovery, or diet questions.",
-    markers: "Ferritin, iron, B12, folate, vitamin D"
+    detail: "Look for deficiency patterns tied to energy, hair, mood, diet, or recovery.",
+    markers: "Nutrients",
+    href: "/message-team?request=I%20want%20help%20understanding%20nutrient%20labs",
+    cta: "Review nutrients"
   },
   {
     title: "Metabolic analysis",
-    detail: "Review blood sugar, insulin resistance, cholesterol, and weight-related risk markers together.",
-    markers: "A1c, fasting glucose, insulin, ApoB, triglycerides"
+    detail: "Review blood sugar, cholesterol, insulin resistance, and weight-related risk together.",
+    markers: "Metabolic",
+    href: "/message-team?request=I%20want%20help%20understanding%20metabolic%20labs",
+    cta: "Review metabolism"
   }
 ] as const;
 
 const clinicianOptions = [
   {
     title: "Primary care",
-    detail: "Find a general clinician for broad concerns, routine follow-up, and next-step planning.",
+    detail: "Get routed for broad concerns, routine follow-up, and next-step planning.",
     href: "/message-team",
     meta: "Care"
   },
   {
     title: "Women's health",
-    detail: "Get routed toward support for fertility, hormones, cycles, menopause, or pelvic health questions.",
+    detail: "Find support for fertility, hormones, cycles, menopause, or pelvic health questions.",
     href: "/message-team",
     meta: "Specialty"
   },
   {
     title: "Genetics guidance",
-    detail: "Talk through genetics results, inherited risk, carrier screening, or medication-response questions.",
+    detail: "Talk through inherited risk, carrier screening, PGx, or genetic reports.",
     href: "/message-team",
     meta: "Genetics"
   },
   {
     title: "Nutrition support",
-    detail: "Find help connecting labs, symptoms, and diet questions to a practical plan.",
+    detail: "Connect labs, symptoms, goals, and diet questions to a practical next step.",
     href: "/message-team",
     meta: "Nutrition"
   },
   {
     title: "Mental health",
-    detail: "Explore care options for mood, stress, sleep, focus, and related support needs.",
+    detail: "Explore support options for mood, stress, sleep, focus, and related concerns.",
     href: "/message-team",
     meta: "Care"
   },
   {
     title: "Specialist routing",
-    detail: "Get help figuring out what type of clinician or specialist may make sense next.",
+    detail: "Figure out what kind of clinician or specialist may make sense next.",
     href: "/message-team",
     meta: "Referral"
   }
@@ -199,42 +211,42 @@ const clinicianOptions = [
 const treatmentOptions = [
   {
     title: "Weight loss treatment",
-    detail: "Review GLP-1, oral medication, lab, and follow-up questions before routing to care.",
+    detail: "Review medication, lab, eligibility, and follow-up questions before routing.",
     href: "/message-team",
     meta: "Prescription",
     cta: "Review weight options"
   },
   {
     title: "Hair loss treatment",
-    detail: "Compare topical, oral, lab, and scalp-care questions for thinning, shedding, or pattern hair loss.",
+    detail: "Compare topical, oral, lab, and scalp-care paths for thinning or shedding.",
     href: "/message-team",
     meta: "Hair",
     cta: "Review hair options"
   },
   {
     title: "Acne treatment",
-    detail: "Explore prescription and non-prescription acne paths, routine fit, photos, and follow-up needs.",
+    detail: "Compare prescription and non-prescription paths, routines, photos, and follow-up.",
     href: "/message-team",
     meta: "Skin",
     cta: "Review acne options"
   },
   {
     title: "Erectile dysfunction treatment",
-    detail: "Review ED medication questions, safety context, labs, and when clinician follow-up may be needed.",
+    detail: "Review medication questions, safety context, labs, and when follow-up may be needed.",
     href: "/message-team",
     meta: "Men's health",
     cta: "Review ED options"
   },
   {
     title: "Smoking cessation",
-    detail: "Compare prescription and over-the-counter quit-support options with health history in mind.",
+    detail: "Compare prescription and OTC quit-support options against health history.",
     href: "/message-team",
     meta: "Quit support",
     cta: "Review quit options"
   },
   {
     title: "Migraine treatment",
-    detail: "Review acute, preventive, trigger, and follow-up questions for recurring headaches or migraine.",
+    detail: "Sort acute, preventive, trigger, and follow-up questions for recurring migraine.",
     href: "/message-team",
     meta: "Migraine",
     cta: "Review migraine options"
@@ -244,37 +256,37 @@ const treatmentOptions = [
 const productOptions = [
   {
     title: "Daily supplement packs",
-    detail: "Basic supplement options for daily routines, nutrient questions, and general wellness support.",
+    detail: "Routine supplement packs for common nutrient gaps and everyday wellness support.",
     href: "/products/daily-multivitamin-pack",
     meta: "Supplements"
   },
   {
     title: "Skin care routines",
-    detail: "Simple cleanser, moisturizer, sunscreen, and skin-support products for everyday routines.",
+    detail: "Daily cleanser, moisturizer, sunscreen, and skin-support routines.",
     href: "/products/skin-clarity-routine",
     meta: "Skin care"
   },
   {
     title: "Hair support kits",
-    detail: "Hair and scalp support options that can sit alongside testing, analysis, or care guidance.",
+    detail: "Hair and scalp support that can pair with testing, analysis, or care guidance.",
     href: "/products/hair-density-support-kit",
     meta: "Hair"
   },
   {
     title: "Digestive support",
-    detail: "Fiber and gut-support products for digestion, regularity, and nutrition follow-up questions.",
+    detail: "Fiber and gut-support options for regularity, digestion, and nutrition follow-up.",
     href: "/products/fiber-daily-pack",
     meta: "Digestive"
   },
   {
     title: "Hydration packs",
-    detail: "Electrolyte and hydration products for daily routines, exercise, and recovery support.",
+    detail: "Electrolyte packs for daily hydration, exercise, travel, and recovery.",
     href: "/products/electrolyte-hydration-pack",
     meta: "Wellness"
   },
   {
     title: "Sleep and stress support",
-    detail: "Non-prescription support products for sleep, stress, recovery, and daily routine planning.",
+    detail: "Non-prescription sleep, stress, and recovery support for daily routines.",
     href: "/products/sleep-stress-support-kit",
     meta: "Recovery"
   }
@@ -283,49 +295,49 @@ const productOptions = [
 const advancedHealthOptions = [
   {
     title: "Stem Cell Therapy Review",
-    detail: "Review questions about stem-cell clinics, joint pain, injury recovery, aging claims, and what to ask before considering options.",
+    detail: "Review clinic claims, eligibility questions, and what to ask before considering options.",
     href: "/message-team",
     meta: "Regenerative",
     cta: "Check stem cell options"
   },
   {
     title: "PRP Therapy",
-    detail: "Platelet-rich plasma questions for joint pain, tendon issues, hair loss, skin, recovery, and clinician routing.",
+    detail: "Ask about PRP for joints, tendons, hair, skin, or recovery and how to route next.",
     href: "/message-team",
     meta: "PRP",
     cta: "Explore PRP"
   },
   {
     title: "Exosome Therapy Review",
-    detail: "Inquiry-only review for exosome claims around injections, skin, hair, joints, and regenerative medicine marketing.",
+    detail: "Review exosome marketing claims and safety questions before considering any clinic.",
     href: "/message-team",
     meta: "Exosomes",
     cta: "Ask about exosomes"
   },
   {
     title: "Microbiome Therapy",
-    detail: "Explore microbiome restoration, FMT-style questions, advanced probiotics, and when recurrent C. difficile context matters.",
+    detail: "Explore microbiome, advanced probiotic, and recurrent C. difficile context questions.",
     href: "/message-team",
     meta: "Microbiome",
     cta: "Explore microbiome options"
   },
   {
     title: "Peptide Therapy Review",
-    detail: "Review peptide questions around BPC-157, TB-500, sermorelin, CJC/ipamorelin, recovery, and safety evidence.",
+    detail: "Review peptide claims, safety concerns, and evidence before considering next steps.",
     href: "/message-team",
     meta: "Peptides",
     cta: "Review peptide options"
   },
   {
     title: "IV Nutrient Therapy",
-    detail: "Explore questions about NAD+, glutathione, vitamin C, Myers cocktail, hydration, and recovery drips.",
+    detail: "Ask about NAD+, glutathione, vitamin C, hydration, and IV drip claims.",
     href: "/message-team",
     meta: "IV therapy",
     cta: "Explore IV therapy"
   },
   {
     title: "Hyperbaric Oxygen Therapy",
-    detail: "Check HBOT questions for wound healing, recovery, inflammation, and brain-injury-adjacent interest.",
+    detail: "Review HBOT questions for wound healing, recovery, inflammation, or brain-injury-adjacent interest.",
     href: "/message-team",
     meta: "HBOT",
     cta: "Check HBOT options"
@@ -787,7 +799,7 @@ function ServicesSection({ variant }: { variant: Exclude<ServicesSectionVariant,
             <h2 id="services-title">{variant === "carousel" ? "Tests" : "Services"}</h2>
             <p>
               {variant === "carousel"
-                ? "Find testing paths based on what you want to understand."
+                ? "Start with a question, then find the right testing path."
                 : "Start with the kind of support you need. Each path keeps records, testing, and follow-up organized around a clear next step."}
             </p>
           </div>
@@ -803,7 +815,7 @@ function ServicesSection({ variant }: { variant: Exclude<ServicesSectionVariant,
                 type="button"
                 onClick={() => setCarouselIndex((index) => previousCarouselIndex(index))}
               >
-                ←
+                ‹
               </button>
               <button
                 aria-label="Next tests"
@@ -812,7 +824,7 @@ function ServicesSection({ variant }: { variant: Exclude<ServicesSectionVariant,
                 type="button"
                 onClick={() => setCarouselIndex((index) => nextCarouselIndex(index, specificTestOptions.length, visibleCount))}
               >
-                →
+                ›
               </button>
             </div>
           ) : null}
@@ -898,7 +910,7 @@ function ReviewTestingSection({ variant }: { variant: Exclude<ReviewSectionVaria
             <h3 id="lab-categories-title">{variant === "carousel" ? "Analysis" : "Areas we cover"}</h3>
             <p>
               {variant === "carousel"
-                ? "Make sense of labs, genetics, hormones, and other results."
+                ? "Turn results and reports into clearer follow-up questions."
                 : "Explore common health areas where records, testing, screening, and follow-up can be organized into a clearer next step."}
             </p>
           </div>
@@ -915,7 +927,7 @@ function ReviewTestingSection({ variant }: { variant: Exclude<ReviewSectionVaria
                   type="button"
                   onClick={() => setCarouselIndex((index) => previousCarouselIndex(index))}
                 >
-                  ←
+                  ‹
                 </button>
                 <button
                   aria-label="Next analysis categories"
@@ -926,7 +938,7 @@ function ReviewTestingSection({ variant }: { variant: Exclude<ReviewSectionVaria
                     setCarouselIndex((index) => nextCarouselIndex(index, specificReviewServices.length, visibleCount))
                   }
                 >
-                  →
+                  ›
                 </button>
               </>
             ) : null}
@@ -937,11 +949,15 @@ function ReviewTestingSection({ variant }: { variant: Exclude<ReviewSectionVaria
           <div className="home-arrow-carousel" aria-label="Analysis categories">
             <div className="home-specific-carousel home-specific-carousel-review">
               {visibleAnalysis.map((service) => (
-                <article className="home-specific-service-card home-specific-review-card" key={service.title}>
+                <Link className="home-specific-service-card home-specific-review-card" href={service.href} key={service.title}>
                   <span>{service.markers}</span>
                   <h4>{service.title}</h4>
                   <p>{service.detail}</p>
-                </article>
+                  <small>
+                    {service.cta}
+                    <span aria-hidden="true">→</span>
+                  </small>
+                </Link>
               ))}
             </div>
           </div>
@@ -1048,7 +1064,7 @@ function SimpleLandingCarouselSection({
               type="button"
               onClick={() => setCarouselIndex((index) => previousCarouselIndex(index))}
             >
-              ←
+              ‹
             </button>
             <button
               aria-label={nextLabel}
@@ -1057,7 +1073,7 @@ function SimpleLandingCarouselSection({
               type="button"
               onClick={() => setCarouselIndex((index) => nextCarouselIndex(index, items.length, visibleCount))}
             >
-              →
+              ›
             </button>
           </div>
         </div>
@@ -1468,7 +1484,7 @@ function LandingPageContent({
           items={productOptions}
           nextLabel="Next wellness options"
           previousLabel="Previous wellness options"
-          subtitle="Browse supplements, skin care, hair care, and routine support."
+          subtitle="Everyday products that can pair with testing, records, or care guidance."
           actionLabel="View wellness"
         />
       ) : null}
@@ -1483,7 +1499,7 @@ function LandingPageContent({
           items={clinicianOptions}
           nextLabel="Next care options"
           previousLabel="Previous care options"
-          subtitle="Find care support for the question you are trying to solve."
+          subtitle="Get routed toward the kind of clinician support your question may need."
         />
       ) : null}
       {treatmentsVariant === "current" ? (
@@ -1496,7 +1512,7 @@ function LandingPageContent({
           items={treatmentOptions}
           nextLabel="Next treatment options"
           previousLabel="Previous treatment options"
-          subtitle="Review treatment categories, eligibility questions, and clinician routing before this goes live."
+          subtitle="Review eligibility, safety, and follow-up questions before routing to care."
         />
       ) : null}
       {advancedVariant === "current" ? (
@@ -1509,7 +1525,7 @@ function LandingPageContent({
           items={advancedHealthOptions}
           nextLabel="Next advanced health options"
           previousLabel="Previous advanced health options"
-          subtitle="Review regenerative, microbiome, peptide, IV, and hyperbaric therapy questions before taking a next step."
+          subtitle="Ask careful questions about advanced therapies, evidence, safety, and routing."
         />
       ) : null}
 

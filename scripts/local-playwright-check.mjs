@@ -394,6 +394,15 @@ const checks = {
       .locator(".home-specific-carousel-review")
       .locator(".home-specific-review-card")
       .evaluateAll((nodes) => nodes.map((node) => node.textContent));
+    const reviewCardLinks = await page
+      .locator(".home-specific-carousel-review")
+      .locator(".home-specific-review-card")
+      .evaluateAll((nodes) =>
+        nodes.map((node) => ({
+          tag: node.tagName,
+          href: node.getAttribute("href")
+        }))
+      );
     const testsHeading = await page.getByRole("heading", { name: "Tests" }).isVisible();
     const wellnessHeading = await page.getByRole("heading", { name: "Wellness", exact: true }).isVisible();
     const analysisHeading = await page.getByRole("heading", { name: "Analysis", exact: true }).isVisible();
@@ -429,6 +438,7 @@ const checks = {
       viewAllTests,
       viewAllWellness,
       viewAllAnalysis,
+      reviewCardLinks,
       servicePriceLabels
     };
   },
