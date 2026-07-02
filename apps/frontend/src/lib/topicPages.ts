@@ -59,7 +59,7 @@ export const topicPages = {
       {
         title: "Testing options",
         detail: "Compare genetics tests by purpose, scope, and result type.",
-        href: "/#services",
+        href: "/services",
         cta: "View testing"
       },
       {
@@ -111,13 +111,13 @@ export const topicPages = {
       {
         title: "Testing",
         detail: "Explore metabolic, thyroid, cholesterol, and general health lab paths.",
-        href: "/#services",
+        href: "/services",
         cta: "View tests"
       },
       {
         title: "Analysis",
         detail: "Review bloodwork patterns and markers related to metabolic health.",
-        href: "/#services",
+        href: "/services",
         cta: "View analysis"
       },
       {
@@ -163,7 +163,7 @@ export const topicPages = {
       {
         title: "Testing",
         detail: "Look at lab paths that may be relevant to hair changes.",
-        href: "/#services",
+        href: "/services",
         cta: "View tests"
       },
       {
@@ -267,13 +267,13 @@ export const topicPages = {
       {
         title: "Testing",
         detail: "Explore hormone, thyroid, fertility, and general lab paths.",
-        href: "/#services",
+        href: "/services",
         cta: "View tests"
       },
       {
         title: "Analysis",
         detail: "Review hormone and bloodwork patterns with timing and symptoms in mind.",
-        href: "/#services",
+        href: "/services",
         cta: "View analysis"
       },
       {
@@ -289,6 +289,6 @@ export const topicPages = {
 } satisfies Record<string, TopicPage>;
 
 export const topicNavLinks = [
-  { href: "/#services", label: "Services" },
+  { href: "/services", label: "Services" },
   { href: "/library", label: "Health library" }
 ];

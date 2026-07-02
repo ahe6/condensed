@@ -24,6 +24,60 @@ const landingVariantGroups = [
       { value: "clinical", label: "Clinical" },
       { value: "warm", label: "Warm" }
     ]
+  },
+  {
+    param: "tests",
+    label: "Tests section",
+    fallback: "current",
+    options: [
+      { value: "current", label: "Current" },
+      { value: "hidden", label: "Hidden" }
+    ]
+  },
+  {
+    param: "products",
+    label: "Products section",
+    fallback: "current",
+    options: [
+      { value: "current", label: "Current" },
+      { value: "hidden", label: "Hidden" }
+    ]
+  },
+  {
+    param: "analysis",
+    label: "Analysis section",
+    fallback: "current",
+    options: [
+      { value: "current", label: "Current" },
+      { value: "hidden", label: "Hidden" }
+    ]
+  },
+  {
+    param: "clinicians",
+    label: "Clinicians section",
+    fallback: "hidden",
+    options: [
+      { value: "current", label: "Current" },
+      { value: "hidden", label: "Hidden" }
+    ]
+  },
+  {
+    param: "treatments",
+    label: "Treatments section",
+    fallback: "hidden",
+    options: [
+      { value: "current", label: "Current" },
+      { value: "hidden", label: "Hidden" }
+    ]
+  },
+  {
+    param: "advanced",
+    label: "Advanced Health section",
+    fallback: "hidden",
+    options: [
+      { value: "current", label: "Current" },
+      { value: "hidden", label: "Hidden" }
+    ]
   }
 ];
 
@@ -31,19 +85,20 @@ const myHealthVariantGroups = [
   {
     param: "layout",
     label: "Experience",
-    fallback: "workspace",
+    fallback: "record-log",
     options: [
+      { value: "record-log", label: "Unified health record" },
       { value: "workspace", label: "Health workspace" },
       { value: "placeholder", label: "Simple placeholder" }
     ]
   },
   {
     param: "state",
-    label: "State",
+    label: "Record data",
     fallback: "empty",
     options: [
-      { value: "empty", label: "Empty" },
-      { value: "active", label: "Active" }
+      { value: "empty", label: "No records" },
+      { value: "active", label: "Mock records" }
     ]
   }
 ];
@@ -80,6 +135,7 @@ type VariantPageLink = {
 
 const experiencePageLinks: VariantPageLink[] = [
   { href: "/", label: "Landing", value: "landing" },
+  { href: "/services", label: "Services", value: "services" },
   { href: "/my-health", label: "My Health", value: "my-health" },
   { href: "/message-team", label: "Message Team", value: "message-team" },
   {

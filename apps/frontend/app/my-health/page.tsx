@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { CustomerBrand } from "../../src/components/CustomerBrand";
+import { ConsultOverlayHeader } from "../../src/components/ConsultOverlayHeader";
 import { getMe } from "../../src/lib/api";
 import { getSession, isAuthConfigured, startLogin } from "../../src/lib/auth";
 
@@ -142,6 +142,44 @@ const activeRecentUpdates = [
   }
 ] as const;
 
+const recordLogItems = [
+  {
+    type: "Upload",
+    title: "June lab panel.pdf",
+    detail: "Added to your health record for review.",
+    meta: "Today"
+  },
+  {
+    type: "Review",
+    title: "Metabolic panel review",
+    detail: "Saved interpretation and written guidance from your health team.",
+    meta: "Today"
+  },
+  {
+    type: "Testing",
+    title: "A1c and fasting insulin plan",
+    detail: "Testing option saved for future follow-up.",
+    meta: "Yesterday"
+  },
+  {
+    type: "Question",
+    title: "Follow-up question drafted",
+    detail: "Open question about whether to repeat fasting labs.",
+    meta: "Yesterday"
+  },
+  {
+    type: "Note",
+    title: "Medication notes",
+    detail: "Personal notes added to keep context with your records.",
+    meta: "Jun 12"
+  }
+] as const;
+
+const recordLogTabs = [
+  { id: "overview", label: "Overview" },
+  { id: "records", label: "Records" }
+] as const;
+
 const overviewActionModules = [
   {
     title: "Start a request",
@@ -205,13 +243,20 @@ const newWorkspaceSections = [
 ] as const;
 
 type WorkspaceSectionId = (typeof newWorkspaceSections)[number]["id"];
+type MyHealthLayout = "workspace" | "placeholder" | "record-log";
+type RecordLogTabId = (typeof recordLogTabs)[number]["id"];
 
 function MyHealthPageContent() {
   const searchParams = useSearchParams();
-  const selectedLayout = searchParams.get("layout") === "placeholder" ? "placeholder" : "workspace";
+  const layoutParam = searchParams.get("layout");
+  const selectedLayout: MyHealthLayout =
+    layoutParam === "workspace" || layoutParam === "placeholder" || layoutParam === "record-log"
+      ? layoutParam
+      : "record-log";
   const selectedSignInBehavior = searchParams.get("signin") === "block" ? "block" : "preview";
   const selectedWorkspaceState = searchParams.get("state") === "active" ? "active" : "empty";
   const [activeWorkspaceSection, setActiveWorkspaceSection] = useState<WorkspaceSectionId>("overview");
+  const [activeRecordLogTab, setActiveRecordLogTab] = useState<RecordLogTabId>("overview");
   const [needsSignIn, setNeedsSignIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -265,10 +310,8 @@ function MyHealthPageContent() {
   }, []);
 
   return (
-    <main className="shell my-health-shell">
-      <section className="topbar" aria-label="Patient Portal navigation">
-        <CustomerBrand />
-      </section>
+    <main className="shell my-health-shell overlay-header-page">
+      <ConsultOverlayHeader lineVariant="full" />
 
       {error ? <p className="error global-error">{error}</p> : null}
 
@@ -304,6 +347,107 @@ function MyHealthPageContent() {
           <Link className="nav-link primary-link" href="/message-team">
             Message our team
           </Link>
+        </section>
+      ) : null}
+
+      {!isLoading && canShowHealthContent && selectedLayout === "record-log" ? (
+        <section className="my-health-record-log" aria-label="Health records overview">
+          <div className="my-health-record-log-heading">
+            <div>
+              <p className="eyebrow">My Health</p>
+              <h1>Health record</h1>
+              <p>Everything you upload, request, review, or save is kept as a record in one place.</p>
+            </div>
+          </div>
+
+          <nav className="my-health-section-tabs" aria-label="Record sections">
+            {recordLogTabs.map((tab) => (
+              <button
+                aria-current={activeRecordLogTab === tab.id ? "page" : undefined}
+                className={activeRecordLogTab === tab.id ? "active" : undefined}
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveRecordLogTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+
+          {activeRecordLogTab === "overview" ? (
+            <>
+              <div className="my-health-record-log-summary" aria-label="Record summary">
+                <article>
+                  <span>Total records</span>
+                  <strong>{isActiveWorkspacePreview ? recordLogItems.length : 0}</strong>
+                  <p>Uploads, reviews, testing plans, questions, and notes.</p>
+                </article>
+                <article>
+                  <span>Latest record</span>
+                  <strong>{isActiveWorkspacePreview ? "Today" : "None yet"}</strong>
+                  <p>{isActiveWorkspacePreview ? "Most recent activity is saved to your record." : "New activity will appear here."}</p>
+                </article>
+              </div>
+
+              <section className="my-health-record-log-card" aria-label="Recent records">
+                <div className="panel-heading">
+                  <div>
+                    <h2>Recent records</h2>
+                    <p>A simple history of what has happened in My Health.</p>
+                  </div>
+                </div>
+                {isActiveWorkspacePreview ? (
+                  <div className="my-health-record-log-list">
+                    {recordLogItems.slice(0, 3).map((record) => (
+                      <article className="my-health-record-log-item" key={`${record.type}-${record.title}`}>
+                        <span>{record.type}</span>
+                        <div>
+                          <h3>{record.title}</h3>
+                          <p>{record.detail}</p>
+                        </div>
+                        <small>{record.meta}</small>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="my-health-record-log-empty">
+                    <strong>No records yet.</strong>
+                    <p>Uploads, requests, result reviews, testing plans, and follow-up notes will appear here as records.</p>
+                  </div>
+                )}
+              </section>
+            </>
+          ) : null}
+
+          {activeRecordLogTab === "records" ? (
+            <section className="my-health-record-log-card" aria-label="All records">
+              <div className="panel-heading">
+                <div>
+                  <h2>Records</h2>
+                  <p>All activity is shown as a record, newest first.</p>
+                </div>
+              </div>
+              {isActiveWorkspacePreview ? (
+                <div className="my-health-record-log-list">
+                  {recordLogItems.map((record) => (
+                    <article className="my-health-record-log-item" key={`${record.type}-${record.title}`}>
+                      <span>{record.type}</span>
+                      <div>
+                        <h3>{record.title}</h3>
+                        <p>{record.detail}</p>
+                      </div>
+                      <small>{record.meta}</small>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="my-health-record-log-empty">
+                  <strong>No records yet.</strong>
+                  <p>When you upload documents, start requests, save testing plans, or get guidance, each item will be added here.</p>
+                </div>
+              )}
+            </section>
+          ) : null}
         </section>
       ) : null}
 

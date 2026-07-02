@@ -12,7 +12,7 @@ export function TopicProgramPage({ topic }: TopicProgramPageProps) {
       <section className="ad-topbar" aria-label="Landing page navigation">
         <CustomerBrand />
         <nav aria-label="Related links">
-          <Link href="/#services">Services</Link>
+          <Link href="/services">Services</Link>
           <Link className="ad-topbar-cta" href="#paths">
             View options
           </Link>
@@ -121,7 +121,7 @@ export function TopicProgramPage({ topic }: TopicProgramPageProps) {
           <p className="eyebrow">Next step</p>
           <h2>Start with the closest option and narrow from there.</h2>
         </div>
-        <Link className="nav-link primary-link" href="/#services">
+        <Link className="nav-link primary-link" href="/services">
           View services
         </Link>
       </section>

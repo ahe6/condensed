@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
-import { CustomerBrand } from "../src/components/CustomerBrand";
-import { CustomerNav } from "../src/components/CustomerNav";
-import { TopicNav } from "../src/components/TopicNav";
+import { Suspense, useState } from "react";
+import { ConsultOverlayHeader } from "../src/components/ConsultOverlayHeader";
 import { reviewStartPaths } from "../src/lib/reviewStartPaths";
 
 const labAnalysisCategories = [
@@ -446,7 +444,6 @@ export type ServicesSectionVariant = "hidden" | "cards" | "alternating" | "carou
 export type ReviewSectionVariant = "hidden" | "grid" | "list" | "bands" | "carousel";
 export type SimpleCarouselSectionVariant = "hidden" | "carousel";
 export type TrustRowVariant = "hidden" | "inline";
-export type TopBarLineVariant = "gutter" | "full";
 export type HeroCopyVariant =
   | "clinician-plan"
   | "start-review"
@@ -457,12 +454,12 @@ export type HeroCopyVariant =
 export type FaqSectionVariant = "hidden" | "accordion" | "compact" | "columns";
 export type TypographyVariant = "default" | "soft" | "editorial";
 export type ColorThemeVariant = "default" | "clinical" | "warm";
+type LandingSectionVariant = "current" | "hidden";
 
 const servicesSectionVariantValues = ["hidden", "cards", "alternating", "carousel"] as const;
 const reviewSectionVariantValues = ["hidden", "bands", "grid", "list", "carousel"] as const;
 const simpleCarouselSectionVariantValues = ["hidden", "carousel"] as const;
 const trustRowVariantValues = ["hidden", "inline"] as const;
-const topBarLineVariantValues = ["gutter", "full"] as const;
 const heroCopyVariantValues = [
   "consult-overlay",
   "consult-search",
@@ -474,6 +471,7 @@ const heroCopyVariantValues = [
 const faqSectionVariantValues = ["hidden", "accordion", "compact", "columns"] as const;
 const typographyVariantValues = ["default", "soft", "editorial"] as const;
 const colorThemeVariantValues = ["default", "clinical", "warm"] as const;
+const landingSectionVariantValues = ["current", "hidden"] as const;
 
 function pickVariant<T extends string>(value: string | null, allowed: readonly T[], fallback: T): T {
   return allowed.includes(value as T) ? (value as T) : fallback;
@@ -677,12 +675,6 @@ const consultExplainerItems = [
     title: "Organize next steps",
     detail: "You get written guidance for what to ask, test, monitor, or follow up on when appropriate."
   }
-];
-
-const consultOverlayNavLinks = [
-  { href: "/my-health", label: "My Health" },
-  { href: "/#services", label: "Services" },
-  { href: "/library", label: "Health library" }
 ];
 
 const faqs = [
@@ -1327,88 +1319,6 @@ function ConsultExplainerHero() {
   );
 }
 
-function ConsultOverlayHeader({ lineVariant }: { lineVariant: TopBarLineVariant }) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if (!isMenuOpen) {
-      return undefined;
-    }
-
-    function handleDocumentPointerDown(event: PointerEvent) {
-      const target = event.target;
-
-      if (!(target instanceof Node)) {
-        return;
-      }
-
-      if (menuRef.current?.contains(target) || menuButtonRef.current?.contains(target)) {
-        return;
-      }
-
-      setIsMenuOpen(false);
-    }
-
-    document.addEventListener("pointerdown", handleDocumentPointerDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handleDocumentPointerDown);
-    };
-  }, [isMenuOpen]);
-
-  return (
-    <header
-      className={`consult-overlay-header consult-overlay-header-lines-${lineVariant} ${
-        isMenuOpen ? "consult-overlay-header-menu-open" : ""
-      }`}
-      aria-label="Condensed Health navigation"
-    >
-      <div className="consult-overlay-primary-bar">
-        <button
-          ref={menuButtonRef}
-          aria-expanded={isMenuOpen}
-          aria-label="Toggle navigation menu"
-          className="consult-overlay-menu-button"
-          type="button"
-          onClick={() => setIsMenuOpen((open) => !open)}
-        >
-          <span />
-          <span />
-          <span />
-        </button>
-        <CustomerBrand />
-        <nav ref={menuRef} className="consult-overlay-service-bar" aria-label="Site sections">
-          {consultOverlayNavLinks.map((link) => (
-            <Link href={link.href} key={link.href} onClick={() => setIsMenuOpen(false)}>
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-        <Link className="consult-overlay-mobile-sign-in" href="/account">
-          Sign in
-        </Link>
-      </div>
-    </header>
-  );
-}
-
-function LandingHeader() {
-  return (
-    <section className="topbar site-header" aria-label="Condensed Health navigation">
-      <CustomerBrand />
-      <TopicNav />
-      <div className="nav-actions">
-        <CustomerNav
-          primaryHref="/my-health"
-          primaryLabel="My Health"
-        />
-      </div>
-    </section>
-  );
-}
-
 function LandingPageContent({
   typographyVariant = "default",
   colorThemeVariant = "default"
@@ -1419,60 +1329,98 @@ function LandingPageContent({
   const searchParams = useSearchParams();
   const selectedTypographyVariant = pickVariant(searchParams.get("type"), typographyVariantValues, typographyVariant);
   const selectedColorThemeVariant = pickVariant(searchParams.get("theme"), colorThemeVariantValues, colorThemeVariant);
+  const testsVariant = pickVariant<LandingSectionVariant>(
+    searchParams.get("tests"),
+    landingSectionVariantValues,
+    "current"
+  );
+  const productsVariant = pickVariant<LandingSectionVariant>(
+    searchParams.get("products"),
+    landingSectionVariantValues,
+    "current"
+  );
+  const analysisVariant = pickVariant<LandingSectionVariant>(
+    searchParams.get("analysis"),
+    landingSectionVariantValues,
+    "current"
+  );
+  const cliniciansVariant = pickVariant<LandingSectionVariant>(
+    searchParams.get("clinicians"),
+    landingSectionVariantValues,
+    "hidden"
+  );
+  const treatmentsVariant = pickVariant<LandingSectionVariant>(
+    searchParams.get("treatments"),
+    landingSectionVariantValues,
+    "hidden"
+  );
+  const advancedVariant = pickVariant<LandingSectionVariant>(
+    searchParams.get("advanced"),
+    landingSectionVariantValues,
+    "hidden"
+  );
 
   return (
     <main
       className={`shell landing-page landing-type-${selectedTypographyVariant} landing-theme-${selectedColorThemeVariant}`}
     >
-      <ConsultOverlayHeader lineVariant="gutter" />
+      <ConsultOverlayHeader lineVariant="full" />
       <ConsultSearchHero />
-      <ServicesSection variant="carousel" />
-      <SimpleLandingCarouselSection
-        ariaLabel="Product options"
-        footerHref="/message-team"
-        footerLabel="View all products"
-        heading="Products"
-        id="products"
-        items={productOptions}
-        nextLabel="Next product options"
-        previousLabel="Previous product options"
-        subtitle="Browse supplements, skin care, hair care, and routine support products."
-        actionLabel="View product"
-      />
-      <ReviewTestingSection variant="carousel" />
-      <SimpleLandingCarouselSection
-        ariaLabel="Clinician options"
-        footerHref="/message-team"
-        footerLabel="View all clinicians"
-        heading="Clinicians"
-        id="clinicians"
-        items={clinicianOptions}
-        nextLabel="Next clinician options"
-        previousLabel="Previous clinician options"
-        subtitle="Find care support for the question you are trying to solve."
-      />
-      <SimpleLandingCarouselSection
-        ariaLabel="Treatment options"
-        footerHref="/message-team"
-        footerLabel="View all treatments"
-        heading="Treatments"
-        id="treatments"
-        items={treatmentOptions}
-        nextLabel="Next treatment options"
-        previousLabel="Previous treatment options"
-        subtitle="Review treatment categories, eligibility questions, and clinician routing before this goes live."
-      />
-      <SimpleLandingCarouselSection
-        ariaLabel="Advanced health options"
-        footerHref="/message-team"
-        footerLabel="View all advanced health"
-        heading="Advanced Health"
-        id="advanced-health"
-        items={advancedHealthOptions}
-        nextLabel="Next advanced health options"
-        previousLabel="Previous advanced health options"
-        subtitle="Review regenerative, microbiome, peptide, IV, and hyperbaric therapy questions before taking a next step."
-      />
+      {testsVariant === "current" ? <ServicesSection variant="carousel" /> : null}
+      {productsVariant === "current" ? (
+        <SimpleLandingCarouselSection
+          ariaLabel="Product options"
+          footerHref="/message-team"
+          footerLabel="View all products"
+          heading="Products"
+          id="products"
+          items={productOptions}
+          nextLabel="Next product options"
+          previousLabel="Previous product options"
+          subtitle="Browse supplements, skin care, hair care, and routine support products."
+          actionLabel="View product"
+        />
+      ) : null}
+      {analysisVariant === "current" ? <ReviewTestingSection variant="carousel" /> : null}
+      {cliniciansVariant === "current" ? (
+        <SimpleLandingCarouselSection
+          ariaLabel="Clinician options"
+          footerHref="/message-team"
+          footerLabel="View all clinicians"
+          heading="Clinicians"
+          id="clinicians"
+          items={clinicianOptions}
+          nextLabel="Next clinician options"
+          previousLabel="Previous clinician options"
+          subtitle="Find care support for the question you are trying to solve."
+        />
+      ) : null}
+      {treatmentsVariant === "current" ? (
+        <SimpleLandingCarouselSection
+          ariaLabel="Treatment options"
+          footerHref="/message-team"
+          footerLabel="View all treatments"
+          heading="Treatments"
+          id="treatments"
+          items={treatmentOptions}
+          nextLabel="Next treatment options"
+          previousLabel="Previous treatment options"
+          subtitle="Review treatment categories, eligibility questions, and clinician routing before this goes live."
+        />
+      ) : null}
+      {advancedVariant === "current" ? (
+        <SimpleLandingCarouselSection
+          ariaLabel="Advanced health options"
+          footerHref="/message-team"
+          footerLabel="View all advanced health"
+          heading="Advanced Health"
+          id="advanced-health"
+          items={advancedHealthOptions}
+          nextLabel="Next advanced health options"
+          previousLabel="Previous advanced health options"
+          subtitle="Review regenerative, microbiome, peptide, IV, and hyperbaric therapy questions before taking a next step."
+        />
+      ) : null}
 
     </main>
   );
