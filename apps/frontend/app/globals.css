@@ -8024,6 +8024,10 @@ h3 {
   width: min(1344px, calc(100% - 96px));
 }
 
+.my-health-shell.overlay-header-page {
+  clip-path: none;
+}
+
 .my-health-workspace {
   display: grid;
   grid-template-columns: 1fr;
@@ -8354,6 +8358,105 @@ h3 {
   background: var(--accent);
   color: #fff;
   font-weight: 850;
+}
+
+.my-health-request-float {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 54;
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+  pointer-events: auto;
+}
+
+.my-health-request-launcher {
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 14px 30px rgba(31, 42, 51, 0.16);
+  font-size: 0.94rem;
+  font-weight: 850;
+}
+
+.my-health-request-launcher:hover:not(:disabled),
+.my-health-request-launcher:focus-visible {
+  background: var(--accent-strong);
+  transform: none;
+}
+
+.my-health-request-float.open .my-health-request-launcher {
+  display: none;
+}
+
+.my-health-request-drawer {
+  width: min(420px, calc(100vw - 48px));
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(47, 111, 159, 0.12);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 20px 52px rgba(31, 42, 51, 0.18);
+}
+
+.my-health-request-drawer-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.my-health-request-drawer-heading h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.06rem;
+  line-height: 1.16;
+}
+
+.my-health-request-drawer-heading p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.38;
+}
+
+.my-health-request-drawer-close {
+  width: 30px;
+  min-height: 30px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(47, 111, 159, 0.12);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  box-shadow: none;
+  font-size: 0.9rem;
+  font-weight: 850;
+}
+
+.my-health-request-drawer-close:hover:not(:disabled),
+.my-health-request-drawer-close:focus-visible {
+  border-color: rgba(47, 111, 159, 0.24);
+  background: var(--surface);
+  color: var(--text);
+  transform: none;
+}
+
+.my-health-request-drawer-form {
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+.my-health-request-drawer-form textarea {
+  min-height: 96px;
+  border: 1px solid rgba(47, 111, 159, 0.1);
 }
 
 .my-health-record-secondary-actions {
@@ -11933,6 +12036,23 @@ output {
 
   .my-health-request-submit {
     width: 100%;
+  }
+
+  .my-health-request-float {
+    right: 14px;
+    bottom: 72px;
+    left: 14px;
+  }
+
+  .my-health-request-drawer {
+    width: 100%;
+    max-height: calc(100vh - 154px);
+    overflow-y: auto;
+  }
+
+  .my-health-request-launcher {
+    min-height: 44px;
+    padding: 0 15px;
   }
 
   .my-health-record-secondary-actions,

@@ -289,6 +289,7 @@ function MyHealthPageContent() {
   const [activeWorkspaceSection, setActiveWorkspaceSection] = useState<WorkspaceSectionId>("overview");
   const [activeRecordLogTab, setActiveRecordLogTab] = useState<RecordLogTabId>("overview");
   const [recordRequestText, setRecordRequestText] = useState("");
+  const [isRecordRequestOpen, setIsRecordRequestOpen] = useState(false);
   const [needsSignIn, setNeedsSignIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -433,40 +434,6 @@ function MyHealthPageContent() {
                 </div>
               </section>
 
-              <section className="my-health-detail-section my-health-record-log-actions-card" aria-label="What do you need help with?">
-                <div className="panel-heading">
-                  <div>
-                    <h2>What do you need help with?</h2>
-                    <p>Tell us what you're looking for, and we'll help route you to testing, products, or the next step.</p>
-                  </div>
-                </div>
-
-                <form className="my-health-request-composer" onSubmit={handleRecordRequestSubmit}>
-                  <label>
-                    <span className="sr-only">Request message</span>
-                    <textarea
-                      value={recordRequestText}
-                      rows={2}
-                      placeholder="Ask about symptoms, testing, supplements, results, or what to do next..."
-                      onChange={(event) => setRecordRequestText(event.target.value)}
-                    />
-                  </label>
-                  <div className="my-health-request-composer-footer">
-                    <div className="my-health-request-chip-row" aria-label="Quick request prompts">
-                      {recordLogQuickChips.map((chip) => (
-                        <button key={chip} type="button" onClick={() => setRecordRequestText(chip)}>
-                          {chip}
-                        </button>
-                      ))}
-                    </div>
-                    <button className="my-health-request-submit" type="submit">
-                      Ask our team
-                    </button>
-                  </div>
-                </form>
-
-              </section>
-
               <div className="my-health-record-log-summary" aria-label="Record summary">
                 <article>
                   <span>Total records</span>
@@ -540,6 +507,69 @@ function MyHealthPageContent() {
             </section>
           ) : null}
         </section>
+      ) : null}
+
+      {!isLoading && canShowHealthContent && selectedLayout === "record-log" ? (
+        <aside
+          className={`my-health-request-float${isRecordRequestOpen ? " open" : ""}`}
+          aria-label="Ask our team"
+        >
+          {isRecordRequestOpen ? (
+            <section
+              className="my-health-request-drawer"
+              role="dialog"
+              aria-modal="false"
+              aria-labelledby="my-health-request-drawer-title"
+            >
+              <div className="my-health-request-drawer-heading">
+                <div>
+                  <h2 id="my-health-request-drawer-title">What do you need help with?</h2>
+                  <p>Tell us what you're looking for, and we'll help route the next step.</p>
+                </div>
+                <button
+                  aria-label="Close request drawer"
+                  className="my-health-request-drawer-close"
+                  type="button"
+                  onClick={() => setIsRecordRequestOpen(false)}
+                >
+                  x
+                </button>
+              </div>
+
+              <form className="my-health-request-composer my-health-request-drawer-form" onSubmit={handleRecordRequestSubmit}>
+                <label>
+                  <span className="sr-only">Request message</span>
+                  <textarea
+                    value={recordRequestText}
+                    rows={3}
+                    placeholder="Ask about symptoms, testing, supplements, results, or what to do next..."
+                    onChange={(event) => setRecordRequestText(event.target.value)}
+                  />
+                </label>
+                <div className="my-health-request-composer-footer">
+                  <div className="my-health-request-chip-row" aria-label="Quick request prompts">
+                    {recordLogQuickChips.map((chip) => (
+                      <button key={chip} type="button" onClick={() => setRecordRequestText(chip)}>
+                        {chip}
+                      </button>
+                    ))}
+                  </div>
+                  <button className="my-health-request-submit" type="submit">
+                    Send request
+                  </button>
+                </div>
+              </form>
+            </section>
+          ) : null}
+
+          <button
+            className="my-health-request-launcher"
+            type="button"
+            onClick={() => setIsRecordRequestOpen((isOpen) => !isOpen)}
+          >
+            Ask our team
+          </button>
+        </aside>
       ) : null}
 
       {!isLoading && canShowHealthContent && selectedLayout === "workspace" ? (

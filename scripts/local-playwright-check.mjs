@@ -220,11 +220,13 @@ const checks = {
       .getByLabel("Record sections")
       .locator("button")
       .evaluateAll((nodes) => nodes.map((node) => node.textContent));
-    const actionSection = page.getByLabel("What do you need help with?");
-    const composerPlaceholder = await actionSection
+    await page.getByRole("button", { name: "Ask our team" }).click();
+    const requestDrawer = page.locator(".my-health-request-drawer");
+    const composerPlaceholder = await requestDrawer
       .getByPlaceholder("Ask about symptoms, testing, supplements, results, or what to do next...")
       .isVisible();
-    const secondaryActionCount = await actionSection.locator(".my-health-record-secondary-actions .portal-action-row").count();
+    const requestDrawerTitle = await requestDrawer.getByRole("heading", { name: "What do you need help with?" }).isVisible();
+    const secondaryActionCount = await page.locator(".my-health-record-secondary-actions .portal-action-row").count();
     const recommendationCards = await page
       .getByLabel("Recommendations")
       .locator(".my-health-recommendation-card")
@@ -234,13 +236,13 @@ const checks = {
           href: node.getAttribute("href")
         }))
       );
-    await actionSection.getByRole("button", { name: "Compare products" }).click();
-    const chipPrefill = await actionSection
+    await requestDrawer.getByRole("button", { name: "Compare products" }).click();
+    const chipPrefill = await requestDrawer
       .getByPlaceholder("Ask about symptoms, testing, supplements, results, or what to do next...")
       .inputValue();
     const emptyOverview = await page.getByText("No records yet.").isVisible();
-    await actionSection.getByPlaceholder("Ask about symptoms, testing, supplements, results, or what to do next...").fill("I need help with a thyroid test");
-    await actionSection.getByRole("button", { name: "Ask our team" }).click();
+    await requestDrawer.getByPlaceholder("Ask about symptoms, testing, supplements, results, or what to do next...").fill("I need help with a thyroid test");
+    await requestDrawer.getByRole("button", { name: "Send request" }).click();
     await page.waitForURL(/\/message-team\?request=/);
     const routedRequestText = await page.getByLabel("Message details").locator("textarea").inputValue();
 
@@ -259,6 +261,7 @@ const checks = {
       heading,
       tabs,
       composerPlaceholder,
+      requestDrawerTitle,
       secondaryActionCount,
       recommendationCards,
       chipPrefill,
