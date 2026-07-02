@@ -11900,15 +11900,65 @@ output {
   }
 
   .message-team-workspace {
-    gap: 18px;
-    margin-top: 22px;
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  .message-team-heading {
+    gap: 6px;
+  }
+
+  .message-team-heading h1 {
+    font-size: clamp(1.85rem, 8vw, 2.18rem);
+    line-height: 1.02;
+  }
+
+  .message-team-heading p:not(.eyebrow) {
+    font-size: 0.98rem;
+    line-height: 1.45;
+  }
+
+  .message-team-option-grid {
+    gap: 8px;
   }
 
   .message-team-option,
   .message-team-form,
   .message-team-upload,
   .message-team-contact {
-    padding: 16px;
+    padding: 13px 14px;
+  }
+
+  .message-team-option {
+    min-height: 0;
+    gap: 5px;
+  }
+
+  .message-team-option strong {
+    font-size: 0.98rem;
+  }
+
+  .message-team-option span {
+    font-size: 0.9rem;
+    line-height: 1.34;
+  }
+
+  .message-team-secondary-option {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .message-team-field textarea {
+    min-height: 96px;
+  }
+
+  .message-team-selected {
+    gap: 6px 10px;
+  }
+
+  .message-team-prefill-note,
+  .message-team-reassurance {
+    font-size: 0.88rem;
   }
 
   .message-team-submit {
