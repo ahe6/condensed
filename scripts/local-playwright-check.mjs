@@ -224,9 +224,7 @@ const checks = {
     const composerPlaceholder = await actionSection
       .getByPlaceholder("Ask about symptoms, testing, supplements, results, or what to do next...")
       .isVisible();
-    const secondaryActionLabels = await actionSection
-      .locator(".my-health-record-secondary-actions .portal-action-row strong")
-      .evaluateAll((nodes) => nodes.map((node) => node.textContent));
+    const secondaryActionCount = await actionSection.locator(".my-health-record-secondary-actions .portal-action-row").count();
     const recommendationCards = await page
       .getByLabel("Recommendations")
       .locator(".my-health-recommendation-card")
@@ -261,7 +259,7 @@ const checks = {
       heading,
       tabs,
       composerPlaceholder,
-      secondaryActionLabels,
+      secondaryActionCount,
       recommendationCards,
       chipPrefill,
       routedRequestText,

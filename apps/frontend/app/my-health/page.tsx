@@ -189,23 +189,6 @@ const recordLogQuickChips = [
   "Not sure what I need"
 ] as const;
 
-const recordLogSecondaryActions = [
-  {
-    title: "Find testing options",
-    detail: "Explore lab, genetic, and at-home testing paths connected to what you are trying to understand.",
-    href: "/services?category=Tests",
-    action: "Plan testing",
-    priority: "Testing"
-  },
-  {
-    title: "Shop products",
-    detail: "Browse supplements, skin care, hair support, and other health products.",
-    href: "/services?category=Wellness",
-    action: "View products",
-    priority: "Products"
-  }
-] as const;
-
 const recordLogRecommendations = [
   {
     title: "General health panel",
@@ -482,22 +465,6 @@ function MyHealthPageContent() {
                   </div>
                 </form>
 
-                <div className="my-health-record-secondary-actions">
-                  {recordLogSecondaryActions.map((item) => (
-                    <Link
-                      className="portal-action-row"
-                      href={item.href}
-                      key={`${item.priority}-${item.title}`}
-                    >
-                      <span>{item.priority}</span>
-                      <div>
-                        <strong>{item.title}</strong>
-                        <p>{item.detail}</p>
-                      </div>
-                      <small>{item.action}</small>
-                    </Link>
-                  ))}
-                </div>
               </section>
 
               <div className="my-health-record-log-summary" aria-label="Record summary">
