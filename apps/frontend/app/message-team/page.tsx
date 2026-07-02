@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
-import { CustomerBrand } from "../../src/components/CustomerBrand";
-import { CustomerNav } from "../../src/components/CustomerNav";
+import { ConsultOverlayHeader } from "../../src/components/ConsultOverlayHeader";
 
 const messagePrimaryOptions = [
   {
@@ -61,12 +60,39 @@ function pickLayout(value: string | null): (typeof messageLayoutValues)[number] 
     : "guided";
 }
 
+function pickInitialOption(requestText: string): (typeof messageStartOptions)[number] | null {
+  const normalizedRequest = requestText.toLowerCase();
+
+  if (!normalizedRequest) {
+    return null;
+  }
+
+  if (
+    /\b(result|results|bloodwork|lab|labs|report|reports|genetic|genetics|hormone|metabolic|nutrient|fertility)\b/.test(
+      normalizedRequest
+    ) &&
+    /\b(understand|understanding|review|analysis|analyze|look at|second look)\b/.test(normalizedRequest)
+  ) {
+    return messagePrimaryOptions[1];
+  }
+
+  if (/\b(test|testing|panel|screening|sti|std|genetic|hormone|fertility|thyroid)\b/.test(normalizedRequest)) {
+    return messagePrimaryOptions[0];
+  }
+
+  if (/\b(symptom|symptoms|concern|pain|fatigue|worried|issue|problem)\b/.test(normalizedRequest)) {
+    return messagePrimaryOptions[2];
+  }
+
+  return messagePrimaryOptions[3];
+}
+
 function MessageTeamContent() {
   const searchParams = useSearchParams();
   const layout = pickLayout(searchParams.get("layout"));
   const initialRequestText = searchParams.get("request") ?? "";
   const [selectedOption, setSelectedOption] = useState<(typeof messageStartOptions)[number] | null>(
-    initialRequestText ? messagePrimaryOptions[3] : null
+    () => pickInitialOption(initialRequestText)
   );
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -74,13 +100,8 @@ function MessageTeamContent() {
   }
 
   return (
-    <main className={`shell message-team-page message-team-page-${layout}`}>
-      <section className="topbar site-header" aria-label="Message team navigation">
-        <CustomerBrand />
-        <div className="nav-actions">
-          <CustomerNav primaryHref="/my-health" primaryLabel="My Health" />
-        </div>
-      </section>
+    <main className={`shell message-team-page message-team-page-${layout} overlay-header-page`}>
+      <ConsultOverlayHeader lineVariant="full" />
 
       <section className="message-team-workspace" aria-labelledby="message-team-title">
         <div className="message-team-heading">
@@ -132,6 +153,10 @@ function MessageTeamContent() {
               <span>{selectedOption.prompt}</span>
               <textarea defaultValue={initialRequestText} placeholder={selectedOption.placeholder} rows={5} />
             </label>
+
+            {initialRequestText ? (
+              <p className="message-team-prefill-note">We started this message from what you clicked. You can edit it before sending.</p>
+            ) : null}
 
             <section
               className={

@@ -274,6 +274,9 @@ const checks = {
   async "message-team"(page) {
     await page.goto("http://localhost:3001/message-team?layout=guided", { waitUntil: "networkidle" });
     const heading = await page.getByRole("heading", { name: "What can we help you with?" }).isVisible();
+    const navLinks = await page
+      .locator(".consult-overlay-service-bar a:not(.consult-overlay-menu-sign-in)")
+      .evaluateAll((nodes) => nodes.map((node) => node.textContent));
     const options = await page.locator(".message-team-option").evaluateAll((nodes) =>
       nodes.map((node) => node.textContent)
     );
@@ -290,8 +293,33 @@ const checks = {
     await page.getByRole("button", { name: /Something else/ }).click();
     const secondaryPrompt = await page.getByText("What would you like to ask us?").isVisible();
     const secondarySelected = await page.getByText("Something else", { exact: true }).isVisible();
+    await page.goto("http://localhost:3001/message-team?request=I%20want%20help%20understanding%20my%20bloodwork", {
+      waitUntil: "networkidle"
+    });
+    const prefilledText = await page.getByLabel("Message details").locator("textarea").inputValue();
+    const prefillNote = await page.getByText("We started this message from what you clicked. You can edit it before sending.").isVisible();
+    const prefilledSelected = await page
+      .locator(".message-team-selected")
+      .getByText("Understand my results", { exact: true })
+      .isVisible();
 
-    return { heading, subtitle, options, selected, messageBox, upload, contact, reassurance, send, secondaryPrompt, secondarySelected };
+    return {
+      heading,
+      navLinks,
+      subtitle,
+      options,
+      selected,
+      messageBox,
+      upload,
+      contact,
+      reassurance,
+      send,
+      secondaryPrompt,
+      secondarySelected,
+      prefilledText,
+      prefillNote,
+      prefilledSelected
+    };
   },
 
   async "landing-message-cta"(page) {
