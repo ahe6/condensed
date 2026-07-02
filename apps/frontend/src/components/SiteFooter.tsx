@@ -23,6 +23,8 @@ const footerSections = [
     title: "Learn",
     links: [
       { label: "Library", href: "/library" },
+      { label: "Q&A", href: "/qa" },
+      { label: "Forum", href: "/forum" },
       { label: "Genetics", href: "/genetic-testing" }
     ]
   }

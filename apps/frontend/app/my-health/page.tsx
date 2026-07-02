@@ -223,6 +223,24 @@ const recordLogRecommendations = [
     detail: "Routine wellness support for nutrient questions and everyday health goals.",
     href: "/services?category=Wellness",
     meta: "Wellness"
+  },
+  {
+    title: "Care navigation",
+    detail: "Get help deciding whether a question belongs with testing, records, products, or follow-up.",
+    href: "/services?category=Care",
+    meta: "Care"
+  },
+  {
+    title: "Vitamin D retest plan",
+    detail: "Plan when to recheck levels and what context to keep with the result.",
+    href: "/services?category=Tests",
+    meta: "Testing"
+  },
+  {
+    title: "Sleep support basics",
+    detail: "Compare common sleep questions across routines, products, testing, and follow-up.",
+    href: "/services?category=Wellness",
+    meta: "Wellness"
   }
 ] as const;
 
@@ -315,6 +333,7 @@ function MyHealthPageContent() {
   const [activeRecordLogTab, setActiveRecordLogTab] = useState<RecordLogTabId>("overview");
   const [recordRequestText, setRecordRequestText] = useState("");
   const [isRecordRequestOpen, setIsRecordRequestOpen] = useState(false);
+  const [recommendationStartIndex, setRecommendationStartIndex] = useState(0);
   const [needsSignIn, setNeedsSignIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -327,6 +346,14 @@ function MyHealthPageContent() {
   const isActiveWorkspacePreview = canPreviewWithoutSignIn && selectedWorkspaceState === "active";
   const shouldShowSignInDialog = needsSignIn && !isSignInPreview;
   const canShowHealthContent = !needsSignIn || isSignInPreview;
+  const visibleRecommendationCount = 4;
+  const maxRecommendationStartIndex = Math.max(recordLogRecommendations.length - visibleRecommendationCount, 0);
+  const visibleRecommendations = recordLogRecommendations.slice(
+    recommendationStartIndex,
+    recommendationStartIndex + visibleRecommendationCount
+  );
+  const canGoToPreviousRecommendations = recommendationStartIndex > 0;
+  const canGoToNextRecommendations = recommendationStartIndex < maxRecommendationStartIndex;
 
   function handleRecordRequestSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -424,6 +451,15 @@ function MyHealthPageContent() {
               <p>Ask health questions, save records, and track testing, products, and follow-ups.</p>
             </div>
 
+            {selectedSupportVariant === "empty-state-only" && !isActiveWorkspacePreview ? (
+              <div className="my-health-header-action-group">
+                <span>Need help?</span>
+                <button className="my-health-header-action" type="button" onClick={() => setIsRecordRequestOpen(true)}>
+                  Ask a question
+                </button>
+              </div>
+            ) : null}
+
             <nav className="my-health-section-tabs" aria-label="Record sections">
               {recordLogTabs.map((tab) => (
                 <button
@@ -438,14 +474,6 @@ function MyHealthPageContent() {
               ))}
             </nav>
 
-            {selectedSupportVariant === "empty-state-only" && !isActiveWorkspacePreview ? (
-              <div className="my-health-header-action-group">
-                <span>Need help?</span>
-                <button className="my-health-header-action" type="button" onClick={() => setIsRecordRequestOpen(true)}>
-                  Ask a question
-                </button>
-              </div>
-            ) : null}
           </div>
 
           {activeRecordLogTab === "overview" ? (
@@ -502,9 +530,39 @@ function MyHealthPageContent() {
                     <h2>Recommendations</h2>
                     <p>Services that may be useful based on common starting points.</p>
                   </div>
+                  <div className="my-health-recommendations-controls">
+                    <div className="my-health-recommendations-nav" aria-label="Recommendation navigation">
+                      <button
+                        aria-label="Previous recommendations"
+                        className="home-carousel-arrow"
+                        disabled={!canGoToPreviousRecommendations}
+                        type="button"
+                        onClick={() =>
+                          setRecommendationStartIndex((current) =>
+                            Math.max(current - visibleRecommendationCount, 0)
+                          )
+                        }
+                      >
+                        ‹
+                      </button>
+                      <button
+                        aria-label="Next recommendations"
+                        className="home-carousel-arrow"
+                        disabled={!canGoToNextRecommendations}
+                        type="button"
+                        onClick={() =>
+                          setRecommendationStartIndex((current) =>
+                            Math.min(current + visibleRecommendationCount, maxRecommendationStartIndex)
+                          )
+                        }
+                      >
+                        ›
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 <div className="my-health-recommendation-grid">
-                  {recordLogRecommendations.map((recommendation) => (
+                  {visibleRecommendations.map((recommendation) => (
                     <Link className="my-health-recommendation-card" href={recommendation.href} key={recommendation.title}>
                       <span>{recommendation.meta}</span>
                       <strong>{recommendation.title}</strong>
@@ -513,6 +571,11 @@ function MyHealthPageContent() {
                   ))}
                 </div>
               </section>
+
+              <div className="my-health-record-log-section-heading">
+                <h2>Health summary</h2>
+                <p>Saved records and recent activity will show here.</p>
+              </div>
 
               <div className="my-health-record-log-summary" aria-label="Record summary">
                 <article>

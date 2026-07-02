@@ -1,178 +1,294 @@
 import Link from "next/link";
 import { ConsultOverlayHeader } from "../../src/components/ConsultOverlayHeader";
+import { LibraryFeaturedGuides } from "./LibraryFeaturedGuides";
 
 export const metadata = {
   title: "Health Library | Condensed Health"
 };
 
-const libraryCollections = [
+const libraryAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+const topicCollections = [
   {
-    title: "Testing",
-    detail: "How to think about lab, genetic, and at-home testing options.",
-    href: "/#tests",
-    items: ["Lab panels", "Genetic testing", "At-home kits"]
+    title: "Testing guides",
+    detail: "Lab panels, genetics, at-home kits, timing, and how to compare options.",
+    links: ["General lab panels", "Genetic testing", "At-home testing"]
   },
   {
-    title: "Results",
-    detail: "Plain-language guides for understanding reports and deciding what to ask next.",
-    href: "/message-team",
-    items: ["Bloodwork", "Hormones", "Follow-up questions"]
+    title: "Results guides",
+    detail: "Bloodwork, hormone reports, genetic results, and questions to ask after a review.",
+    links: ["Bloodwork basics", "Hormone results", "Follow-up questions"]
   },
   {
-    title: "Health concerns",
-    detail: "Starting points for common questions about symptoms, goals, and next steps.",
-    href: "/#clinicians",
-    items: ["Weight", "Hair loss", "Skin care"]
+    title: "Wellness guides",
+    detail: "Supplements, skin care, hair support, and daily routines connected to health goals.",
+    links: ["Supplement routines", "Skin care", "Hair support"]
   },
   {
-    title: "Care navigation",
-    detail: "When to message our team, review records, plan testing, or talk to a clinician.",
-    href: "/my-health",
-    items: ["Records", "Testing plans", "Follow-up"]
+    title: "Advanced health guides",
+    detail: "How to ask better questions about regenerative, peptide, IV, and microbiome options.",
+    links: ["PRP questions", "Peptide review", "Microbiome therapies"]
   }
 ] as const;
 
-const featuredGuides = [
-  "What to ask before ordering a test",
-  "How to prepare lab results for review",
-  "When a result needs follow-up",
-  "How to compare testing options"
+const latestGuides = [
+  "Questions to ask before ordering a test",
+  "How to prepare records for review",
+  "What makes a result worth repeating",
+  "How to compare wellness products without overbuying"
 ] as const;
 
-const forumCategories = [
+const libraryQuestions = [
   {
-    title: "Results help",
-    detail: "Questions about bloodwork, genetic reports, imaging notes, and what to ask next.",
-    count: "18 threads"
+    question: "I have fatigue and older bloodwork. Should I test again or upload what I have first?",
+    answer:
+      "The team would usually start by reviewing the existing report dates, abnormal markers, symptoms, and missing labs before suggesting whether repeat testing makes sense."
   },
   {
-    title: "Testing options",
-    detail: "Compare labs, at-home kits, genetics, screening, and advanced testing paths.",
-    count: "12 threads"
+    question: "My thyroid result is borderline. What should I ask next?",
+    answer:
+      "A useful next step is grouping the value with symptoms, medications, prior thyroid results, and related markers so the follow-up question is more specific."
   },
   {
-    title: "Care next steps",
-    detail: "Talk through follow-up, referrals, second opinions, and care coordination questions.",
-    count: "9 threads"
+    question: "I want supplements but do not know what is worth buying.",
+    answer:
+      "The team can help separate product questions from testing questions, especially when symptoms, diet, medications, or recent labs might change what is reasonable."
   },
   {
-    title: "Products and routines",
-    detail: "Discuss supplements, skin care, hair support, and daily wellness routines.",
-    count: "7 threads"
+    question: "I am not sure if this is a testing question or a clinician question.",
+    answer:
+      "That is a good reason to start with a plain-language message. The team can help route it toward records review, testing options, products, or care follow-up."
   }
 ] as const;
 
-const forumThreads = [
-  {
-    title: "Which markers matter most before a general health panel?",
-    tag: "Testing",
-    meta: "New discussion",
-    replies: "4 replies"
-  },
-  {
-    title: "How should I organize old bloodwork before asking for a review?",
-    tag: "Records",
-    meta: "Pinned starter",
-    replies: "6 replies"
-  },
-  {
-    title: "What questions should I ask after a borderline thyroid result?",
-    tag: "Results",
-    meta: "Popular",
-    replies: "11 replies"
-  },
-  {
-    title: "Stem cells, PRP, exosomes: what should someone verify first?",
-    tag: "Advanced health",
-    meta: "Review topic",
-    replies: "3 replies"
-  }
-] as const;
+type LibrarySectionVariant = "current" | "hidden";
+type LibraryTopicsVariant = "directory" | "rows" | "matrix" | "current" | "hidden";
+type LibraryQaVariant = "feed" | "spotlight" | "rows" | "hidden";
+type LibrarySearchParams = Record<string, string | string[] | undefined>;
 
-export default function LibraryPage() {
+const librarySectionVariantValues = ["current", "hidden"] as const;
+const libraryTopicsVariantValues = ["directory", "rows", "matrix", "current", "hidden"] as const;
+const libraryQaVariantValues = ["feed", "spotlight", "rows", "hidden"] as const;
+
+function getSearchParamValue(searchParams: LibrarySearchParams, key: string): string | null {
+  const value = searchParams[key];
+
+  return Array.isArray(value) ? (value[0] ?? null) : (value ?? null);
+}
+
+function pickLibrarySectionVariant(value: string | null, fallback: LibrarySectionVariant): LibrarySectionVariant {
+  return librarySectionVariantValues.includes(value as LibrarySectionVariant)
+    ? (value as LibrarySectionVariant)
+    : fallback;
+}
+
+function pickLibraryTopicsVariant(value: string | null, fallback: LibraryTopicsVariant): LibraryTopicsVariant {
+  return libraryTopicsVariantValues.includes(value as LibraryTopicsVariant)
+    ? (value as LibraryTopicsVariant)
+    : fallback;
+}
+
+function pickLibraryQaVariant(value: string | null, fallback: LibraryQaVariant): LibraryQaVariant {
+  return libraryQaVariantValues.includes(value as LibraryQaVariant) ? (value as LibraryQaVariant) : fallback;
+}
+
+export default async function LibraryPage({
+  searchParams
+}: {
+  searchParams?: Promise<LibrarySearchParams>;
+}) {
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const featuredVariant = pickLibrarySectionVariant(getSearchParamValue(resolvedSearchParams, "featured"), "current");
+  const topicsVariant = pickLibraryTopicsVariant(getSearchParamValue(resolvedSearchParams, "topics"), "directory");
+  const latestVariant = pickLibrarySectionVariant(getSearchParamValue(resolvedSearchParams, "latest"), "hidden");
+  const qaVariant = pickLibraryQaVariant(getSearchParamValue(resolvedSearchParams, "qa"), "hidden");
+
   return (
-    <main className="shell overlay-header-page">
+    <main className="shell overlay-header-page library-page">
       <ConsultOverlayHeader lineVariant="full" />
 
-      <section className="library-collection-grid" aria-label="Library collections">
-        {libraryCollections.map((collection) => (
-          <article className="library-collection-card" key={collection.title}>
+      <section className="library-hero" aria-labelledby="library-title">
+        <div className="library-hero-main">
+          <div className="library-hero-copy">
+            <h1 id="library-title">Practical guides for your health</h1>
+            <p>Plain-language explainers for testing, results, wellness, and next steps.</p>
+          </div>
+          <section className="library-discovery" aria-label="Find library guides">
+            <label className="library-search">
+              <span>Search guides</span>
+              <input type="search" placeholder="Search guides by topic or question..." />
+            </label>
+            <details className="library-alpha-mobile">
+              <summary>Search by first letter</summary>
+              <div className="library-alpha-row">
+                {libraryAlphabet.map((letter) => (
+                  <Link href={`/library?letter=${letter}`} key={letter}>
+                    {letter}
+                  </Link>
+                ))}
+              </div>
+            </details>
+          </section>
+        </div>
+        <div className="library-alpha-browser library-alpha-browser-desktop" aria-label="Search guides by first letter">
+          <span>Search by first letter</span>
+          <div className="library-alpha-row">
+            {libraryAlphabet.map((letter) => (
+              <Link href={`/library?letter=${letter}`} key={letter}>
+                {letter}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {featuredVariant === "current" ? <LibraryFeaturedGuides /> : null}
+
+      {topicsVariant !== "hidden" ? (
+        <section className="library-section" aria-labelledby="library-topics-title">
+          <div className="library-section-heading">
             <div>
-              <h2>{collection.title}</h2>
-              <p>{collection.detail}</p>
+              <h2 id="library-topics-title">Browse by topic</h2>
+              <p>Use the library as a reference layer before you message our team or save records.</p>
             </div>
-            <ul>
-              {collection.items.map((item) => (
-                <li key={item}>{item}</li>
+          </div>
+          {topicsVariant === "current" ? (
+            <div className="library-topic-grid">
+              {topicCollections.map((collection) => (
+                <article className="library-topic-card" key={collection.title}>
+                  <h3>{collection.title}</h3>
+                  <p>{collection.detail}</p>
+                  <ul>
+                    {collection.links.map((link) => (
+                      <li key={link}>{link}</li>
+                    ))}
+                  </ul>
+                </article>
               ))}
-            </ul>
-            <Link href={collection.href}>View collection</Link>
-          </article>
-        ))}
-      </section>
-
-      <section className="library-forum" aria-labelledby="library-forum-title">
-        <div className="library-forum-heading">
-          <div>
-            <p className="eyebrow">Community forum</p>
-            <h2 id="library-forum-title">Ask, compare, and organize health questions.</h2>
-            <p>
-              A place for practical discussions about testing, results, products, advanced options,
-              and what to do next. This is not medical advice or urgent care.
-            </p>
-          </div>
-          <Link className="nav-link primary-link" href="/message-team">
-            Start a discussion
-          </Link>
-        </div>
-
-        <div className="library-forum-layout">
-          <div className="library-forum-categories" aria-label="Forum categories">
-            {forumCategories.map((category) => (
-              <article key={category.title}>
-                <div>
-                  <h3>{category.title}</h3>
-                  <p>{category.detail}</p>
-                </div>
-                <span>{category.count}</span>
-              </article>
-            ))}
-          </div>
-
-          <div className="library-forum-threads" aria-label="Recent forum threads">
-            <div className="library-forum-thread-heading">
-              <h3>Recent discussions</h3>
-              <span>Preview</span>
             </div>
-            {forumThreads.map((thread) => (
-              <article key={thread.title}>
-                <span>{thread.tag}</span>
-                <div>
-                  <h4>{thread.title}</h4>
-                  <p>
-                    {thread.meta} · {thread.replies}
-                  </p>
-                </div>
+          ) : null}
+          {topicsVariant === "directory" ? (
+            <div className="library-topic-directory">
+              {topicCollections.map((collection) => (
+                <section key={collection.title}>
+                  <h3>{collection.title}</h3>
+                  <p>{collection.detail}</p>
+                  <div>
+                    {collection.links.map((link) => (
+                      <Link href={`/library?topic=${encodeURIComponent(link)}`} key={link}>
+                        {link}
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          ) : null}
+          {topicsVariant === "rows" ? (
+            <div className="library-topic-rows">
+              {topicCollections.map((collection) => (
+                <article key={collection.title}>
+                  <div>
+                    <h3>{collection.title}</h3>
+                    <p>{collection.detail}</p>
+                  </div>
+                  <div>
+                    {collection.links.map((link) => (
+                      <Link href={`/library?topic=${encodeURIComponent(link)}`} key={link}>
+                        {link}
+                      </Link>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : null}
+          {topicsVariant === "matrix" ? (
+            <div className="library-topic-matrix">
+              {topicCollections.map((collection) => (
+                <section key={collection.title}>
+                  <h3>{collection.title}</h3>
+                  {collection.links.map((link) => (
+                    <Link href={`/library?topic=${encodeURIComponent(link)}`} key={link}>
+                      {link}
+                    </Link>
+                  ))}
+                </section>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      {latestVariant === "current" ? (
+        <section className="library-section library-latest-section" aria-labelledby="library-latest-title">
+          <div className="library-section-heading">
+            <div>
+              <h2 id="library-latest-title">Latest guides</h2>
+              <p>Placeholder titles for the first SEO-focused articles.</p>
+            </div>
+          </div>
+          <div className="library-latest-list">
+            {latestGuides.map((guide) => (
+              <article key={guide}>
+                <h3>{guide}</h3>
+                <p>Short practical guidance will live here as the library grows.</p>
               </article>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
-      <section className="library-featured" aria-label="Featured guides">
-        <div>
-          <p className="eyebrow">Featured guides</p>
-          <h2>Coming soon</h2>
-        </div>
-        <div className="library-featured-list">
-          {featuredGuides.map((guide) => (
-            <article key={guide}>
-              <h3>{guide}</h3>
-              <p>Short practical guidance will live here as the content library grows.</p>
-            </article>
-          ))}
-        </div>
-      </section>
+      {qaVariant !== "hidden" ? (
+        <section className="library-section library-qa-section" aria-labelledby="library-qa-title">
+          <div className="library-section-heading">
+            <div>
+              <h2 id="library-qa-title">Questions from people like you</h2>
+              <p>Example exchanges showing how people ask the team about testing, results, products, and next steps.</p>
+            </div>
+            <Link href="/qa">View Q&A</Link>
+          </div>
+          {qaVariant === "feed" ? (
+            <div className="library-qa-feed">
+              {libraryQuestions.map((item) => (
+                <article key={item.question}>
+                  <span>Question</span>
+                  <div>
+                    <h3>{item.question}</h3>
+                    <p>{item.answer}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : null}
+          {qaVariant === "spotlight" ? (
+            <div className="library-qa-spotlight">
+              <article>
+                <span>Featured question</span>
+                <h3>{libraryQuestions[0].question}</h3>
+                <p>{libraryQuestions[0].answer}</p>
+              </article>
+              <div>
+                {libraryQuestions.slice(1).map((item) => (
+                  <Link href="/qa" key={item.question}>
+                    {item.question}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {qaVariant === "rows" ? (
+            <div className="library-qa-rows">
+              {libraryQuestions.map((item) => (
+                <article key={item.question}>
+                  <h3>{item.question}</h3>
+                  <p>{item.answer}</p>
+                </article>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
     </main>
   );
 }

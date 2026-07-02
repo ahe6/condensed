@@ -137,6 +137,50 @@ const messageTeamVariantGroups = [
   }
 ];
 
+const libraryVariantGroups = [
+  {
+    param: "featured",
+    label: "Featured guides",
+    fallback: "current",
+    options: [
+      { value: "current", label: "Current" },
+      { value: "hidden", label: "Hidden" }
+    ]
+  },
+  {
+    param: "topics",
+    label: "Browse topics",
+    fallback: "directory",
+    options: [
+      { value: "directory", label: "Directory" },
+      { value: "matrix", label: "Link matrix" },
+      { value: "rows", label: "Rows" },
+      { value: "current", label: "Cards" },
+      { value: "hidden", label: "Hidden" }
+    ]
+  },
+  {
+    param: "latest",
+    label: "Latest guides",
+    fallback: "hidden",
+    options: [
+      { value: "current", label: "Current" },
+      { value: "hidden", label: "Hidden" }
+    ]
+  },
+  {
+    param: "qa",
+    label: "Q&A section",
+    fallback: "hidden",
+    options: [
+      { value: "feed", label: "Feed" },
+      { value: "spotlight", label: "Spotlight" },
+      { value: "rows", label: "Rows" },
+      { value: "hidden", label: "Hidden" }
+    ]
+  }
+];
+
 type VariantPageLink = {
   href: string;
   label: string;
@@ -169,7 +213,9 @@ const campaignPageLinks: VariantPageLink[] = [
   { href: "/weight-loss", label: "Weight loss", value: "weight-loss" },
   { href: "/hormones", label: "Hormones", value: "hormones" },
   { href: "/genetic-testing", label: "Genetic testing", value: "genetic-testing" },
-  { href: "/library", label: "Library", value: "library" }
+  { href: "/library", label: "Library", value: "library" },
+  { href: "/qa", label: "Q&A", value: "qa" },
+  { href: "/forum", label: "Forum", value: "forum" }
 ];
 
 const operationalPageLinks: VariantPageLink[] = [
@@ -222,7 +268,9 @@ export function VariantPreviewSelector() {
         ? myHealthVariantGroups
         : activePage === "message-team"
           ? messageTeamVariantGroups
-          : [];
+          : activePage === "library"
+            ? libraryVariantGroups
+            : [];
   const triggerLabel = "Design variants";
 
   if (!shouldShow) {

@@ -68,7 +68,8 @@ export function ConsultOverlayHeader({ lineVariant }: { lineVariant: TopBarLineV
         <CustomerBrand />
         <nav ref={menuRef} className="consult-overlay-service-bar" aria-label="Site sections">
           {consultOverlayNavLinks.map((link) => {
-            const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
+            const isLibraryArea = link.href === "/library" && (pathname.startsWith("/forum") || pathname.startsWith("/qa"));
+            const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`) || isLibraryArea;
 
             return (
               <Link
