@@ -81,6 +81,7 @@ body {
 }
 
 .overlay-header-page.shell {
+  width: min(1344px, calc(100% - 96px));
   background: var(--color-page);
   box-shadow: 0 0 0 100vmax var(--color-page);
   clip-path: inset(0 -100vmax);
@@ -3226,8 +3227,37 @@ h3 {
   display: none;
 }
 
-.consult-overlay-mobile-sign-in {
+.consult-overlay-service-bar .consult-overlay-menu-sign-in {
   display: none;
+}
+
+.consult-overlay-account-icon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(47, 111, 159, 0.14);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.consult-overlay-account-icon:hover,
+.consult-overlay-account-icon:focus-visible {
+  border-color: rgba(47, 111, 159, 0.28);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.consult-overlay-account-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
 }
 
 .consult-overlay-service-bar {
@@ -3434,9 +3464,9 @@ h3 {
   min-width: 0;
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(6, max-content);
+  grid-template-columns: repeat(var(--hero-card-count, 6), minmax(0, 1fr));
   gap: 8px;
-  justify-content: center;
+  justify-content: stretch;
 }
 
 .home-hero-search-card {
@@ -6517,10 +6547,10 @@ h3 {
 }
 
 .services-catalog-page {
+  width: min(1344px, calc(100% - 96px));
   padding-top: 0;
 }
 
-.services-catalog-hero,
 .services-catalog-controls,
 .services-catalog-results {
   margin-bottom: 18px;
@@ -6532,31 +6562,32 @@ h3 {
 
 .services-catalog-hero {
   display: grid;
-  gap: 18px;
-  padding: clamp(26px, 5vw, 58px);
+  gap: 12px;
+  margin: 22px 0 16px;
+  padding: 0;
 }
 
 .services-catalog-hero > div {
   display: grid;
-  gap: 12px;
+  gap: 7px;
 }
 
 .services-catalog-hero h1 {
   max-width: 800px;
   margin: 0;
   color: var(--ink);
-  font-size: clamp(2.35rem, 4.4vw, 4.7rem);
+  font-size: clamp(1.8rem, 3vw, 2.7rem);
   font-weight: 760;
   letter-spacing: 0;
-  line-height: 0.98;
+  line-height: 1;
 }
 
-.services-catalog-hero p:not(.eyebrow) {
+.services-catalog-hero p {
   max-width: 760px;
   margin: 0;
   color: var(--muted);
-  font-size: 1.08rem;
-  line-height: 1.55;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .services-catalog-controls {
@@ -6706,6 +6737,16 @@ h3 {
   margin: 0;
   color: var(--muted);
   line-height: 1.5;
+}
+
+.services-catalog-price {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 850;
+  line-height: 1.2;
 }
 
 .services-catalog-card small {
@@ -7899,7 +7940,7 @@ h3 {
 }
 
 .my-health-shell {
-  width: min(1180px, calc(100% - 80px));
+  width: min(1344px, calc(100% - 96px));
 }
 
 .my-health-workspace {
@@ -8134,14 +8175,25 @@ h3 {
 .my-health-record-log-actions-card h2 {
   margin: 0;
   color: var(--text);
-  font-size: 1.2rem;
+  font-size: 1.02rem;
   line-height: 1.18;
+}
+
+.my-health-record-log-actions-card {
+  gap: 11px;
+  padding: 14px;
+}
+
+.my-health-record-log-actions-card .panel-heading p {
+  max-width: 600px;
+  font-size: 0.93rem;
+  line-height: 1.4;
 }
 
 .my-health-request-composer {
   display: grid;
-  gap: 10px;
-  padding: 12px;
+  gap: 8px;
+  padding: 10px;
   border: 1px solid rgba(47, 111, 159, 0.14);
   border-radius: 10px;
   background: #fff;
@@ -8154,9 +8206,9 @@ h3 {
 
 .my-health-request-composer textarea {
   width: 100%;
-  min-height: 78px;
+  min-height: 52px;
   resize: vertical;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border: 0;
   border-radius: 8px;
   background: #fff;
@@ -8228,6 +8280,54 @@ h3 {
   min-height: 84px;
   border: 0;
   background: #fff;
+}
+
+.my-health-recommendations-card {
+  gap: 12px;
+}
+
+.my-health-recommendation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.my-health-recommendation-card {
+  min-height: 138px;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(31, 42, 51, 0.04);
+}
+
+.my-health-recommendation-card span {
+  width: fit-content;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 0.74rem;
+  font-weight: 850;
+}
+
+.my-health-recommendation-card strong {
+  color: var(--text);
+  font-size: 0.98rem;
+  line-height: 1.18;
+}
+
+.my-health-recommendation-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.42;
 }
 
 .my-health-section-tabs {
@@ -11539,7 +11639,9 @@ output {
     padding: 20px 0;
   }
 
-  .my-health-shell {
+  .overlay-header-page.shell,
+  .my-health-shell,
+  .services-catalog-page {
     width: min(100% - 24px, 1440px);
   }
 
@@ -11687,6 +11789,7 @@ output {
   }
 
   .my-health-record-secondary-actions,
+  .my-health-recommendation-grid,
   .my-health-overview-actions-card .portal-action-list {
     grid-template-columns: 1fr;
   }
@@ -11738,29 +11841,28 @@ output {
   }
 
   .home-specific-carousel {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .home-hero-card-carousel {
     display: grid;
-    grid-template-columns: 38px 38px;
+    grid-template-columns: 38px minmax(0, 1fr) 38px;
     gap: 8px;
     align-items: center;
-    justify-content: center;
   }
 
   .home-hero-card-carousel .home-carousel-arrow:first-child {
     grid-column: 1;
-    grid-row: 2;
+    grid-row: 1;
   }
 
   .home-hero-card-carousel .home-carousel-arrow:last-child {
-    grid-column: 2;
-    grid-row: 2;
+    grid-column: 3;
+    grid-row: 1;
   }
 
   .home-hero-card-carousel .home-hero-search-card-row {
-    grid-column: 1 / -1;
+    grid-column: 2;
     grid-row: 1;
   }
 
@@ -11829,21 +11931,8 @@ output {
     background: currentColor;
   }
 
-  .consult-overlay-mobile-sign-in {
-    min-height: 38px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: auto;
-    padding: 0 13px;
-    border: 1px solid rgba(47, 111, 159, 0.16);
-    border-radius: 2px;
-    background: #ffffff;
-    color: var(--color-text);
-    font-size: 0.9rem;
-    font-weight: 520;
-    text-decoration: none;
-    white-space: nowrap;
+  .consult-overlay-account-icon {
+    display: none;
   }
 
   .consult-overlay-header-lines-gutter::before,
@@ -11882,6 +11971,15 @@ output {
     font-size: 1rem;
   }
 
+  .consult-overlay-header-menu-open .consult-overlay-service-bar .consult-overlay-menu-sign-in {
+    display: inline-flex;
+    margin-top: 6px;
+    border-top: 1px solid rgba(47, 111, 159, 0.12);
+    border-radius: 0;
+    color: var(--color-primary);
+    font-weight: 700;
+  }
+
   .home-hero-consult-search {
     min-height: 0;
     margin-right: -12px;
@@ -11914,16 +12012,16 @@ output {
   .home-hero-search-card-row {
     width: 100%;
     display: grid;
-    grid-template-columns: repeat(3, max-content);
-    justify-content: center;
+    grid-template-columns: repeat(var(--hero-card-count, 2), minmax(0, 1fr));
+    justify-content: stretch;
     gap: 8px;
   }
 
   .home-hero-search-card {
-    min-width: 86px;
-    min-height: 72px;
+    min-width: 0;
+    min-height: 68px;
     aspect-ratio: auto;
-    padding: 9px 11px;
+    padding: 8px 9px;
   }
 
   .home-hero-search-bar {
@@ -12802,5 +12900,11 @@ output {
 
   h1 {
     font-size: 28px;
+  }
+}
+
+@media (min-width: 560px) and (max-width: 720px) {
+  .home-specific-carousel {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

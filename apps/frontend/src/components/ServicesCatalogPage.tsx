@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { ConsultOverlayHeader } from "./ConsultOverlayHeader";
 
@@ -9,10 +10,20 @@ const categories = [
   "Tests",
   "Analysis",
   "Wellness",
-  "Clinicians",
+  "Care",
   "Treatments",
   "Advanced Health"
 ] as const;
+
+type ServiceCategory = (typeof categories)[number];
+
+function pickInitialCategory(value: string | null): ServiceCategory {
+  if (value === "Clinicians") {
+    return "Care";
+  }
+
+  return categories.includes(value as ServiceCategory) ? (value as ServiceCategory) : "All";
+}
 
 const serviceCards = [
   {
@@ -21,7 +32,8 @@ const serviceCards = [
     category: "Tests",
     meta: "Testing",
     href: "/message-team",
-    cta: "Start here"
+    cta: "Start here",
+    price: "From $129"
   },
   {
     title: "Hormone testing",
@@ -29,7 +41,8 @@ const serviceCards = [
     category: "Tests",
     meta: "Labs",
     href: "/hormones",
-    cta: "Explore"
+    cta: "Explore",
+    price: "From $149"
   },
   {
     title: "Genetic testing",
@@ -37,7 +50,8 @@ const serviceCards = [
     category: "Tests",
     meta: "Genetics",
     href: "/genetic-testing",
-    cta: "Explore"
+    cta: "Explore",
+    price: "From $199"
   },
   {
     title: "Bloodwork analysis",
@@ -45,7 +59,8 @@ const serviceCards = [
     category: "Analysis",
     meta: "Bloodwork",
     href: "/message-team",
-    cta: "Review results"
+    cta: "Review results",
+    price: "From $49"
   },
   {
     title: "Hormone analysis",
@@ -53,7 +68,8 @@ const serviceCards = [
     category: "Analysis",
     meta: "Hormones",
     href: "/message-team",
-    cta: "Review results"
+    cta: "Review results",
+    price: "From $49"
   },
   {
     title: "Daily supplement packs",
@@ -61,7 +77,8 @@ const serviceCards = [
     category: "Wellness",
     meta: "Supplements",
     href: "/products/daily-multivitamin-pack",
-    cta: "View wellness"
+    cta: "View wellness",
+    price: "From $29"
   },
   {
     title: "Skin care routines",
@@ -69,7 +86,8 @@ const serviceCards = [
     category: "Wellness",
     meta: "Skin care",
     href: "/products/skin-clarity-routine",
-    cta: "View wellness"
+    cta: "View wellness",
+    price: "From $39"
   },
   {
     title: "Hair support kits",
@@ -77,23 +95,26 @@ const serviceCards = [
     category: "Wellness",
     meta: "Hair",
     href: "/products/hair-density-support-kit",
-    cta: "View wellness"
+    cta: "View wellness",
+    price: "From $49"
   },
   {
     title: "Primary care",
     detail: "General clinician routing for broad concerns, routine follow-up, and next-step planning.",
-    category: "Clinicians",
-    meta: "Clinicians",
+    category: "Care",
+    meta: "Care",
     href: "/message-team",
-    cta: "Ask us"
+    cta: "Ask us",
+    price: "Free to ask"
   },
   {
     title: "Genetics guidance",
     detail: "Talk through genetics results, inherited risk, carrier screening, or medication-response questions.",
-    category: "Clinicians",
+    category: "Care",
     meta: "Genetics",
     href: "/message-team",
-    cta: "Ask us"
+    cta: "Ask us",
+    price: "Free to ask"
   },
   {
     title: "Weight loss treatment",
@@ -101,7 +122,8 @@ const serviceCards = [
     category: "Treatments",
     meta: "Prescription",
     href: "/message-team",
-    cta: "Review options"
+    cta: "Review options",
+    price: "Free to ask"
   },
   {
     title: "Hair loss treatment",
@@ -109,7 +131,8 @@ const serviceCards = [
     category: "Treatments",
     meta: "Hair",
     href: "/message-team",
-    cta: "Review options"
+    cta: "Review options",
+    price: "Free to ask"
   },
   {
     title: "Acne treatment",
@@ -117,7 +140,8 @@ const serviceCards = [
     category: "Treatments",
     meta: "Skin",
     href: "/message-team",
-    cta: "Review options"
+    cta: "Review options",
+    price: "Free to ask"
   },
   {
     title: "PRP Therapy",
@@ -125,7 +149,8 @@ const serviceCards = [
     category: "Advanced Health",
     meta: "PRP",
     href: "/message-team",
-    cta: "Explore PRP"
+    cta: "Explore PRP",
+    price: "Free to ask"
   },
   {
     title: "Stem Cell Therapy Review",
@@ -133,7 +158,8 @@ const serviceCards = [
     category: "Advanced Health",
     meta: "Regenerative",
     href: "/message-team",
-    cta: "Check options"
+    cta: "Check options",
+    price: "Free to ask"
   },
   {
     title: "Hyperbaric Oxygen Therapy",
@@ -141,12 +167,16 @@ const serviceCards = [
     category: "Advanced Health",
     meta: "HBOT",
     href: "/message-team",
-    cta: "Check options"
+    cta: "Check options",
+    price: "Free to ask"
   }
 ] as const;
 
 export function ServicesCatalogPage() {
-  const [activeCategory, setActiveCategory] = useState<(typeof categories)[number]>("All");
+  const searchParams = useSearchParams();
+  const [activeCategory, setActiveCategory] = useState<ServiceCategory>(() =>
+    pickInitialCategory(searchParams.get("category"))
+  );
   const [query, setQuery] = useState("");
 
   const filteredCards = useMemo(() => {
@@ -170,11 +200,9 @@ export function ServicesCatalogPage() {
 
       <section className="services-catalog-hero" aria-labelledby="services-catalog-title">
         <div>
-          <p className="eyebrow">Services</p>
-          <h1 id="services-catalog-title">Find the right place to start.</h1>
+          <h1 id="services-catalog-title">Services</h1>
           <p>
-            Browse testing, analysis, wellness, clinicians, treatment questions, and advanced health
-            options from one catalog-style view.
+            Find the right place to start across testing, analysis, wellness, care, treatments, and advanced health.
           </p>
         </div>
       </section>
@@ -217,6 +245,7 @@ export function ServicesCatalogPage() {
               <span>{card.meta}</span>
               <h3>{card.title}</h3>
               <p>{card.detail}</p>
+              <strong className="services-catalog-price">{card.price}</strong>
               <small>
                 {card.cta}
                 <span aria-hidden="true">→</span>

@@ -82,9 +82,15 @@ export function ConsultOverlayHeader({ lineVariant }: { lineVariant: TopBarLineV
               </Link>
             );
           })}
+          <Link className="consult-overlay-menu-sign-in" href="/account" onClick={() => setIsMenuOpen(false)}>
+            Sign in
+          </Link>
         </nav>
-        <Link className="consult-overlay-mobile-sign-in" href="/account">
-          Sign in
+        <Link className="consult-overlay-account-icon" href="/account" aria-label="Sign in">
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M12 12.5a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+            <path d="M4.8 20.2a7.4 7.4 0 0 1 14.4 0" />
+          </svg>
         </Link>
       </div>
     </header>

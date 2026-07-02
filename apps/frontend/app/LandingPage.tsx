@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import type { CSSProperties } from "react";
 import { ConsultOverlayHeader } from "../src/components/ConsultOverlayHeader";
 import { reviewStartPaths } from "../src/lib/reviewStartPaths";
 
@@ -332,14 +333,14 @@ const advancedHealthOptions = [
 ] as const;
 
 const heroSearchCards = [
-  { label: "Testing", icon: "testing" },
-  { label: "Results review", icon: "results" },
-  { label: "Care", icon: "clinicians" },
-  { label: "Treatments", icon: "treatments" },
-  { label: "Wellness", icon: "products" },
-  { label: "Advanced health", icon: "advanced" },
-  { label: "Health concern", icon: "concern" },
-  { label: "Not sure", icon: "question" }
+  { label: "Testing", icon: "testing", href: "/services?category=Tests" },
+  { label: "Results review", icon: "results", href: "/services?category=Analysis" },
+  { label: "Care", icon: "clinicians", href: "/services?category=Care" },
+  { label: "Treatments", icon: "treatments", href: "/services?category=Treatments" },
+  { label: "Wellness", icon: "products", href: "/services?category=Wellness" },
+  { label: "Advanced health", icon: "advanced", href: "/services?category=Advanced%20Health" },
+  { label: "Health concern", icon: "concern", href: "/services?category=Care" },
+  { label: "Not sure", icon: "question", href: "/services" }
 ] as const;
 
 function HeroSearchIcon({ icon }: { icon: (typeof heroSearchCards)[number]["icon"] }) {
@@ -438,6 +439,53 @@ function previousCarouselIndex(currentIndex: number) {
 
 function visibleCarouselItems<T>(items: readonly T[], startIndex: number, visibleCount = 3) {
   return items.slice(startIndex, startIndex + visibleCount);
+}
+
+function getHeroCarouselVisibleCount() {
+  if (typeof window === "undefined") {
+    return 6;
+  }
+
+  if (window.innerWidth < 560) {
+    return 3;
+  }
+
+  if (window.innerWidth < 760) {
+    return 4;
+  }
+
+  if (window.innerWidth < 980) {
+    return 5;
+  }
+
+  return 6;
+}
+
+function getSectionCarouselVisibleCount() {
+  if (typeof window === "undefined") {
+    return 4;
+  }
+
+  return window.innerWidth < 560 ? 2 : 4;
+}
+
+function useSectionCarouselVisibleCount() {
+  const [visibleCount, setVisibleCount] = useState(4);
+
+  useEffect(() => {
+    function updateVisibleCount() {
+      setVisibleCount(getSectionCarouselVisibleCount());
+    }
+
+    updateVisibleCount();
+    window.addEventListener("resize", updateVisibleCount);
+
+    return () => {
+      window.removeEventListener("resize", updateVisibleCount);
+    };
+  }, []);
+
+  return visibleCount;
 }
 
 export type ServicesSectionVariant = "hidden" | "cards" | "alternating" | "carousel";
@@ -722,9 +770,14 @@ const faqs = [
 
 function ServicesSection({ variant }: { variant: Exclude<ServicesSectionVariant, "hidden"> }) {
   const [carouselIndex, setCarouselIndex] = useState(0);
-  const visibleTests = visibleCarouselItems(specificTestOptions, carouselIndex, 4);
+  const visibleCount = useSectionCarouselVisibleCount();
+  const visibleTests = visibleCarouselItems(specificTestOptions, carouselIndex, visibleCount);
   const canGoPrevious = carouselIndex > 0;
-  const canGoNext = carouselIndex < specificTestOptions.length - 4;
+  const canGoNext = carouselIndex < specificTestOptions.length - visibleCount;
+
+  useEffect(() => {
+    setCarouselIndex((index) => Math.min(index, Math.max(specificTestOptions.length - visibleCount, 0)));
+  }, [visibleCount]);
 
   return (
     <section className="home-content-section home-services-section" id="services" aria-labelledby="services-title">
@@ -740,7 +793,7 @@ function ServicesSection({ variant }: { variant: Exclude<ServicesSectionVariant,
           </div>
           {variant === "carousel" ? (
             <div className="home-section-header-action">
-              <Link href="/message-team">
+              <Link href="/services?category=Tests">
                 View all tests
               </Link>
               <button
@@ -757,7 +810,7 @@ function ServicesSection({ variant }: { variant: Exclude<ServicesSectionVariant,
                 className="home-carousel-arrow"
                 disabled={!canGoNext}
                 type="button"
-                onClick={() => setCarouselIndex((index) => nextCarouselIndex(index, specificTestOptions.length, 4))}
+                onClick={() => setCarouselIndex((index) => nextCarouselIndex(index, specificTestOptions.length, visibleCount))}
               >
                 →
               </button>
@@ -824,9 +877,14 @@ function HeroTrustRow({ variant }: { variant: Exclude<TrustRowVariant, "hidden">
 
 function ReviewTestingSection({ variant }: { variant: Exclude<ReviewSectionVariant, "hidden"> }) {
   const [carouselIndex, setCarouselIndex] = useState(0);
-  const visibleAnalysis = visibleCarouselItems(specificReviewServices, carouselIndex, 4);
+  const visibleCount = useSectionCarouselVisibleCount();
+  const visibleAnalysis = visibleCarouselItems(specificReviewServices, carouselIndex, visibleCount);
   const canGoPrevious = carouselIndex > 0;
-  const canGoNext = carouselIndex < specificReviewServices.length - 4;
+  const canGoNext = carouselIndex < specificReviewServices.length - visibleCount;
+
+  useEffect(() => {
+    setCarouselIndex((index) => Math.min(index, Math.max(specificReviewServices.length - visibleCount, 0)));
+  }, [visibleCount]);
 
   return (
     <section
@@ -845,7 +903,7 @@ function ReviewTestingSection({ variant }: { variant: Exclude<ReviewSectionVaria
             </p>
           </div>
           <div className="home-section-header-action">
-            <Link href="/message-team">
+            <Link href={variant === "carousel" ? "/services?category=Analysis" : "/services"}>
               {variant === "carousel" ? "View all analysis" : "View all areas"}
             </Link>
             {variant === "carousel" ? (
@@ -865,7 +923,7 @@ function ReviewTestingSection({ variant }: { variant: Exclude<ReviewSectionVaria
                   disabled={!canGoNext}
                   type="button"
                   onClick={() =>
-                    setCarouselIndex((index) => nextCarouselIndex(index, specificReviewServices.length, 4))
+                    setCarouselIndex((index) => nextCarouselIndex(index, specificReviewServices.length, visibleCount))
                   }
                 >
                   →
@@ -961,10 +1019,15 @@ function SimpleLandingCarouselSection({
   subtitle: string;
 }) {
   const [carouselIndex, setCarouselIndex] = useState(0);
-  const visibleItems = visibleCarouselItems(items, carouselIndex, 4);
+  const visibleCount = useSectionCarouselVisibleCount();
+  const visibleItems = visibleCarouselItems(items, carouselIndex, visibleCount);
   const canGoPrevious = carouselIndex > 0;
-  const canGoNext = carouselIndex < items.length - 4;
+  const canGoNext = carouselIndex < items.length - visibleCount;
   const titleId = `${id}-title`;
+
+  useEffect(() => {
+    setCarouselIndex((index) => Math.min(index, Math.max(items.length - visibleCount, 0)));
+  }, [items.length, visibleCount]);
 
   return (
     <section className="home-content-section home-problem-section" id={id} aria-labelledby={titleId}>
@@ -992,7 +1055,7 @@ function SimpleLandingCarouselSection({
               className="home-carousel-arrow"
               disabled={!canGoNext}
               type="button"
-              onClick={() => setCarouselIndex((index) => nextCarouselIndex(index, items.length, 4))}
+              onClick={() => setCarouselIndex((index) => nextCarouselIndex(index, items.length, visibleCount))}
             >
               →
             </button>
@@ -1191,9 +1254,28 @@ function ConsultSearchHero() {
   const heroContent = heroContentByVariant["consult-search"];
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [searchText, setSearchText] = useState("");
-  const visibleHeroCards = visibleCarouselItems(heroSearchCards, carouselIndex, 6);
+  const [visibleHeroCardCount, setVisibleHeroCardCount] = useState(6);
+  const visibleHeroCards = visibleCarouselItems(heroSearchCards, carouselIndex, visibleHeroCardCount);
+  const heroCardRowStyle = { "--hero-card-count": visibleHeroCardCount } as CSSProperties;
   const canGoPrevious = carouselIndex > 0;
-  const canGoNext = carouselIndex < heroSearchCards.length - 6;
+  const canGoNext = carouselIndex < heroSearchCards.length - visibleHeroCardCount;
+
+  useEffect(() => {
+    function updateVisibleCardCount() {
+      setVisibleHeroCardCount(getHeroCarouselVisibleCount());
+    }
+
+    updateVisibleCardCount();
+    window.addEventListener("resize", updateVisibleCardCount);
+
+    return () => {
+      window.removeEventListener("resize", updateVisibleCardCount);
+    };
+  }, []);
+
+  useEffect(() => {
+    setCarouselIndex((current) => Math.min(current, Math.max(heroSearchCards.length - visibleHeroCardCount, 0)));
+  }, [visibleHeroCardCount]);
 
   return (
     <section className="home-hero home-hero-consult-search" id="start-review" aria-labelledby="home-start-title">
@@ -1212,14 +1294,14 @@ function ConsultSearchHero() {
           >
             ‹
           </button>
-          <div className="home-hero-search-card-row">
+          <div className="home-hero-search-card-row" style={heroCardRowStyle}>
             {visibleHeroCards.map((card) => (
-              <div className="home-hero-search-card" key={card.label}>
+              <Link className="home-hero-search-card" href={card.href} key={card.label}>
                 <span className="home-hero-search-card-icon">
                   <HeroSearchIcon icon={card.icon} />
                 </span>
                 <strong>{card.label}</strong>
-              </div>
+              </Link>
             ))}
           </div>
           <button
@@ -1227,7 +1309,7 @@ function ConsultSearchHero() {
             className="home-carousel-arrow"
             disabled={!canGoNext}
             type="button"
-            onClick={() => setCarouselIndex((current) => nextCarouselIndex(current, heroSearchCards.length, 5))}
+            onClick={() => setCarouselIndex((current) => nextCarouselIndex(current, heroSearchCards.length, visibleHeroCardCount))}
           >
             ›
           </button>
@@ -1370,7 +1452,7 @@ function LandingPageContent({
       {productsVariant === "current" ? (
         <SimpleLandingCarouselSection
           ariaLabel="Wellness options"
-          footerHref="/message-team"
+          footerHref="/services?category=Wellness"
           footerLabel="View all wellness"
           heading="Wellness"
           id="products"
@@ -1385,7 +1467,7 @@ function LandingPageContent({
       {cliniciansVariant === "current" ? (
         <SimpleLandingCarouselSection
           ariaLabel="Care options"
-          footerHref="/message-team"
+          footerHref="/services?category=Care"
           footerLabel="View all care"
           heading="Care"
           id="clinicians"
@@ -1398,7 +1480,7 @@ function LandingPageContent({
       {treatmentsVariant === "current" ? (
         <SimpleLandingCarouselSection
           ariaLabel="Treatment options"
-          footerHref="/message-team"
+          footerHref="/services?category=Treatments"
           footerLabel="View all treatments"
           heading="Treatments"
           id="treatments"
@@ -1411,7 +1493,7 @@ function LandingPageContent({
       {advancedVariant === "current" ? (
         <SimpleLandingCarouselSection
           ariaLabel="Advanced health options"
-          footerHref="/message-team"
+          footerHref="/services?category=Advanced%20Health"
           footerLabel="View all advanced health"
           heading="Advanced Health"
           id="advanced-health"

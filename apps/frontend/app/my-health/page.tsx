@@ -193,16 +193,37 @@ const recordLogSecondaryActions = [
   {
     title: "Find testing options",
     detail: "Explore lab, genetic, and at-home testing paths connected to what you are trying to understand.",
-    href: "/services",
+    href: "/services?category=Tests",
     action: "Plan testing",
     priority: "Testing"
   },
   {
     title: "Shop products",
     detail: "Browse supplements, skin care, hair support, and other health products.",
-    href: "/services",
+    href: "/services?category=Wellness",
     action: "View products",
     priority: "Products"
+  }
+] as const;
+
+const recordLogRecommendations = [
+  {
+    title: "General health panel",
+    detail: "A starting point for energy, metabolism, inflammation, and organ function questions.",
+    href: "/services?category=Tests",
+    meta: "Testing"
+  },
+  {
+    title: "Bloodwork analysis",
+    detail: "Review abnormal values, borderline markers, trends, and what to consider next.",
+    href: "/services?category=Analysis",
+    meta: "Results"
+  },
+  {
+    title: "Daily supplement packs",
+    detail: "Routine wellness support for nutrient questions and everyday health goals.",
+    href: "/services?category=Wellness",
+    meta: "Wellness"
   }
 ] as const;
 
@@ -391,7 +412,7 @@ function MyHealthPageContent() {
           <div className="my-health-record-log-top">
             <div className="my-health-record-log-title">
               <h1>My Health</h1>
-              <p>Your place to ask health questions, save records, and keep track of testing, products, and follow-ups.</p>
+              <p>Ask health questions, save records, and track testing, products, and follow-ups.</p>
             </div>
 
             <nav className="my-health-section-tabs" aria-label="Record sections">
@@ -411,6 +432,24 @@ function MyHealthPageContent() {
 
           {activeRecordLogTab === "overview" ? (
             <>
+              <section className="my-health-record-log-card my-health-recommendations-card" aria-label="Recommendations">
+                <div className="panel-heading">
+                  <div>
+                    <h2>Recommendations</h2>
+                    <p>Services that may be useful based on common starting points.</p>
+                  </div>
+                </div>
+                <div className="my-health-recommendation-grid">
+                  {recordLogRecommendations.map((recommendation) => (
+                    <Link className="my-health-recommendation-card" href={recommendation.href} key={recommendation.title}>
+                      <span>{recommendation.meta}</span>
+                      <strong>{recommendation.title}</strong>
+                      <p>{recommendation.detail}</p>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+
               <section className="my-health-detail-section my-health-record-log-actions-card" aria-label="What do you need help with?">
                 <div className="panel-heading">
                   <div>
@@ -424,7 +463,7 @@ function MyHealthPageContent() {
                     <span className="sr-only">Request message</span>
                     <textarea
                       value={recordRequestText}
-                      rows={3}
+                      rows={2}
                       placeholder="Ask about symptoms, testing, supplements, results, or what to do next..."
                       onChange={(event) => setRecordRequestText(event.target.value)}
                     />

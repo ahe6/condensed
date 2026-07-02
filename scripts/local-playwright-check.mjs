@@ -227,6 +227,15 @@ const checks = {
     const secondaryActionLabels = await actionSection
       .locator(".my-health-record-secondary-actions .portal-action-row strong")
       .evaluateAll((nodes) => nodes.map((node) => node.textContent));
+    const recommendationCards = await page
+      .getByLabel("Recommendations")
+      .locator(".my-health-recommendation-card")
+      .evaluateAll((nodes) =>
+        nodes.map((node) => ({
+          text: node.textContent,
+          href: node.getAttribute("href")
+        }))
+      );
     await actionSection.getByRole("button", { name: "Compare products" }).click();
     const chipPrefill = await actionSection
       .getByPlaceholder("Ask about symptoms, testing, supplements, results, or what to do next...")
@@ -253,6 +262,7 @@ const checks = {
       tabs,
       composerPlaceholder,
       secondaryActionLabels,
+      recommendationCards,
       chipPrefill,
       routedRequestText,
       emptyOverview,
@@ -308,12 +318,50 @@ const checks = {
     const cardTags = await page.locator(".home-hero-search-card").evaluateAll((nodes) =>
       nodes.map((node) => node.tagName)
     );
+    const cardHrefs = await page.locator(".home-hero-search-card").evaluateAll((nodes) =>
+      nodes.map((node) => node.getAttribute("href"))
+    );
     const searchBarTag = await page.locator(".home-hero-search-bar").evaluate((node) => node.tagName);
     const heroNavButtons = await page
       .getByRole("button", { name: /starting points/i })
       .count();
 
-    return { heading, subtitleVisible, searchPrompt, cards, cardTags, searchBarTag, heroNavButtons };
+    return { heading, subtitleVisible, searchPrompt, cards, cardTags, cardHrefs, searchBarTag, heroNavButtons };
+  },
+
+  async "landing-mobile-hero-cards"(page) {
+    async function measureLanding(width) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto("http://localhost:3001/", { waitUntil: "networkidle" });
+
+      const heroCards = await page.locator(".home-hero-search-card").evaluateAll((nodes) =>
+        nodes.map((node) => node.textContent)
+      );
+      const heroRows = await page.locator(".home-hero-search-card").evaluateAll((nodes) =>
+        Array.from(new Set(nodes.map((node) => Math.round(node.getBoundingClientRect().top)))).length
+      );
+      const sectionCards = await page
+        .locator(".home-specific-carousel")
+        .first()
+        .locator(".home-specific-service-card")
+        .evaluateAll((nodes) => nodes.map((node) => node.textContent));
+      const sectionRows = await page
+        .locator(".home-specific-carousel")
+        .first()
+        .locator(".home-specific-service-card")
+        .evaluateAll((nodes) =>
+          Array.from(new Set(nodes.map((node) => Math.round(node.getBoundingClientRect().top)))).length
+        );
+
+      return { heroCards, heroRows, sectionCards, sectionRows };
+    }
+
+    return {
+      phone: await measureLanding(390),
+      largePhone: await measureLanding(500),
+      tablet: await measureLanding(640),
+      smallDesktop: await measureLanding(860)
+    };
   },
 
   async "landing-service-carousels"(page) {
@@ -321,6 +369,7 @@ const checks = {
     const serviceCards = await page.locator(".home-specific-carousel").first().locator(".home-specific-service-card").evaluateAll((nodes) =>
       nodes.map((node) => node.textContent)
     );
+    const servicePriceLabels = await page.locator(".services-catalog-price").count();
     const reviewCards = await page
       .locator(".home-specific-carousel-review")
       .locator(".home-specific-review-card")
@@ -339,9 +388,9 @@ const checks = {
     const thyroidTesting = await page.getByText("Thyroid testing").isVisible();
     await page.getByRole("button", { name: "Next analysis categories" }).click();
     const geneticAnalysis = await page.getByText("Genetic analysis").isVisible();
-    const viewAllTests = await page.getByRole("link", { name: /View all tests/ }).isVisible();
-    const viewAllWellness = await page.getByRole("link", { name: /View all wellness/ }).isVisible();
-    const viewAllAnalysis = await page.getByRole("link", { name: /View all analysis/ }).isVisible();
+    const viewAllTests = await page.getByRole("link", { name: /View all tests/ }).getAttribute("href");
+    const viewAllWellness = await page.getByRole("link", { name: /View all wellness/ }).getAttribute("href");
+    const viewAllAnalysis = await page.getByRole("link", { name: /View all analysis/ }).getAttribute("href");
 
     return {
       serviceCount: serviceCards.length,
@@ -359,7 +408,8 @@ const checks = {
       medicationReview,
       viewAllTests,
       viewAllWellness,
-      viewAllAnalysis
+      viewAllAnalysis,
+      servicePriceLabels
     };
   },
 
@@ -370,7 +420,7 @@ const checks = {
     );
     const careHeading = await page.getByRole("heading", { name: "Care", exact: true }).isVisible();
     const cliniciansHeading = await page.getByRole("heading", { name: "Clinicians", exact: true }).isVisible().catch(() => false);
-    const viewAllCare = await page.getByRole("link", { name: "View all care" }).isVisible();
+    const viewAllCare = await page.getByRole("link", { name: "View all care" }).getAttribute("href");
     const nextCare = await page.getByRole("button", { name: "Next care options" }).isVisible();
     const primaryCare = await page.getByText("Primary care").isVisible();
 
@@ -380,7 +430,7 @@ const checks = {
   async "library-forum"(page) {
     await page.goto("http://localhost:3001/library", { waitUntil: "networkidle" });
     const navLinks = await page
-      .locator(".consult-overlay-service-bar a")
+      .locator(".consult-overlay-service-bar a:not(.consult-overlay-menu-sign-in)")
       .evaluateAll((nodes) => nodes.map((node) => node.textContent));
     const heroVisible = await page.locator(".library-hero").isVisible().catch(() => false);
     const title = await page.locator("#library-forum-title").textContent();
@@ -404,27 +454,36 @@ const checks = {
 
   async "services-catalog"(page) {
     await page.goto("http://localhost:3001/services", { waitUntil: "networkidle" });
-    const heading = await page.getByRole("heading", { name: "Find the right place to start." }).isVisible();
+    const heading = await page.getByRole("heading", { name: "Services", exact: true }).isVisible();
     const navLinks = await page
-      .locator(".consult-overlay-service-bar a")
+      .locator(".consult-overlay-service-bar a:not(.consult-overlay-menu-sign-in)")
       .evaluateAll((nodes) => nodes.map((node) => node.textContent));
     const categories = await page
       .getByLabel("Service categories")
       .locator("button")
       .evaluateAll((nodes) => nodes.map((node) => node.textContent));
     const initialCards = await page.locator(".services-catalog-card h3").allTextContents();
+    const initialPrices = await page.locator(".services-catalog-price").allTextContents();
     await page.getByRole("button", { name: "Wellness" }).click();
     const wellnessCards = await page.locator(".services-catalog-card h3").allTextContents();
+    const wellnessPrices = await page.locator(".services-catalog-price").allTextContents();
     await page.getByLabel("Search services or describe what you need").fill("hair");
     const filteredCards = await page.locator(".services-catalog-card h3").allTextContents();
+    await page.goto("http://localhost:3001/services?category=Care", { waitUntil: "networkidle" });
+    const categoryQueryHeading = await page.getByRole("heading", { name: "Care", exact: true }).isVisible();
+    const categoryQueryCards = await page.locator(".services-catalog-card h3").allTextContents();
 
     return {
       heading,
       navLinks,
       categories,
       initialCount: initialCards.length,
+      initialPrices,
       wellnessCards,
-      filteredCards
+      wellnessPrices,
+      filteredCards,
+      categoryQueryHeading,
+      categoryQueryCards
     };
   },
 
@@ -449,17 +508,33 @@ const checks = {
       const activeLinks = await page
         .locator(".consult-overlay-service-bar a[aria-current='page']")
         .evaluateAll((nodes) => nodes.map((node) => node.textContent));
+      const accountIconVisible = await page.locator(".consult-overlay-account-icon").isVisible();
 
       measurements[pageConfig.name] = {
         header: roundRect(header),
         bar: roundRect(bar),
         content: roundRect(content),
         activeLinks,
+        accountIconVisible,
         gapBelowHeader: header && content ? Math.round(content.y - (header.y + header.height)) : null
       };
     }
 
     return { measurements };
+  },
+
+  async "mobile-header-menu"(page) {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("http://localhost:3001/services", { waitUntil: "networkidle" });
+    const topBarSignIn = await page.locator(".consult-overlay-mobile-sign-in").isVisible().catch(() => false);
+    const accountIconVisible = await page.locator(".consult-overlay-account-icon").isVisible();
+    await page.getByRole("button", { name: "Toggle navigation menu" }).click();
+    const menuLinks = await page
+      .locator(".consult-overlay-service-bar a")
+      .evaluateAll((nodes) => nodes.map((node) => ({ text: node.textContent, visible: !!node.offsetParent })));
+    const signInVisible = await page.locator(".consult-overlay-menu-sign-in").isVisible();
+
+    return { topBarSignIn, accountIconVisible, menuLinks, signInVisible };
   },
 
   async "product-detail-preview"(page) {
