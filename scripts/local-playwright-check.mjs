@@ -220,12 +220,14 @@ const checks = {
       .getByLabel("Record sections")
       .locator("button")
       .evaluateAll((nodes) => nodes.map((node) => node.textContent));
-    await page.getByRole("button", { name: "Ask our team" }).click();
+    const bottomLauncherCount = await page.locator(".my-health-request-launcher").count();
+    await page.locator(".my-health-header-action").click();
     const requestDrawer = page.locator(".my-health-request-drawer");
     const composerPlaceholder = await requestDrawer
       .getByPlaceholder("Ask about symptoms, testing, supplements, results, or what to do next...")
       .isVisible();
     const requestDrawerTitle = await requestDrawer.getByRole("heading", { name: "What do you need help with?" }).isVisible();
+    const inPagePromptOpensDrawer = await requestDrawer.isVisible();
     const secondaryActionCount = await page.locator(".my-health-record-secondary-actions .portal-action-row").count();
     const recommendationCards = await page
       .getByLabel("Recommendations")
@@ -240,7 +242,7 @@ const checks = {
     const chipPrefill = await requestDrawer
       .getByPlaceholder("Ask about symptoms, testing, supplements, results, or what to do next...")
       .inputValue();
-    const emptyOverview = await page.getByText("No records yet.").isVisible();
+    const emptyOverviewRecentRecordsCount = await page.getByLabel("Recent records").count();
     await requestDrawer.getByPlaceholder("Ask about symptoms, testing, supplements, results, or what to do next...").fill("I need help with a thyroid test");
     await requestDrawer.getByRole("button", { name: "Send request" }).click();
     await page.waitForURL(/\/message-team\?request=/);
@@ -262,19 +264,44 @@ const checks = {
       .locator(".my-health-record-log-item h3")
       .evaluateAll((nodes) => nodes.map((node) => node.textContent));
 
+    await page.goto("http://localhost:3001/my-health?signin=preview&support=composer-first", { waitUntil: "networkidle" });
+    const composerFirstSubmit = await page
+      .getByLabel("Ask our team prompt")
+      .getByRole("button", { name: "Send request" })
+      .isVisible();
+    await page.goto("http://localhost:3001/my-health?signin=preview&support=utility-bar", { waitUntil: "networkidle" });
+    const utilityBarActions = await page
+      .getByLabel("My Health quick actions")
+      .locator("button,a")
+      .evaluateAll((nodes) => nodes.map((node) => node.textContent));
+    await page.goto("http://localhost:3001/my-health?signin=preview&support=messages-tab", { waitUntil: "networkidle" });
+    await page.getByLabel("Record sections").getByRole("button", { name: "Messages" }).click();
+    const messagesTabAction = await page
+      .getByLabel("Messages panel")
+      .getByRole("button", { name: "Ask our team" })
+      .isVisible();
+    await page.goto("http://localhost:3001/my-health?signin=preview&state=active&support=empty-state-only", { waitUntil: "networkidle" });
+    const activeEmptyStatePromptCount = await page.locator(".my-health-header-action").count();
+
     return {
       heading,
       tabs,
       composerPlaceholder,
       requestDrawerTitle,
+      bottomLauncherCount,
       secondaryActionCount,
       recommendationCards,
+      inPagePromptOpensDrawer,
       chipPrefill,
       routedRequestText,
-      emptyOverview,
+      emptyOverviewRecentRecordsCount,
       recentRecords,
       allRecords,
-      messages
+      messages,
+      composerFirstSubmit,
+      utilityBarActions,
+      messagesTabAction,
+      activeEmptyStatePromptCount
     };
   },
 
@@ -367,6 +394,9 @@ const checks = {
       .count();
     await page.getByPlaceholder("Search services or describe what you need...").fill("I want help with thyroid labs");
     await page.getByRole("button", { name: "Ask our team" }).click();
+    const requestModalTitle = await page.getByRole("heading", { name: "Ask our team" }).isVisible();
+    const modalPrefillText = await page.locator(".services-request-form textarea").inputValue();
+    await page.getByRole("button", { name: "Send request" }).click();
     await page.waitForURL("**/message-team?request=I%20want%20help%20with%20thyroid%20labs");
     const routedRequestText = await page.locator("textarea").inputValue();
 
@@ -380,6 +410,8 @@ const checks = {
       cardHrefs,
       searchBarTag,
       heroNavButtons,
+      requestModalTitle,
+      modalPrefillText,
       routedRequestText
     };
   },
@@ -529,6 +561,13 @@ const checks = {
       .evaluateAll((nodes) => nodes.map((node) => node.textContent));
     const initialCards = await page.locator(".services-catalog-card h3").allTextContents();
     const initialPrices = await page.locator(".services-catalog-price").allTextContents();
+    await page.locator(".services-request-launcher").click();
+    const serviceRequestPopup = await page.getByRole("dialog", { name: "Ask our team" }).isVisible();
+    await page.getByRole("button", { name: "Compare services" }).click();
+    const serviceRequestPrefill = await page
+      .getByPlaceholder("Ask about symptoms, testing, supplements, results, or what to do next...")
+      .inputValue();
+    await page.getByRole("button", { name: "Close ask our team popup" }).click();
     await page.getByRole("button", { name: "Wellness" }).click();
     const wellnessCards = await page.locator(".services-catalog-card h3").allTextContents();
     const wellnessPrices = await page.locator(".services-catalog-price").allTextContents();
@@ -544,6 +583,8 @@ const checks = {
       categories,
       initialCount: initialCards.length,
       initialPrices,
+      serviceRequestPopup,
+      serviceRequestPrefill,
       wellnessCards,
       wellnessPrices,
       filteredCards,

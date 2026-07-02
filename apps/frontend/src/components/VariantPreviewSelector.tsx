@@ -100,6 +100,17 @@ const myHealthVariantGroups = [
       { value: "empty", label: "No records" },
       { value: "active", label: "Mock records" }
     ]
+  },
+  {
+    param: "support",
+    label: "Ask team pattern",
+    fallback: "empty-state-only",
+    options: [
+      { value: "composer-first", label: "Composer first" },
+      { value: "utility-bar", label: "Utility bar" },
+      { value: "empty-state-only", label: "Empty state only" },
+      { value: "messages-tab", label: "Messages tab" }
+    ]
   }
 ];
 

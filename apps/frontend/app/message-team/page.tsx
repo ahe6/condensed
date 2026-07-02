@@ -15,11 +15,11 @@ const messagePrimaryOptions = [
     uploadMode: "secondary"
   },
   {
-    title: "Find the right test",
-    detail: "For labs, genetics, fertility, hormones, STI testing, or general screening.",
-    prompt: "What are you trying to test or figure out?",
+    title: "Find the right service",
+    detail: "For testing, results, wellness products, care support, or general screening.",
+    prompt: "What service are you trying to find?",
     placeholder:
-      'For example: "I want a general health panel," "I\'m worried about fertility," "I want STI testing," or "I\'m not sure what tests make sense."',
+      'For example: "I want a general health panel," "I\'m worried about fertility," "I need help with supplements," or "I\'m not sure what service makes sense."',
     uploadMode: "secondary"
   },
   {

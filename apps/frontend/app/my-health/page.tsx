@@ -291,6 +291,7 @@ const newWorkspaceSections = [
 type WorkspaceSectionId = (typeof newWorkspaceSections)[number]["id"];
 type MyHealthLayout = "workspace" | "placeholder" | "record-log";
 type RecordLogTabId = (typeof recordLogTabs)[number]["id"];
+type MyHealthSupportVariant = "composer-first" | "utility-bar" | "empty-state-only" | "messages-tab";
 
 function MyHealthPageContent() {
   const router = useRouter();
@@ -302,6 +303,14 @@ function MyHealthPageContent() {
       : "record-log";
   const selectedSignInBehavior = searchParams.get("signin") === "block" ? "block" : "preview";
   const selectedWorkspaceState = searchParams.get("state") === "active" ? "active" : "empty";
+  const supportParam = searchParams.get("support");
+  const selectedSupportVariant: MyHealthSupportVariant =
+    supportParam === "composer-first" ||
+    supportParam === "utility-bar" ||
+    supportParam === "messages-tab" ||
+    supportParam === "empty-state-only"
+      ? supportParam
+      : "empty-state-only";
   const [activeWorkspaceSection, setActiveWorkspaceSection] = useState<WorkspaceSectionId>("overview");
   const [activeRecordLogTab, setActiveRecordLogTab] = useState<RecordLogTabId>("overview");
   const [recordRequestText, setRecordRequestText] = useState("");
@@ -428,10 +437,65 @@ function MyHealthPageContent() {
                 </button>
               ))}
             </nav>
+
+            {selectedSupportVariant === "empty-state-only" && !isActiveWorkspacePreview ? (
+              <div className="my-health-header-action-group">
+                <span>Need help?</span>
+                <button className="my-health-header-action" type="button" onClick={() => setIsRecordRequestOpen(true)}>
+                  Ask a question
+                </button>
+              </div>
+            ) : null}
           </div>
 
           {activeRecordLogTab === "overview" ? (
             <>
+              {selectedSupportVariant === "composer-first" ? (
+                <section className="my-health-record-log-card my-health-inline-composer-card" aria-label="Ask our team prompt">
+                  <div className="panel-heading">
+                    <div>
+                      <h2>Ask our team</h2>
+                      <p>Start with a question and we can route you to testing, products, results review, or next steps.</p>
+                    </div>
+                  </div>
+                  <form className="my-health-request-composer" onSubmit={handleRecordRequestSubmit}>
+                    <label>
+                      <span className="sr-only">Request message</span>
+                      <textarea
+                        value={recordRequestText}
+                        rows={3}
+                        placeholder="Ask about symptoms, testing, supplements, results, or what to do next..."
+                        onChange={(event) => setRecordRequestText(event.target.value)}
+                      />
+                    </label>
+                    <div className="my-health-request-composer-footer">
+                      <div className="my-health-request-chip-row" aria-label="Quick request prompts">
+                        {recordLogQuickChips.map((chip) => (
+                          <button key={chip} type="button" onClick={() => setRecordRequestText(chip)}>
+                            {chip}
+                          </button>
+                        ))}
+                      </div>
+                      <button className="my-health-request-submit" type="submit">
+                        Send request
+                      </button>
+                    </div>
+                  </form>
+                </section>
+              ) : null}
+
+              {selectedSupportVariant === "utility-bar" ? (
+                <section className="my-health-support-utility-bar" aria-label="My Health quick actions">
+                  <button type="button" onClick={() => setIsRecordRequestOpen(true)}>
+                    Ask our team
+                  </button>
+                  <button type="button" onClick={() => setActiveRecordLogTab("records")}>
+                    View records
+                  </button>
+                  <Link href="/services">Find services</Link>
+                </section>
+              ) : null}
+
               <section className="my-health-record-log-card my-health-recommendations-card" aria-label="Recommendations">
                 <div className="panel-heading">
                   <div>
@@ -452,25 +516,25 @@ function MyHealthPageContent() {
 
               <div className="my-health-record-log-summary" aria-label="Record summary">
                 <article>
-                  <span>Total records</span>
+                  <span>Saved records</span>
                   <strong>{isActiveWorkspacePreview ? recordLogItems.length : 0}</strong>
                   <p>Uploads, reviews, testing plans, questions, and notes.</p>
                 </article>
                 <article>
-                  <span>Latest record</span>
+                  <span>Latest activity</span>
                   <strong>{isActiveWorkspacePreview ? "Today" : "None yet"}</strong>
                   <p>{isActiveWorkspacePreview ? "Most recent activity is saved to your record." : "New activity will appear here."}</p>
                 </article>
               </div>
 
-              <section className="my-health-record-log-card" aria-label="Recent records">
-                <div className="panel-heading">
-                  <div>
-                    <h2>Recent records</h2>
-                    <p>A simple history of what has happened in My Health.</p>
+              {isActiveWorkspacePreview ? (
+                <section className="my-health-record-log-card" aria-label="Recent records">
+                  <div className="panel-heading">
+                    <div>
+                      <h2>Recent records</h2>
+                      <p>A simple history of what has happened in My Health.</p>
+                    </div>
                   </div>
-                </div>
-                {isActiveWorkspacePreview ? (
                   <div className="my-health-record-log-list">
                     {recordLogItems.slice(0, 3).map((record) => (
                       <article className="my-health-record-log-item" key={`${record.type}-${record.title}`}>
@@ -483,13 +547,8 @@ function MyHealthPageContent() {
                       </article>
                     ))}
                   </div>
-                ) : (
-                  <div className="my-health-record-log-empty">
-                    <strong>No records yet.</strong>
-                    <p>Uploads, requests, result reviews, testing plans, and follow-up notes will appear here as records.</p>
-                  </div>
-                )}
-              </section>
+                </section>
+              ) : null}
             </>
           ) : null}
 
@@ -528,8 +587,17 @@ function MyHealthPageContent() {
               <div className="panel-heading">
                 <div>
                   <h2>Messages</h2>
-                  <p>Requests, team replies, and review notes stay grouped here.</p>
+                  <p>
+                    {selectedSupportVariant === "messages-tab"
+                      ? "Ask our team about symptoms, testing, supplements, results, or next steps."
+                      : "Requests, team replies, and review notes stay grouped here."}
+                  </p>
                 </div>
+                {selectedSupportVariant === "messages-tab" ? (
+                  <button className="my-health-heading-action" type="button" onClick={() => setIsRecordRequestOpen(true)}>
+                    Ask our team
+                  </button>
+                ) : null}
               </div>
               {isActiveWorkspacePreview ? (
                 <div className="my-health-record-log-list">
@@ -547,7 +615,11 @@ function MyHealthPageContent() {
               ) : (
                 <div className="my-health-record-log-empty">
                   <strong>No messages yet.</strong>
-                  <p>When you send a request or your health team replies, messages and review notes will appear here.</p>
+                  <p>
+                    {selectedSupportVariant === "messages-tab"
+                      ? "Start a message when you want help choosing a service, reviewing results, or deciding what to do next."
+                      : "When you send a request or your health team replies, messages and review notes will appear here."}
+                  </p>
                 </div>
               )}
             </section>
@@ -564,7 +636,7 @@ function MyHealthPageContent() {
             <section
               className="my-health-request-drawer"
               role="dialog"
-              aria-modal="false"
+              aria-modal="true"
               aria-labelledby="my-health-request-drawer-title"
             >
               <div className="my-health-request-drawer-heading">
@@ -608,13 +680,6 @@ function MyHealthPageContent() {
             </section>
           ) : null}
 
-          <button
-            className="my-health-request-launcher"
-            type="button"
-            onClick={() => setIsRecordRequestOpen((isOpen) => !isOpen)}
-          >
-            Ask our team
-          </button>
         </aside>
       ) : null}
 

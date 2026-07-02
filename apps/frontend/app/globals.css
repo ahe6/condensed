@@ -6608,6 +6608,10 @@ h3 {
   padding-top: 0;
 }
 
+.services-catalog-page.overlay-header-page {
+  clip-path: none;
+}
+
 .services-catalog-controls,
 .services-catalog-results {
   margin-bottom: 18px;
@@ -6652,12 +6656,21 @@ h3 {
   border-bottom: 1px solid rgba(47, 111, 159, 0.1);
 }
 
-.services-catalog-search {
+.services-catalog-search,
+.services-catalog-category-control {
   display: grid;
   gap: 7px;
 }
 
-.services-catalog-search span {
+.services-catalog-category-control {
+  width: fit-content;
+  max-width: 100%;
+  align-self: end;
+  justify-self: end;
+}
+
+.services-catalog-search span,
+.services-catalog-category-control > span {
   color: var(--muted);
   font-size: 0.8rem;
   font-weight: 900;
@@ -6682,33 +6695,211 @@ h3 {
 }
 
 .services-catalog-category-row {
+  min-height: 48px;
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 0;
+  align-items: center;
   justify-content: flex-end;
-  padding: 4px;
-  border: 1px solid rgba(47, 111, 159, 0.1);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.62);
+  overflow: hidden;
+  padding: 3px;
+  border: 1px solid rgba(47, 111, 159, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .services-catalog-category-row button {
-  min-height: 34px;
-  padding: 0 11px;
+  min-height: 36px;
+  padding: 0 12px;
   border: 0;
-  border-radius: 7px;
+  border-left: 1px solid rgba(47, 111, 159, 0.1);
+  border-radius: 5px;
   background: transparent;
   color: var(--text);
   font-size: 0.88rem;
   font-weight: 760;
+  box-shadow: none;
+}
+
+.services-catalog-category-row button:first-child {
+  border-left: 0;
 }
 
 .services-catalog-category-row button[aria-pressed="true"] {
-  background: #ffffff;
+  background: var(--blue);
+  border-left-color: transparent;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(31, 42, 51, 0.08);
+}
+
+.services-catalog-category-row button[aria-pressed="true"] + button {
+  border-left-color: transparent;
+}
+
+.services-request-launcher {
+  position: fixed;
+  right: 24px;
+  bottom: 32px;
+  z-index: 53;
+  min-height: 46px;
+  padding: 0 17px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 850;
+  box-shadow: 0 14px 30px rgba(31, 42, 51, 0.16);
+  cursor: pointer;
+}
+
+.services-request-launcher:hover:not(:disabled),
+.services-request-launcher:focus-visible {
+  background: var(--accent-strong);
+  transform: none;
+}
+
+.services-request-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 54;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(17, 31, 44, 0.18);
+  backdrop-filter: blur(3px);
+}
+
+.services-request-modal {
+  width: min(460px, 100%);
+  max-height: min(680px, calc(100vh - 48px));
+  overflow-y: auto;
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(47, 111, 159, 0.12);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 20px 52px rgba(31, 42, 51, 0.18);
+}
+
+.services-request-modal-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.services-request-modal-heading h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.06rem;
+  line-height: 1.16;
+}
+
+.services-request-modal-heading p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.38;
+}
+
+.services-request-modal-close {
+  width: 30px;
+  min-height: 30px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(47, 111, 159, 0.12);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  box-shadow: none;
+  font-size: 0.9rem;
+  font-weight: 850;
+}
+
+.services-request-modal-close:hover:not(:disabled),
+.services-request-modal-close:focus-visible {
+  border-color: rgba(47, 111, 159, 0.24);
+  color: var(--text);
+}
+
+.services-request-form {
+  padding: 10px;
+  gap: 10px;
+}
+
+.services-request-form textarea {
+  min-height: 88px;
+  font-size: 0.95rem;
+}
+
+.services-request-form,
+.services-request-form label {
+  display: grid;
+}
+
+.services-request-form textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid rgba(47, 111, 159, 0.14);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  outline: 0;
+}
+
+.services-request-form textarea::placeholder {
+  color: rgba(95, 111, 123, 0.8);
+}
+
+.services-request-form:focus-within {
+  border-color: rgba(47, 111, 159, 0.36);
+  box-shadow: 0 0 0 3px rgba(47, 111, 159, 0.1);
+}
+
+.services-request-form-footer {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.services-request-chip-row {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.services-request-chip-row button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(47, 111, 159, 0.14);
+  border-radius: 999px;
+  background: var(--surface);
   color: var(--accent-strong);
-  box-shadow:
-    0 0 0 1px rgba(47, 111, 159, 0.12),
-    0 8px 18px rgba(31, 42, 51, 0.055);
+  font-size: 0.86rem;
+  font-weight: 800;
+  box-shadow: none;
+}
+
+.services-request-chip-row button:hover:not(:disabled) {
+  border-color: rgba(47, 111, 159, 0.28);
+  background: #fff;
+  transform: none;
+}
+
+.services-request-submit {
+  min-height: 42px;
+  flex: 0 0 auto;
+  padding: 0 16px;
+  border-color: var(--accent);
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 850;
 }
 
 .services-catalog-results {
@@ -8110,8 +8301,18 @@ h3 {
 
 .my-health-record-log-top {
   display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
   gap: 12px;
-  align-items: start;
+  align-items: end;
+}
+
+.my-health-record-log-title {
+  grid-column: 1 / -1;
+}
+
+.my-health-record-log-top .my-health-section-tabs {
+  grid-column: 1;
+  grid-row: 2;
 }
 
 .my-health-record-log-title h1 {
@@ -8126,6 +8327,52 @@ h3 {
   margin: 6px 0 0;
   color: var(--muted);
   line-height: 1.5;
+}
+
+.my-health-header-action-group {
+  grid-column: 3;
+  grid-row: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: center;
+  justify-self: end;
+  margin-left: 0;
+  min-height: 46px;
+  padding: 4px 5px 4px 13px;
+  border: 1px solid rgba(31, 125, 183, 0.16);
+  border-radius: 999px;
+  background: #f1f8fd;
+  box-shadow: 0 8px 20px rgba(31, 42, 51, 0.05);
+}
+
+.my-health-header-action-group span {
+  color: var(--accent-strong);
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.my-health-header-action {
+  width: fit-content;
+  min-height: 36px;
+  padding: 0 13px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.86rem;
+  font-weight: 850;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.my-health-header-action:hover:not(:disabled),
+.my-health-header-action:focus-visible {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+  transform: none;
 }
 
 .my-health-record-log-summary {
@@ -8280,6 +8527,57 @@ h3 {
   line-height: 1.4;
 }
 
+.my-health-inline-composer-card {
+  gap: 10px;
+}
+
+.my-health-support-utility-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid rgba(47, 111, 159, 0.08);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.my-health-support-utility-bar button,
+.my-health-support-utility-bar a,
+.my-health-heading-action {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 1px solid rgba(47, 111, 159, 0.12);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-strong);
+  font-size: 0.88rem;
+  font-weight: 850;
+  text-decoration: none;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.my-health-support-utility-bar button:first-child,
+.my-health-heading-action {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.my-health-support-utility-bar button:hover:not(:disabled),
+.my-health-support-utility-bar a:hover,
+.my-health-support-utility-bar button:focus-visible,
+.my-health-support-utility-bar a:focus-visible,
+.my-health-heading-action:hover:not(:disabled),
+.my-health-heading-action:focus-visible {
+  border-color: rgba(47, 111, 159, 0.24);
+  transform: none;
+}
+
 .my-health-request-composer {
   display: grid;
   gap: 10px;
@@ -8362,44 +8660,28 @@ h3 {
 
 .my-health-request-float {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
+  inset: 0;
   z-index: 54;
-  display: grid;
-  gap: 10px;
-  justify-items: end;
-  pointer-events: auto;
-}
-
-.my-health-request-launcher {
-  min-height: 48px;
-  padding: 0 18px;
-  border: 1px solid var(--accent);
-  border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
-  box-shadow: 0 14px 30px rgba(31, 42, 51, 0.16);
-  font-size: 0.94rem;
-  font-weight: 850;
-}
-
-.my-health-request-launcher:hover:not(:disabled),
-.my-health-request-launcher:focus-visible {
-  background: var(--accent-strong);
-  transform: none;
-}
-
-.my-health-request-float.open .my-health-request-launcher {
   display: none;
+  place-items: center;
+  padding: 24px;
+  background: rgba(17, 31, 44, 0.18);
+  backdrop-filter: blur(3px);
+}
+
+.my-health-request-float.open {
+  display: grid;
 }
 
 .my-health-request-drawer {
-  width: min(420px, calc(100vw - 48px));
+  width: min(460px, 100%);
+  max-height: min(680px, calc(100vh - 48px));
+  overflow-y: auto;
   display: grid;
   gap: 12px;
-  padding: 14px;
+  padding: 16px;
   border: 1px solid rgba(47, 111, 159, 0.12);
-  border-radius: 10px;
+  border-radius: 12px;
   background: #fff;
   box-shadow: 0 20px 52px rgba(31, 42, 51, 0.18);
 }
@@ -8493,6 +8775,13 @@ h3 {
   color: var(--text);
   text-decoration: none;
   box-shadow: none;
+}
+
+.my-health-recommendation-card:hover,
+.my-health-recommendation-card:focus-visible {
+  border-color: rgba(47, 111, 159, 0.18);
+  box-shadow: 0 8px 18px rgba(24, 55, 84, 0.045);
+  transform: none;
 }
 
 .my-health-recommendation-card span {
@@ -11656,6 +11945,26 @@ output {
     justify-content: flex-start;
   }
 
+  .services-catalog-category-control {
+    justify-self: start;
+  }
+
+  .services-request-launcher {
+    right: 14px;
+    bottom: 22px;
+    min-height: 44px;
+    padding: 0 15px;
+  }
+
+  .services-request-form-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .services-request-submit {
+    width: 100%;
+  }
+
   .home-path-cards article:nth-child(2)::after {
     content: none;
   }
@@ -11927,6 +12236,30 @@ output {
     width: 100%;
   }
 
+  .my-health-record-log-top {
+    grid-template-columns: 1fr;
+  }
+
+  .my-health-record-log-top .my-health-section-tabs,
+  .my-health-header-action-group {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: start;
+    margin-left: 0;
+    min-height: 42px;
+    gap: 6px;
+    padding: 3px 4px 3px 12px;
+  }
+
+  .my-health-header-action-group span {
+    text-align: left;
+  }
+
+  .my-health-header-action {
+    min-height: 34px;
+    padding: 0 12px;
+  }
+
   .variant-preview-panel {
     width: min(340px, calc(100vw - 28px));
   }
@@ -12012,6 +12345,17 @@ output {
     padding: 14px;
   }
 
+  .my-health-support-utility-bar,
+  .my-health-record-log-card .panel-heading {
+    align-items: stretch;
+  }
+
+  .my-health-support-utility-bar button,
+  .my-health-support-utility-bar a,
+  .my-health-heading-action {
+    width: 100%;
+  }
+
   .my-health-request-composer {
     padding: 10px;
   }
@@ -12038,21 +12382,10 @@ output {
     width: 100%;
   }
 
-  .my-health-request-float {
-    right: 14px;
-    bottom: 72px;
-    left: 14px;
-  }
-
   .my-health-request-drawer {
     width: 100%;
-    max-height: calc(100vh - 154px);
+    max-height: calc(100vh - 48px);
     overflow-y: auto;
-  }
-
-  .my-health-request-launcher {
-    min-height: 44px;
-    padding: 0 15px;
   }
 
   .my-health-record-secondary-actions,

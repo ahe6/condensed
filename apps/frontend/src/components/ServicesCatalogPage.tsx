@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
 import { ConsultOverlayHeader } from "./ConsultOverlayHeader";
 
@@ -172,12 +173,23 @@ const serviceCards = [
   }
 ] as const;
 
+const serviceRequestChips = [
+  "Find a test",
+  "Compare services",
+  "Review lab results",
+  "Ask about symptoms",
+  "Not sure what I need"
+] as const;
+
 export function ServicesCatalogPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<ServiceCategory>(() =>
     pickInitialCategory(searchParams.get("category"))
   );
   const [query, setQuery] = useState("");
+  const [isRequestOpen, setIsRequestOpen] = useState(false);
+  const [serviceRequestText, setServiceRequestText] = useState("");
 
   const filteredCards = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -193,6 +205,14 @@ export function ServicesCatalogPage() {
       return matchesCategory && matchesQuery;
     });
   }, [activeCategory, query]);
+
+  function handleServicesRequestSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const trimmedRequest = serviceRequestText.trim();
+    const requestQuery = trimmedRequest ? `?request=${encodeURIComponent(trimmedRequest)}` : "";
+
+    router.push(`/message-team${requestQuery}`);
+  }
 
   return (
     <main className="shell services-catalog-page overlay-header-page">
@@ -219,19 +239,76 @@ export function ServicesCatalogPage() {
           />
         </label>
 
-        <div className="services-catalog-category-row" aria-label="Service categories">
-          {categories.map((category) => (
-            <button
-              aria-pressed={activeCategory === category}
-              key={category}
-              type="button"
-              onClick={() => setActiveCategory(category)}
-            >
-              {category}
-            </button>
-          ))}
+        <div className="services-catalog-category-control">
+          <div className="services-catalog-category-row" aria-label="Service categories">
+            {categories.map((category) => (
+              <button
+                aria-pressed={activeCategory === category}
+                key={category}
+                type="button"
+                onClick={() => setActiveCategory(category)}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
         </div>
+
       </section>
+
+      <button className="services-request-launcher" type="button" onClick={() => setIsRequestOpen(true)}>
+        Help me choose
+      </button>
+
+      {isRequestOpen ? (
+        <div className="services-request-modal-overlay" aria-label="Ask our team popup">
+          <section
+            className="services-request-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="services-request-modal-title"
+          >
+            <div className="services-request-modal-heading">
+              <div>
+                <h2 id="services-request-modal-title">Ask our team</h2>
+                <p>Tell us what you're trying to find and we'll point you to the right service.</p>
+              </div>
+              <button
+                aria-label="Close ask our team popup"
+                className="services-request-modal-close"
+                type="button"
+                onClick={() => setIsRequestOpen(false)}
+              >
+                x
+              </button>
+            </div>
+
+            <form className="services-request-form" onSubmit={handleServicesRequestSubmit}>
+              <label>
+                <span className="sr-only">Request message</span>
+                <textarea
+                  value={serviceRequestText}
+                  rows={3}
+                  placeholder="Ask about symptoms, testing, supplements, results, or what to do next..."
+                  onChange={(event) => setServiceRequestText(event.target.value)}
+                />
+              </label>
+              <div className="services-request-form-footer">
+                <div className="services-request-chip-row" aria-label="Quick service prompts">
+                  {serviceRequestChips.map((chip) => (
+                    <button key={chip} type="button" onClick={() => setServiceRequestText(chip)}>
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+                <button className="services-request-submit" type="submit">
+                  Send request
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
 
       <section className="services-catalog-results" aria-label="Service results">
         <div className="services-catalog-results-heading">

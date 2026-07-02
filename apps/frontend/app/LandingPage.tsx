@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, FormEvent } from "react";
 import { ConsultOverlayHeader } from "../src/components/ConsultOverlayHeader";
 import { reviewStartPaths } from "../src/lib/reviewStartPaths";
 
@@ -717,6 +717,13 @@ const heroContentByVariant: Record<
 };
 
 const trustItems = ["Clinician-reviewed", "Written next steps", "Testing guidance", "Private upload"];
+const landingRequestChips = [
+  "Find a test",
+  "Compare services",
+  "Review lab results",
+  "Ask about symptoms",
+  "Not sure what I need"
+] as const;
 
 const consultExplainerItems = [
   {
@@ -1270,6 +1277,8 @@ function ConsultSearchHero() {
   const heroContent = heroContentByVariant["consult-search"];
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [searchText, setSearchText] = useState("");
+  const [isRequestOpen, setIsRequestOpen] = useState(false);
+  const [requestText, setRequestText] = useState("");
   const [visibleHeroCardCount, setVisibleHeroCardCount] = useState(6);
   const visibleHeroCards = visibleCarouselItems(heroSearchCards, carouselIndex, visibleHeroCardCount);
   const heroCardRowStyle = { "--hero-card-count": visibleHeroCardCount } as CSSProperties;
@@ -1293,6 +1302,20 @@ function ConsultSearchHero() {
     setCarouselIndex((current) => Math.min(current, Math.max(heroSearchCards.length - visibleHeroCardCount, 0)));
   }, [visibleHeroCardCount]);
 
+  function handleHeroRequestOpen(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setRequestText(searchText.trim());
+    setIsRequestOpen(true);
+  }
+
+  function handleHeroRequestSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const trimmedRequest = requestText.trim();
+    const requestQuery = trimmedRequest ? `?request=${encodeURIComponent(trimmedRequest)}` : "";
+
+    window.location.href = `/message-team${requestQuery}`;
+  }
+
   return (
     <section className="home-hero home-hero-consult-search" id="start-review" aria-labelledby="home-start-title">
       <div className="home-hero-consult-search-inner">
@@ -1303,11 +1326,7 @@ function ConsultSearchHero() {
         <form
           className="home-hero-search-bar"
           aria-label="Search services or ask our team"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const request = searchText.trim();
-            window.location.href = request ? `/message-team?request=${encodeURIComponent(request)}` : "/message-team";
-          }}
+          onSubmit={handleHeroRequestOpen}
         >
           <input
             aria-label="Search services or describe what you need"
@@ -1318,6 +1337,56 @@ function ConsultSearchHero() {
           />
           <button type="submit">Ask our team</button>
         </form>
+
+        {isRequestOpen ? (
+          <div className="services-request-modal-overlay" aria-label="Ask our team popup">
+            <section
+              className="services-request-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="landing-request-modal-title"
+            >
+              <div className="services-request-modal-heading">
+                <div>
+                  <h2 id="landing-request-modal-title">Ask our team</h2>
+                  <p>Tell us what you're trying to figure out and we'll help route you to the right option.</p>
+                </div>
+                <button
+                  aria-label="Close ask our team popup"
+                  className="services-request-modal-close"
+                  type="button"
+                  onClick={() => setIsRequestOpen(false)}
+                >
+                  x
+                </button>
+              </div>
+
+              <form className="services-request-form" onSubmit={handleHeroRequestSubmit}>
+                <label>
+                  <span className="sr-only">Request message</span>
+                  <textarea
+                    value={requestText}
+                    rows={3}
+                    placeholder="Ask about symptoms, testing, supplements, results, or what to do next..."
+                    onChange={(event) => setRequestText(event.target.value)}
+                  />
+                </label>
+                <div className="services-request-form-footer">
+                  <div className="services-request-chip-row" aria-label="Quick request prompts">
+                    {landingRequestChips.map((chip) => (
+                      <button key={chip} type="button" onClick={() => setRequestText(chip)}>
+                        {chip}
+                      </button>
+                    ))}
+                  </div>
+                  <button className="services-request-submit" type="submit">
+                    Send request
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+        ) : null}
 
         <p className="home-hero-search-assurance">Free to ask. We'll help route you to the right option.</p>
 
