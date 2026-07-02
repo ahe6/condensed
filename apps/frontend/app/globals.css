@@ -8115,6 +8115,17 @@ h3 {
   line-height: 1.5;
 }
 
+.my-health-record-log-actions-card h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.2rem;
+  line-height: 1.18;
+}
+
+.my-health-record-log-actions-card .portal-action-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .my-health-section-tabs {
   display: flex;
   flex-wrap: nowrap;
@@ -11562,7 +11573,8 @@ output {
     white-space: normal;
   }
 
-  .my-health-overview-actions-card .portal-action-list {
+  .my-health-overview-actions-card .portal-action-list,
+  .my-health-record-log-actions-card .portal-action-list {
     grid-template-columns: 1fr;
   }
 

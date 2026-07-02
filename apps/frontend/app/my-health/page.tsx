@@ -180,6 +180,30 @@ const recordLogTabs = [
   { id: "records", label: "Records" }
 ] as const;
 
+const recordLogActionModules = [
+  {
+    title: "Start a request",
+    detail: "Describe what is going on and we will help route the next step.",
+    href: "/message-team",
+    action: "Start request",
+    priority: "Primary"
+  },
+  {
+    title: "Find testing options",
+    detail: "Explore lab, genetic, and at-home testing paths connected to what you are trying to understand.",
+    href: "/services",
+    action: "Plan testing",
+    priority: "Testing"
+  },
+  {
+    title: "Shop products",
+    detail: "Browse supplements, skin care, hair support, and other health products.",
+    href: "/services",
+    action: "View products",
+    priority: "Products"
+  }
+] as const;
+
 const overviewActionModules = [
   {
     title: "Start a request",
@@ -376,6 +400,31 @@ function MyHealthPageContent() {
 
           {activeRecordLogTab === "overview" ? (
             <>
+              <section className="my-health-detail-section my-health-record-log-actions-card" aria-label="What do you need help with?">
+                <div className="panel-heading">
+                  <div>
+                    <h2>What do you need help with?</h2>
+                    <p>Start from a question, a testing goal, or products you want to compare.</p>
+                  </div>
+                </div>
+                <div className="portal-action-list">
+                  {recordLogActionModules.map((item) => (
+                    <Link
+                      className={`portal-action-row ${item.priority === "Primary" ? "my-health-primary-action-row" : ""}`}
+                      href={item.href}
+                      key={`${item.priority}-${item.title}`}
+                    >
+                      <span>{item.priority}</span>
+                      <div>
+                        <strong>{item.title}</strong>
+                        <p>{item.detail}</p>
+                      </div>
+                      <small>{item.action}</small>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+
               <div className="my-health-record-log-summary" aria-label="Record summary">
                 <article>
                   <span>Total records</span>

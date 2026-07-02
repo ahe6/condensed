@@ -220,6 +220,10 @@ const checks = {
       .getByLabel("Record sections")
       .locator("button")
       .evaluateAll((nodes) => nodes.map((node) => node.textContent));
+    const actionLabels = await page
+      .getByLabel("What do you need help with?")
+      .locator(".portal-action-row strong")
+      .evaluateAll((nodes) => nodes.map((node) => node.textContent));
     const emptyOverview = await page.getByText("No records yet.").isVisible();
 
     await page.goto("http://localhost:3001/my-health?signin=preview&state=active", { waitUntil: "networkidle" });
@@ -236,6 +240,7 @@ const checks = {
     return {
       heading,
       tabs,
+      actionLabels,
       emptyOverview,
       recentRecords,
       allRecords
