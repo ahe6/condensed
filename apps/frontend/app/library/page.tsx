@@ -12,22 +12,58 @@ const topicCollections = [
   {
     title: "Testing guides",
     detail: "Lab panels, genetics, at-home kits, timing, and how to compare options.",
-    links: ["General lab panels", "Genetic testing", "At-home testing"]
+    links: [
+      "General lab panels",
+      "Genetic testing",
+      "At-home testing",
+      "Hormone testing",
+      "Fertility testing",
+      "STI testing",
+      "Heart health labs",
+      "Inflammation markers"
+    ]
   },
   {
     title: "Results guides",
     detail: "Bloodwork, hormone reports, genetic results, and questions to ask after a review.",
-    links: ["Bloodwork basics", "Hormone results", "Follow-up questions"]
+    links: [
+      "Bloodwork basics",
+      "Hormone results",
+      "Follow-up questions",
+      "Borderline results",
+      "Repeat testing",
+      "Lab marker trends",
+      "Genetic reports",
+      "Second-look reviews"
+    ]
   },
   {
     title: "Wellness guides",
     detail: "Supplements, skin care, hair support, and daily routines connected to health goals.",
-    links: ["Supplement routines", "Skin care", "Hair support"]
+    links: [
+      "Supplement routines",
+      "Skin care",
+      "Hair support",
+      "Sleep basics",
+      "Energy support",
+      "Vitamin D",
+      "Omega-3",
+      "Daily wellness routines"
+    ]
   },
   {
     title: "Advanced health guides",
     detail: "How to ask better questions about regenerative, peptide, IV, and microbiome options.",
-    links: ["PRP questions", "Peptide review", "Microbiome therapies"]
+    links: [
+      "PRP questions",
+      "Peptide review",
+      "Microbiome therapies",
+      "Stem cell questions",
+      "Exosome therapy",
+      "IV nutrient therapy",
+      "Hyperbaric oxygen",
+      "Evidence and safety"
+    ]
   }
 ] as const;
 

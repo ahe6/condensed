@@ -214,8 +214,7 @@ const campaignPageLinks: VariantPageLink[] = [
   { href: "/hormones", label: "Hormones", value: "hormones" },
   { href: "/genetic-testing", label: "Genetic testing", value: "genetic-testing" },
   { href: "/library", label: "Library", value: "library" },
-  { href: "/qa", label: "Q&A", value: "qa" },
-  { href: "/forum", label: "Forum", value: "forum" }
+  { href: "/qa", label: "Q&A", value: "qa" }
 ];
 
 const operationalPageLinks: VariantPageLink[] = [

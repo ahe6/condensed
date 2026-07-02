@@ -7545,8 +7545,8 @@ h3 {
   grid-template-columns: minmax(0, 0.95fr) minmax(320px, 0.55fr);
   gap: clamp(22px, 4vw, 54px);
   align-items: start;
-  margin: 24px 0 28px;
-  padding: clamp(22px, 3vw, 34px);
+  margin: 22px 0 32px;
+  padding: clamp(20px, 2.6vw, 30px);
   border: 1px solid rgba(47, 111, 159, 0.1);
   border-radius: 10px;
   background: #fff;
@@ -7559,7 +7559,7 @@ h3 {
 }
 
 .library-hero-main {
-  gap: 22px;
+  gap: 20px;
 }
 
 .library-hero-copy {
@@ -7652,11 +7652,11 @@ h3 {
 
 .library-alpha-browser {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   align-self: start;
   justify-self: end;
   width: min(100%, 430px);
-  padding: 16px;
+  padding: 14px;
   border: 1px solid rgba(47, 111, 159, 0.1);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.82);
@@ -7703,8 +7703,12 @@ h3 {
 
 .library-section {
   display: grid;
-  gap: 12px;
-  margin-bottom: 22px;
+  gap: 13px;
+  margin-bottom: 30px;
+}
+
+.library-featured-section {
+  margin-bottom: 26px;
 }
 
 .library-section-heading {
@@ -7723,7 +7727,7 @@ h3 {
 
 .library-section-heading p {
   max-width: 680px;
-  margin: 6px 0 0;
+  margin: 5px 0 0;
   color: var(--muted);
   line-height: 1.5;
 }
@@ -7778,11 +7782,11 @@ h3 {
 .library-guide-card,
 .library-topic-card,
 .library-latest-list article {
-  min-height: 188px;
+  min-height: 166px;
   display: grid;
   align-content: start;
-  gap: 12px;
-  padding: 20px;
+  gap: 11px;
+  padding: 18px;
 }
 
 .library-guide-card > span,
@@ -7854,7 +7858,7 @@ h3 {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 26px;
-  padding: 18px 0 4px;
+  padding: 16px 0 8px;
   border-top: 1px solid rgba(47, 111, 159, 0.1);
 }
 
