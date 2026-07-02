@@ -312,8 +312,9 @@ const checks = {
       .locator(".home-specific-review-card")
       .evaluateAll((nodes) => nodes.map((node) => node.textContent));
     const testsHeading = await page.getByRole("heading", { name: "Tests" }).isVisible();
+    const wellnessHeading = await page.getByRole("heading", { name: "Wellness", exact: true }).isVisible();
     const analysisHeading = await page.getByRole("heading", { name: "Analysis", exact: true }).isVisible();
-    const cliniciansHeading = await page.getByRole("heading", { name: "Clinicians", exact: true }).isVisible();
+    const careHeading = await page.getByRole("heading", { name: "Care", exact: true }).isVisible();
     const treatmentsHeading = await page.getByRole("heading", { name: "Treatments", exact: true }).isVisible();
     const bloodworkAnalysis = await page.getByText("Bloodwork analysis").isVisible();
     const hormoneAnalysis = await page.getByText("Hormone analysis").isVisible();
@@ -325,14 +326,16 @@ const checks = {
     await page.getByRole("button", { name: "Next analysis categories" }).click();
     const geneticAnalysis = await page.getByText("Genetic analysis").isVisible();
     const viewAllTests = await page.getByRole("link", { name: /View all tests/ }).isVisible();
+    const viewAllWellness = await page.getByRole("link", { name: /View all wellness/ }).isVisible();
     const viewAllAnalysis = await page.getByRole("link", { name: /View all analysis/ }).isVisible();
 
     return {
       serviceCount: serviceCards.length,
       reviewCount: reviewCards.length,
       testsHeading,
+      wellnessHeading,
       analysisHeading,
-      cliniciansHeading,
+      careHeading,
       treatmentsHeading,
       thyroidTesting,
       bloodworkAnalysis,
@@ -341,8 +344,23 @@ const checks = {
       primaryCare,
       medicationReview,
       viewAllTests,
+      viewAllWellness,
       viewAllAnalysis
     };
+  },
+
+  async "landing-care-section"(page) {
+    await page.goto("http://localhost:3001/?clinicians=current", { waitUntil: "networkidle" });
+    const heroCards = await page.locator(".home-hero-search-card").evaluateAll((nodes) =>
+      nodes.map((node) => node.textContent)
+    );
+    const careHeading = await page.getByRole("heading", { name: "Care", exact: true }).isVisible();
+    const cliniciansHeading = await page.getByRole("heading", { name: "Clinicians", exact: true }).isVisible().catch(() => false);
+    const viewAllCare = await page.getByRole("link", { name: "View all care" }).isVisible();
+    const nextCare = await page.getByRole("button", { name: "Next care options" }).isVisible();
+    const primaryCare = await page.getByText("Primary care").isVisible();
+
+    return { heroCards, careHeading, cliniciansHeading, viewAllCare, nextCare, primaryCare };
   },
 
   async "library-forum"(page) {
@@ -381,8 +399,8 @@ const checks = {
       .locator("button")
       .evaluateAll((nodes) => nodes.map((node) => node.textContent));
     const initialCards = await page.locator(".services-catalog-card h3").allTextContents();
-    await page.getByRole("button", { name: "Products" }).click();
-    const productCards = await page.locator(".services-catalog-card h3").allTextContents();
+    await page.getByRole("button", { name: "Wellness" }).click();
+    const wellnessCards = await page.locator(".services-catalog-card h3").allTextContents();
     await page.getByLabel("Search services or describe what you need").fill("hair");
     const filteredCards = await page.locator(".services-catalog-card h3").allTextContents();
 
@@ -391,7 +409,7 @@ const checks = {
       navLinks,
       categories,
       initialCount: initialCards.length,
-      productCards,
+      wellnessCards,
       filteredCards
     };
   },

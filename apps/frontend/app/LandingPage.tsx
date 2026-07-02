@@ -161,7 +161,7 @@ const clinicianOptions = [
     title: "Primary care",
     detail: "Find a general clinician for broad concerns, routine follow-up, and next-step planning.",
     href: "/message-team",
-    meta: "Clinicians"
+    meta: "Care"
   },
   {
     title: "Women's health",
@@ -183,7 +183,7 @@ const clinicianOptions = [
   },
   {
     title: "Mental health",
-    detail: "Explore clinician options for mood, stress, sleep, focus, and related care needs.",
+    detail: "Explore care options for mood, stress, sleep, focus, and related support needs.",
     href: "/message-team",
     meta: "Care"
   },
@@ -334,9 +334,9 @@ const advancedHealthOptions = [
 const heroSearchCards = [
   { label: "Testing", icon: "testing" },
   { label: "Results review", icon: "results" },
-  { label: "Clinicians", icon: "clinicians" },
+  { label: "Care", icon: "clinicians" },
   { label: "Treatments", icon: "treatments" },
-  { label: "Products", icon: "products" },
+  { label: "Wellness", icon: "products" },
   { label: "Advanced health", icon: "advanced" },
   { label: "Health concern", icon: "concern" },
   { label: "Not sure", icon: "question" }
@@ -1369,29 +1369,29 @@ function LandingPageContent({
       {testsVariant === "current" ? <ServicesSection variant="carousel" /> : null}
       {productsVariant === "current" ? (
         <SimpleLandingCarouselSection
-          ariaLabel="Product options"
+          ariaLabel="Wellness options"
           footerHref="/message-team"
-          footerLabel="View all products"
-          heading="Products"
+          footerLabel="View all wellness"
+          heading="Wellness"
           id="products"
           items={productOptions}
-          nextLabel="Next product options"
-          previousLabel="Previous product options"
-          subtitle="Browse supplements, skin care, hair care, and routine support products."
-          actionLabel="View product"
+          nextLabel="Next wellness options"
+          previousLabel="Previous wellness options"
+          subtitle="Browse supplements, skin care, hair care, and routine support."
+          actionLabel="View wellness"
         />
       ) : null}
       {analysisVariant === "current" ? <ReviewTestingSection variant="carousel" /> : null}
       {cliniciansVariant === "current" ? (
         <SimpleLandingCarouselSection
-          ariaLabel="Clinician options"
+          ariaLabel="Care options"
           footerHref="/message-team"
-          footerLabel="View all clinicians"
-          heading="Clinicians"
+          footerLabel="View all care"
+          heading="Care"
           id="clinicians"
           items={clinicianOptions}
-          nextLabel="Next clinician options"
-          previousLabel="Previous clinician options"
+          nextLabel="Next care options"
+          previousLabel="Previous care options"
           subtitle="Find care support for the question you are trying to solve."
         />
       ) : null}

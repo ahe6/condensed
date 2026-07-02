@@ -36,7 +36,7 @@ const landingVariantGroups = [
   },
   {
     param: "products",
-    label: "Products section",
+    label: "Wellness section",
     fallback: "current",
     options: [
       { value: "current", label: "Current" },
@@ -54,7 +54,7 @@ const landingVariantGroups = [
   },
   {
     param: "clinicians",
-    label: "Clinicians section",
+    label: "Care section",
     fallback: "hidden",
     options: [
       { value: "current", label: "Current" },

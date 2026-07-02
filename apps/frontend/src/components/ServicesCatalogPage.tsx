@@ -8,7 +8,7 @@ const categories = [
   "All",
   "Tests",
   "Analysis",
-  "Products",
+  "Wellness",
   "Clinicians",
   "Treatments",
   "Advanced Health"
@@ -58,26 +58,26 @@ const serviceCards = [
   {
     title: "Daily supplement packs",
     detail: "Daily supplement options for routine wellness, nutrient questions, and general support.",
-    category: "Products",
+    category: "Wellness",
     meta: "Supplements",
     href: "/products/daily-multivitamin-pack",
-    cta: "View product"
+    cta: "View wellness"
   },
   {
     title: "Skin care routines",
     detail: "Cleanser, moisturizer, sunscreen, and skin-support products for everyday routines.",
-    category: "Products",
+    category: "Wellness",
     meta: "Skin care",
     href: "/products/skin-clarity-routine",
-    cta: "View product"
+    cta: "View wellness"
   },
   {
     title: "Hair support kits",
     detail: "Hair and scalp support options that can sit alongside testing, analysis, or care guidance.",
-    category: "Products",
+    category: "Wellness",
     meta: "Hair",
     href: "/products/hair-density-support-kit",
-    cta: "View product"
+    cta: "View wellness"
   },
   {
     title: "Primary care",
@@ -173,7 +173,7 @@ export function ServicesCatalogPage() {
           <p className="eyebrow">Services</p>
           <h1 id="services-catalog-title">Find the right place to start.</h1>
           <p>
-            Browse testing, analysis, products, clinicians, treatment questions, and advanced health
+            Browse testing, analysis, wellness, clinicians, treatment questions, and advanced health
             options from one catalog-style view.
           </p>
         </div>

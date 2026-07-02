@@ -58,7 +58,6 @@ export function SiteFooter() {
         </nav>
 
         <div className="site-footer-bottom">
-          <p>Condensed Health does not replace medical care.</p>
           <span>© {new Date().getFullYear()} Condensed Health</span>
         </div>
       </div>
