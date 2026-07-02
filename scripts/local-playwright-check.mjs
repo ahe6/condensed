@@ -256,6 +256,11 @@ const checks = {
       .getByLabel("All records")
       .locator(".my-health-record-log-item h3")
       .evaluateAll((nodes) => nodes.map((node) => node.textContent));
+    await page.getByLabel("Record sections").getByRole("button", { name: "Messages" }).click();
+    const messages = await page
+      .getByLabel("Messages panel")
+      .locator(".my-health-record-log-item h3")
+      .evaluateAll((nodes) => nodes.map((node) => node.textContent));
 
     return {
       heading,
@@ -268,7 +273,8 @@ const checks = {
       routedRequestText,
       emptyOverview,
       recentRecords,
-      allRecords
+      allRecords,
+      messages
     };
   },
 

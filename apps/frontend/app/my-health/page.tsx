@@ -176,9 +176,25 @@ const recordLogItems = [
   }
 ] as const;
 
+const recordLogMessages = [
+  {
+    type: "Request",
+    title: "Bloodwork review request",
+    detail: "A request thread for uploaded lab results, review notes, and next-step questions.",
+    meta: "Today"
+  },
+  {
+    type: "Reply",
+    title: "Testing plan follow-up",
+    detail: "Messages about the saved metabolic follow-up plan will stay grouped here.",
+    meta: "Yesterday"
+  }
+] as const;
+
 const recordLogTabs = [
   { id: "overview", label: "Overview" },
-  { id: "records", label: "Records" }
+  { id: "records", label: "Records" },
+  { id: "messages", label: "Messages" }
 ] as const;
 
 const recordLogQuickChips = [
@@ -502,6 +518,36 @@ function MyHealthPageContent() {
                 <div className="my-health-record-log-empty">
                   <strong>No records yet.</strong>
                   <p>When you upload documents, start requests, save testing plans, or get guidance, each item will be added here.</p>
+                </div>
+              )}
+            </section>
+          ) : null}
+
+          {activeRecordLogTab === "messages" ? (
+            <section className="my-health-record-log-card" aria-label="Messages panel">
+              <div className="panel-heading">
+                <div>
+                  <h2>Messages</h2>
+                  <p>Requests, team replies, and review notes stay grouped here.</p>
+                </div>
+              </div>
+              {isActiveWorkspacePreview ? (
+                <div className="my-health-record-log-list">
+                  {recordLogMessages.map((message) => (
+                    <article className="my-health-record-log-item" key={`${message.type}-${message.title}`}>
+                      <span>{message.type}</span>
+                      <div>
+                        <h3>{message.title}</h3>
+                        <p>{message.detail}</p>
+                      </div>
+                      <small>{message.meta}</small>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="my-health-record-log-empty">
+                  <strong>No messages yet.</strong>
+                  <p>When you send a request or your health team replies, messages and review notes will appear here.</p>
                 </div>
               )}
             </section>
