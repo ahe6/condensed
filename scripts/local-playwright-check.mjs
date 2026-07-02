@@ -215,16 +215,27 @@ const checks = {
     await page.goto("http://localhost:3001/my-health?signin=preview", { waitUntil: "networkidle" });
     await page.evaluate(() => localStorage.clear());
     await page.reload({ waitUntil: "networkidle" });
-    const heading = await page.getByRole("heading", { name: "Health record" }).isVisible();
+    const heading = await page.getByRole("heading", { name: "My Health" }).isVisible();
     const tabs = await page
       .getByLabel("Record sections")
       .locator("button")
       .evaluateAll((nodes) => nodes.map((node) => node.textContent));
-    const actionLabels = await page
-      .getByLabel("What do you need help with?")
-      .locator(".portal-action-row strong")
+    const actionSection = page.getByLabel("What do you need help with?");
+    const composerPlaceholder = await actionSection
+      .getByPlaceholder("Ask about symptoms, testing, supplements, results, or what to do next...")
+      .isVisible();
+    const secondaryActionLabels = await actionSection
+      .locator(".my-health-record-secondary-actions .portal-action-row strong")
       .evaluateAll((nodes) => nodes.map((node) => node.textContent));
+    await actionSection.getByRole("button", { name: "Compare products" }).click();
+    const chipPrefill = await actionSection
+      .getByPlaceholder("Ask about symptoms, testing, supplements, results, or what to do next...")
+      .inputValue();
     const emptyOverview = await page.getByText("No records yet.").isVisible();
+    await actionSection.getByPlaceholder("Ask about symptoms, testing, supplements, results, or what to do next...").fill("I need help with a thyroid test");
+    await actionSection.getByRole("button", { name: "Ask our team" }).click();
+    await page.waitForURL(/\/message-team\?request=/);
+    const routedRequestText = await page.getByLabel("Message details").locator("textarea").inputValue();
 
     await page.goto("http://localhost:3001/my-health?signin=preview&state=active", { waitUntil: "networkidle" });
     const recentRecords = await page
@@ -240,7 +251,10 @@ const checks = {
     return {
       heading,
       tabs,
-      actionLabels,
+      composerPlaceholder,
+      secondaryActionLabels,
+      chipPrefill,
+      routedRequestText,
       emptyOverview,
       recentRecords,
       allRecords
@@ -432,11 +446,15 @@ const checks = {
       const header = await page.locator(".consult-overlay-header").boundingBox();
       const bar = await page.locator(".consult-overlay-primary-bar").boundingBox();
       const content = await page.locator(pageConfig.contentSelector).boundingBox();
+      const activeLinks = await page
+        .locator(".consult-overlay-service-bar a[aria-current='page']")
+        .evaluateAll((nodes) => nodes.map((node) => node.textContent));
 
       measurements[pageConfig.name] = {
         header: roundRect(header),
         bar: roundRect(bar),
         content: roundRect(content),
+        activeLinks,
         gapBelowHeader: header && content ? Math.round(content.y - (header.y + header.height)) : null
       };
     }

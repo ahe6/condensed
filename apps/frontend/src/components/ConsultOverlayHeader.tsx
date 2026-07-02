@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { CustomerBrand } from "./CustomerBrand";
 
@@ -13,6 +14,7 @@ const consultOverlayNavLinks = [
 ];
 
 export function ConsultOverlayHeader({ lineVariant }: { lineVariant: TopBarLineVariant }) {
+  const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLElement>(null);
@@ -65,11 +67,21 @@ export function ConsultOverlayHeader({ lineVariant }: { lineVariant: TopBarLineV
         </button>
         <CustomerBrand />
         <nav ref={menuRef} className="consult-overlay-service-bar" aria-label="Site sections">
-          {consultOverlayNavLinks.map((link) => (
-            <Link href={link.href} key={link.href} onClick={() => setIsMenuOpen(false)}>
-              {link.label}
-            </Link>
-          ))}
+          {consultOverlayNavLinks.map((link) => {
+            const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
+
+            return (
+              <Link
+                aria-current={isActive ? "page" : undefined}
+                className={isActive ? "active" : undefined}
+                href={link.href}
+                key={link.href}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
         <Link className="consult-overlay-mobile-sign-in" href="/account">
           Sign in

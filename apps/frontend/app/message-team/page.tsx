@@ -64,7 +64,10 @@ function pickLayout(value: string | null): (typeof messageLayoutValues)[number] 
 function MessageTeamContent() {
   const searchParams = useSearchParams();
   const layout = pickLayout(searchParams.get("layout"));
-  const [selectedOption, setSelectedOption] = useState<(typeof messageStartOptions)[number] | null>(null);
+  const initialRequestText = searchParams.get("request") ?? "";
+  const [selectedOption, setSelectedOption] = useState<(typeof messageStartOptions)[number] | null>(
+    initialRequestText ? messagePrimaryOptions[3] : null
+  );
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -127,7 +130,7 @@ function MessageTeamContent() {
 
             <label className="message-team-field">
               <span>{selectedOption.prompt}</span>
-              <textarea placeholder={selectedOption.placeholder} rows={5} />
+              <textarea defaultValue={initialRequestText} placeholder={selectedOption.placeholder} rows={5} />
             </label>
 
             <section

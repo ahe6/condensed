@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { ConsultOverlayHeader } from "../../src/components/ConsultOverlayHeader";
 import { getMe } from "../../src/lib/api";
 import { getSession, isAuthConfigured, startLogin } from "../../src/lib/auth";
@@ -180,14 +181,15 @@ const recordLogTabs = [
   { id: "records", label: "Records" }
 ] as const;
 
-const recordLogActionModules = [
-  {
-    title: "Start a request",
-    detail: "Describe what is going on and we will help route the next step.",
-    href: "/message-team",
-    action: "Start request",
-    priority: "Primary"
-  },
+const recordLogQuickChips = [
+  "Find a test",
+  "Compare products",
+  "Review lab results",
+  "Ask about symptoms",
+  "Not sure what I need"
+] as const;
+
+const recordLogSecondaryActions = [
   {
     title: "Find testing options",
     detail: "Explore lab, genetic, and at-home testing paths connected to what you are trying to understand.",
@@ -271,6 +273,7 @@ type MyHealthLayout = "workspace" | "placeholder" | "record-log";
 type RecordLogTabId = (typeof recordLogTabs)[number]["id"];
 
 function MyHealthPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const layoutParam = searchParams.get("layout");
   const selectedLayout: MyHealthLayout =
@@ -281,6 +284,7 @@ function MyHealthPageContent() {
   const selectedWorkspaceState = searchParams.get("state") === "active" ? "active" : "empty";
   const [activeWorkspaceSection, setActiveWorkspaceSection] = useState<WorkspaceSectionId>("overview");
   const [activeRecordLogTab, setActiveRecordLogTab] = useState<RecordLogTabId>("overview");
+  const [recordRequestText, setRecordRequestText] = useState("");
   const [needsSignIn, setNeedsSignIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -293,6 +297,14 @@ function MyHealthPageContent() {
   const isActiveWorkspacePreview = canPreviewWithoutSignIn && selectedWorkspaceState === "active";
   const shouldShowSignInDialog = needsSignIn && !isSignInPreview;
   const canShowHealthContent = !needsSignIn || isSignInPreview;
+
+  function handleRecordRequestSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const trimmedRequest = recordRequestText.trim();
+    const requestQuery = trimmedRequest ? `?request=${encodeURIComponent(trimmedRequest)}` : "";
+
+    router.push(`/message-team${requestQuery}`);
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -376,27 +388,26 @@ function MyHealthPageContent() {
 
       {!isLoading && canShowHealthContent && selectedLayout === "record-log" ? (
         <section className="my-health-record-log" aria-label="Health records overview">
-          <div className="my-health-record-log-heading">
-            <div>
-              <p className="eyebrow">My Health</p>
-              <h1>Health record</h1>
-              <p>Everything you upload, request, review, or save is kept as a record in one place.</p>
+          <div className="my-health-record-log-top">
+            <div className="my-health-record-log-title">
+              <h1>My Health</h1>
+              <p>Your place to ask health questions, save records, and keep track of testing, products, and follow-ups.</p>
             </div>
-          </div>
 
-          <nav className="my-health-section-tabs" aria-label="Record sections">
-            {recordLogTabs.map((tab) => (
-              <button
-                aria-current={activeRecordLogTab === tab.id ? "page" : undefined}
-                className={activeRecordLogTab === tab.id ? "active" : undefined}
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveRecordLogTab(tab.id)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
+            <nav className="my-health-section-tabs" aria-label="Record sections">
+              {recordLogTabs.map((tab) => (
+                <button
+                  aria-current={activeRecordLogTab === tab.id ? "page" : undefined}
+                  className={activeRecordLogTab === tab.id ? "active" : undefined}
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveRecordLogTab(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
 
           {activeRecordLogTab === "overview" ? (
             <>
@@ -404,13 +415,38 @@ function MyHealthPageContent() {
                 <div className="panel-heading">
                   <div>
                     <h2>What do you need help with?</h2>
-                    <p>Start from a question, a testing goal, or products you want to compare.</p>
+                    <p>Tell us what you're looking for, and we'll help route you to testing, products, or the next step.</p>
                   </div>
                 </div>
-                <div className="portal-action-list">
-                  {recordLogActionModules.map((item) => (
+
+                <form className="my-health-request-composer" onSubmit={handleRecordRequestSubmit}>
+                  <label>
+                    <span className="sr-only">Request message</span>
+                    <textarea
+                      value={recordRequestText}
+                      rows={3}
+                      placeholder="Ask about symptoms, testing, supplements, results, or what to do next..."
+                      onChange={(event) => setRecordRequestText(event.target.value)}
+                    />
+                  </label>
+                  <div className="my-health-request-composer-footer">
+                    <div className="my-health-request-chip-row" aria-label="Quick request prompts">
+                      {recordLogQuickChips.map((chip) => (
+                        <button key={chip} type="button" onClick={() => setRecordRequestText(chip)}>
+                          {chip}
+                        </button>
+                      ))}
+                    </div>
+                    <button className="my-health-request-submit" type="submit">
+                      Ask our team
+                    </button>
+                  </div>
+                </form>
+
+                <div className="my-health-record-secondary-actions">
+                  {recordLogSecondaryActions.map((item) => (
                     <Link
-                      className={`portal-action-row ${item.priority === "Primary" ? "my-health-primary-action-row" : ""}`}
+                      className="portal-action-row"
                       href={item.href}
                       key={`${item.priority}-${item.title}`}
                     >

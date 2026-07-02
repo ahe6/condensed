@@ -64,6 +64,15 @@ body {
   line-height: 1.45;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
 .landing-page.shell {
   background: var(--color-page);
   box-shadow: 0 0 0 100vmax var(--color-page);
@@ -3232,19 +3241,32 @@ h3 {
 }
 
 .consult-overlay-service-bar a {
-  min-height: 64px;
+  min-height: 36px;
   display: inline-flex;
   align-items: center;
+  padding: 0 12px;
+  border-radius: 999px;
   color: var(--color-text);
   font-size: 1.02rem;
   font-weight: 440;
   text-decoration: none;
   white-space: nowrap;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
 }
 
 .consult-overlay-service-bar a:hover,
 .consult-overlay-service-bar a:focus-visible {
+  background: rgba(47, 111, 159, 0.08);
   color: var(--color-primary);
+}
+
+.consult-overlay-service-bar a.active,
+.consult-overlay-service-bar a[aria-current="page"] {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: 650;
 }
 
 .home-hero-consult-overlay {
@@ -7954,34 +7976,28 @@ h3 {
 
 .my-health-record-log {
   display: grid;
-  gap: 18px;
-  padding: 8px 0 32px;
+  gap: 16px;
+  padding: 18px 0 32px;
 }
 
-.my-health-record-log-heading {
-  display: flex;
-  gap: 18px;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.my-health-record-log-heading > div {
+.my-health-record-log-top {
   display: grid;
-  max-width: 760px;
-  gap: 7px;
+  gap: 12px;
+  align-items: start;
 }
 
-.my-health-record-log-heading h1 {
+.my-health-record-log-title h1 {
   margin: 0;
   color: var(--text);
-  font-size: clamp(1.9rem, 3.2vw, 3rem);
+  font-size: clamp(1.65rem, 2.5vw, 2.25rem);
   line-height: 1;
 }
 
-.my-health-record-log-heading p:not(.eyebrow) {
-  max-width: 660px;
+.my-health-record-log-title p {
+  max-width: 620px;
+  margin: 6px 0 0;
   color: var(--muted);
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
 .my-health-record-log-summary {
@@ -8122,8 +8138,96 @@ h3 {
   line-height: 1.18;
 }
 
-.my-health-record-log-actions-card .portal-action-list {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.my-health-request-composer {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(47, 111, 159, 0.14);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+}
+
+.my-health-request-composer label {
+  display: grid;
+}
+
+.my-health-request-composer textarea {
+  width: 100%;
+  min-height: 78px;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  line-height: 1.45;
+  outline: 0;
+}
+
+.my-health-request-composer textarea::placeholder {
+  color: var(--muted);
+}
+
+.my-health-request-composer:focus-within {
+  border-color: rgba(47, 111, 159, 0.36);
+  box-shadow: 0 0 0 3px rgba(47, 111, 159, 0.1);
+}
+
+.my-health-request-composer-footer {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.my-health-request-chip-row {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.my-health-request-chip-row button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid rgba(47, 111, 159, 0.14);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-strong);
+  font-size: 0.86rem;
+  font-weight: 800;
+  box-shadow: none;
+}
+
+.my-health-request-chip-row button:hover:not(:disabled) {
+  border-color: rgba(47, 111, 159, 0.28);
+  background: #fff;
+  transform: none;
+}
+
+.my-health-request-submit {
+  min-height: 42px;
+  flex: 0 0 auto;
+  padding: 0 16px;
+  border-color: var(--accent);
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 850;
+}
+
+.my-health-record-secondary-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.my-health-record-secondary-actions .portal-action-row {
+  min-height: 84px;
+  border: 0;
+  background: #fff;
 }
 
 .my-health-section-tabs {
@@ -11490,7 +11594,7 @@ output {
   .shop-program-hero,
   .topic-page-hero,
   .layer-hero,
-  .my-health-record-log-heading,
+  .my-health-record-log-top,
   .my-health-workspace-heading,
   .order-summary-heading,
   .admin-order-row-main,
@@ -11573,8 +11677,17 @@ output {
     white-space: normal;
   }
 
-  .my-health-overview-actions-card .portal-action-list,
-  .my-health-record-log-actions-card .portal-action-list {
+  .my-health-request-composer-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .my-health-request-submit {
+    width: 100%;
+  }
+
+  .my-health-record-secondary-actions,
+  .my-health-overview-actions-card .portal-action-list {
     grid-template-columns: 1fr;
   }
 
