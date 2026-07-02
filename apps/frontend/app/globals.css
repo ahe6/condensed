@@ -3022,11 +3022,8 @@ h3 {
 }
 
 .home-hero-card-carousel {
-  width: min(900px, 100%);
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
-  gap: 8px;
-  align-items: center;
+  position: relative;
+  width: min(760px, 100%);
 }
 
 .home-specific-carousel {
@@ -3063,6 +3060,37 @@ h3 {
 .home-carousel-arrow:disabled {
   cursor: default;
   opacity: 0.36;
+}
+
+.home-hero-card-carousel .home-carousel-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  width: 34px;
+  min-height: 34px;
+  border-color: rgba(47, 111, 159, 0.12);
+  color: var(--color-text-soft);
+  font-size: 0.95rem;
+  transform: translateY(-50%);
+}
+
+.home-hero-card-carousel .home-carousel-arrow:first-child {
+  left: -44px;
+}
+
+.home-hero-card-carousel .home-carousel-arrow:last-child {
+  right: -44px;
+}
+
+.home-hero-card-carousel .home-carousel-arrow:disabled {
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+}
+
+.home-hero-card-carousel .home-carousel-arrow:hover:not(:disabled),
+.home-hero-card-carousel .home-carousel-arrow:focus-visible {
+  transform: translateY(-50%);
 }
 
 .home-specific-service-card {
@@ -3414,22 +3442,21 @@ h3 {
 }
 
 .home-hero-consult-search {
-  min-height: clamp(230px, 30vh, 310px);
+  min-height: clamp(255px, 34vh, 360px);
   display: grid;
   align-items: center;
-  padding: clamp(18px, 2.6vw, 30px) 0 clamp(20px, 2.6vw, 28px);
-  border: 1px solid rgba(210, 220, 228, 0.7);
+  padding: clamp(28px, 4vw, 48px) 0 clamp(22px, 3vw, 34px);
+  border: 0;
+  border-bottom: 1px solid rgba(210, 220, 228, 0.74);
   border-top: 0;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(246, 250, 251, 0.96)),
-    var(--color-page);
+  background: var(--color-page);
 }
 
 .home-hero-consult-search-inner {
-  width: min(980px, calc(100% - 48px));
+  width: min(1000px, calc(100% - 64px));
   display: grid;
   justify-items: center;
-  gap: 16px;
+  gap: 12px;
   margin: 0 auto;
   text-align: center;
 }
@@ -3445,10 +3472,10 @@ h3 {
   margin: 0;
   color: var(--ink);
   font-family: var(--font-source-sans), "Source Sans 3", system-ui, sans-serif;
-  font-size: clamp(1.75rem, 2.35vw, 2.45rem);
+  font-size: clamp(1.86rem, 2.75vw, 3rem);
   font-weight: 620;
-  letter-spacing: -0.028em;
-  line-height: 1;
+  letter-spacing: -0.018em;
+  line-height: 1.02;
 }
 
 .home-hero-consult-search-copy p {
@@ -3465,25 +3492,25 @@ h3 {
   width: 100%;
   display: grid;
   grid-template-columns: repeat(var(--hero-card-count, 6), minmax(0, 1fr));
-  gap: 8px;
+  gap: 7px;
   justify-content: stretch;
 }
 
 .home-hero-search-card {
   min-width: 104px;
-  min-height: 76px;
+  min-height: 64px;
   aspect-ratio: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 9px 12px;
-  border: 1px solid rgba(47, 111, 159, 0.12);
+  gap: 5px;
+  padding: 8px 10px;
+  border: 1px solid rgba(47, 111, 159, 0.09);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.74);
+  background: rgba(255, 255, 255, 0.62);
   color: var(--color-text);
-  box-shadow: 0 1px 2px rgba(31, 42, 51, 0.04);
+  box-shadow: none;
   line-height: 1.18;
   text-align: center;
   text-decoration: none;
@@ -3495,19 +3522,19 @@ h3 {
 }
 
 .home-hero-search-card-icon {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   flex: 0 0 auto;
   display: inline-grid;
   place-items: center;
   border-radius: 999px;
-  background: var(--color-primary-soft);
+  background: rgba(218, 236, 248, 0.82);
   color: var(--color-primary-dark);
 }
 
 .home-hero-search-card-icon svg {
-  width: 25px;
-  height: 25px;
+  width: 21px;
+  height: 21px;
   display: block;
   fill: none;
   stroke: currentColor;
@@ -3518,24 +3545,24 @@ h3 {
 
 .home-hero-search-card strong {
   color: inherit;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 720;
 }
 
 .home-hero-search-bar {
-  width: min(640px, 100%);
-  min-height: 54px;
-  margin-top: 4px;
+  width: min(720px, 100%);
+  min-height: 62px;
+  margin-top: 10px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 14px;
+  gap: 12px;
   align-items: center;
-  padding: 6px 6px 6px 18px;
-  border: 1px solid rgba(198, 212, 224, 0.9);
+  padding: 7px 7px 7px 20px;
+  border: 1px solid rgba(166, 193, 213, 0.68);
   border-radius: 999px;
   background: #fff;
   color: var(--text);
-  box-shadow: 0 20px 50px rgba(31, 42, 51, 0.09);
+  box-shadow: 0 22px 54px rgba(31, 42, 51, 0.11);
   text-align: left;
   text-decoration: none;
 }
@@ -3558,11 +3585,11 @@ h3 {
 }
 
 .home-hero-search-bar button {
-  min-height: 40px;
+  min-height: 46px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 18px;
+  padding: 0 24px;
   border: 0;
   border-radius: 999px;
   background: var(--accent);
@@ -3577,6 +3604,14 @@ h3 {
   background: var(--accent-strong);
   box-shadow: none;
   transform: none;
+}
+
+.home-hero-search-assurance {
+  margin: -2px 0 4px;
+  color: var(--color-text-soft);
+  font-size: 0.9rem;
+  font-weight: 540;
+  line-height: 1.35;
 }
 
 .home-hero-consult-services {
@@ -11851,14 +11886,28 @@ output {
     align-items: center;
   }
 
+  .home-hero-card-carousel .home-carousel-arrow {
+    position: static;
+    width: 38px;
+    min-height: 38px;
+    transform: none;
+  }
+
+  .home-hero-card-carousel .home-carousel-arrow:hover:not(:disabled),
+  .home-hero-card-carousel .home-carousel-arrow:focus-visible {
+    transform: none;
+  }
+
   .home-hero-card-carousel .home-carousel-arrow:first-child {
     grid-column: 1;
     grid-row: 1;
+    left: auto;
   }
 
   .home-hero-card-carousel .home-carousel-arrow:last-child {
     grid-column: 3;
     grid-row: 1;
+    right: auto;
   }
 
   .home-hero-card-carousel .home-hero-search-card-row {
@@ -11984,14 +12033,14 @@ output {
     min-height: 0;
     margin-right: -12px;
     margin-left: -12px;
-    padding: 24px 0 30px;
+    padding: 28px 0 24px;
     border-right: 0;
     border-left: 0;
   }
 
   .home-hero-consult-search-inner {
     width: min(100% - 28px, 720px);
-    gap: 14px;
+    gap: 10px;
     text-align: left;
     justify-items: stretch;
   }
@@ -12001,8 +12050,8 @@ output {
   }
 
   .home-hero-consult-search-copy h1 {
-    font-size: clamp(1.7rem, 7vw, 2.2rem);
-    letter-spacing: -0.022em;
+    font-size: clamp(1.78rem, 7vw, 2.2rem);
+    letter-spacing: -0.015em;
   }
 
   .home-hero-consult-search-copy p {
@@ -12019,21 +12068,23 @@ output {
 
   .home-hero-search-card {
     min-width: 0;
-    min-height: 68px;
+    min-height: 62px;
     aspect-ratio: auto;
-    padding: 8px 9px;
+    padding: 7px 8px;
   }
 
   .home-hero-search-bar {
     min-height: 0;
     grid-template-columns: 1fr;
-    gap: 8px;
-    padding: 12px;
-    border-radius: 14px;
+    gap: 9px;
+    margin-top: 6px;
+    padding: 10px;
+    border-radius: 12px;
   }
 
   .home-hero-search-bar button {
     width: 100%;
+    min-height: 40px;
   }
 
   .home-hero-consult-stage {

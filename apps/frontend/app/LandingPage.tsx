@@ -1284,7 +1284,31 @@ function ConsultSearchHero() {
           <h1 id="home-start-title">{heroContent.title}</h1>
         </div>
 
-        <div className="home-hero-card-carousel" aria-label="Common starting points">
+        <form
+          className="home-hero-search-bar"
+          aria-label="Search services or ask our team"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const request = searchText.trim();
+            window.location.href = request ? `/message-team?request=${encodeURIComponent(request)}` : "/message-team";
+          }}
+        >
+          <input
+            aria-label="Search services or describe what you need"
+            placeholder="Search services or describe what you need..."
+            type="search"
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+          />
+          <button type="submit">Ask our team</button>
+        </form>
+
+        <p className="home-hero-search-assurance">Free to ask. We'll help route you to the right option.</p>
+
+        <div
+          className={`home-hero-card-carousel${canGoPrevious || canGoNext ? " home-hero-card-carousel-scrollable" : ""}`}
+          aria-label="Common starting points"
+        >
           <button
             aria-label="Previous starting points"
             className="home-carousel-arrow"
@@ -1314,21 +1338,6 @@ function ConsultSearchHero() {
             ›
           </button>
         </div>
-
-        <form
-          className="home-hero-search-bar"
-          aria-label="Search services or ask our team"
-          onSubmit={(event) => event.preventDefault()}
-        >
-          <input
-            aria-label="Search services or describe what you need"
-            placeholder="Search services or describe what you need..."
-            type="search"
-            value={searchText}
-            onChange={(event) => setSearchText(event.target.value)}
-          />
-          <button type="submit">Ask our team</button>
-        </form>
       </div>
     </section>
   );

@@ -311,7 +311,12 @@ const checks = {
       .getByText("Tell us what you're trying to figure out, or choose a service to start. We'll help you find the right option for testing, results, and next steps.")
       .isVisible()
       .catch(() => false);
-    const searchPrompt = await page.getByText("What are you trying to figure out?").isVisible();
+    const searchPlaceholder = await page
+      .getByPlaceholder("Search services or describe what you need...")
+      .isVisible();
+    const assurance = await page
+      .getByText("Free to ask. We'll help route you to the right option.")
+      .isVisible();
     const cards = await page.locator(".home-hero-search-card").evaluateAll((nodes) =>
       nodes.map((node) => node.textContent)
     );
@@ -325,8 +330,23 @@ const checks = {
     const heroNavButtons = await page
       .getByRole("button", { name: /starting points/i })
       .count();
+    await page.getByPlaceholder("Search services or describe what you need...").fill("I want help with thyroid labs");
+    await page.getByRole("button", { name: "Ask our team" }).click();
+    await page.waitForURL("**/message-team?request=I%20want%20help%20with%20thyroid%20labs");
+    const routedRequestText = await page.locator("textarea").inputValue();
 
-    return { heading, subtitleVisible, searchPrompt, cards, cardTags, cardHrefs, searchBarTag, heroNavButtons };
+    return {
+      heading,
+      subtitleVisible,
+      searchPlaceholder,
+      assurance,
+      cards,
+      cardTags,
+      cardHrefs,
+      searchBarTag,
+      heroNavButtons,
+      routedRequestText
+    };
   },
 
   async "landing-mobile-hero-cards"(page) {
