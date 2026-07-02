@@ -8098,8 +8098,8 @@ h3 {
 
 .my-health-record-log {
   display: grid;
-  gap: 16px;
-  padding: 18px 0 32px;
+  gap: 18px;
+  padding: 20px 0 34px;
 }
 
 .my-health-record-log-top {
@@ -8111,12 +8111,12 @@ h3 {
 .my-health-record-log-title h1 {
   margin: 0;
   color: var(--text);
-  font-size: clamp(1.65rem, 2.5vw, 2.25rem);
-  line-height: 1;
+  font-size: clamp(1.75rem, 2.75vw, 2.6rem);
+  line-height: 1.02;
 }
 
 .my-health-record-log-title p {
-  max-width: 620px;
+  max-width: 660px;
   margin: 6px 0 0;
   color: var(--muted);
   line-height: 1.5;
@@ -8131,7 +8131,7 @@ h3 {
 .my-health-record-log-summary article,
 .my-health-record-log-card {
   border-radius: 8px;
-  background: var(--surface);
+  background: transparent;
 }
 
 .my-health-record-log-summary article {
@@ -8140,6 +8140,8 @@ h3 {
   align-content: space-between;
   gap: 10px;
   padding: 18px;
+  border: 1px solid rgba(47, 111, 159, 0.1);
+  background: #fff;
 }
 
 .my-health-record-log-summary span {
@@ -8163,12 +8165,12 @@ h3 {
 
 .my-health-record-log-card {
   display: grid;
-  gap: 4px;
-  padding: 18px;
+  gap: 12px;
+  padding: 0;
 }
 
 .my-health-record-log-card .panel-heading {
-  margin-bottom: 6px;
+  margin-bottom: 0;
 }
 
 .my-health-record-log-card h2 {
@@ -8256,13 +8258,14 @@ h3 {
 .my-health-record-log-actions-card h2 {
   margin: 0;
   color: var(--text);
-  font-size: 1.02rem;
+  font-size: 1.08rem;
   line-height: 1.18;
 }
 
 .my-health-record-log-actions-card {
-  gap: 11px;
-  padding: 14px;
+  gap: 12px;
+  padding: 0;
+  background: transparent;
 }
 
 .my-health-record-log-actions-card .panel-heading p {
@@ -8273,12 +8276,12 @@ h3 {
 
 .my-health-request-composer {
   display: grid;
-  gap: 8px;
-  padding: 10px;
-  border: 1px solid rgba(47, 111, 159, 0.14);
-  border-radius: 10px;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(47, 111, 159, 0.12);
+  border-radius: 8px;
   background: #fff;
-  box-shadow: var(--shadow-soft);
+  box-shadow: none;
 }
 
 .my-health-request-composer label {
@@ -8287,7 +8290,7 @@ h3 {
 
 .my-health-request-composer textarea {
   width: 100%;
-  min-height: 52px;
+  min-height: 58px;
   resize: vertical;
   padding: 8px 10px;
   border: 0;
@@ -8323,7 +8326,7 @@ h3 {
 }
 
 .my-health-request-chip-row button {
-  min-height: 32px;
+  min-height: 30px;
   padding: 0 10px;
   border: 1px solid rgba(47, 111, 159, 0.14);
   border-radius: 999px;
@@ -8359,7 +8362,7 @@ h3 {
 
 .my-health-record-secondary-actions .portal-action-row {
   min-height: 84px;
-  border: 0;
+  border: 1px solid rgba(47, 111, 159, 0.08);
   background: #fff;
 }
 
@@ -8374,16 +8377,17 @@ h3 {
 }
 
 .my-health-recommendation-card {
-  min-height: 138px;
+  min-height: 132px;
   display: grid;
   align-content: start;
-  gap: 8px;
-  padding: 14px;
+  gap: 9px;
+  padding: 16px;
+  border: 1px solid rgba(47, 111, 159, 0.08);
   border-radius: 8px;
   background: #fff;
   color: var(--text);
   text-decoration: none;
-  box-shadow: 0 1px 2px rgba(31, 42, 51, 0.04);
+  box-shadow: none;
 }
 
 .my-health-recommendation-card span {
@@ -8393,15 +8397,15 @@ h3 {
   align-items: center;
   padding: 0 8px;
   border-radius: 999px;
-  background: var(--accent-soft);
+  background: rgba(218, 236, 248, 0.74);
   color: var(--accent-strong);
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   font-weight: 850;
 }
 
 .my-health-recommendation-card strong {
   color: var(--text);
-  font-size: 0.98rem;
+  font-size: 1rem;
   line-height: 1.18;
 }
 
@@ -8421,7 +8425,8 @@ h3 {
   overflow-x: auto;
   padding: 4px;
   border-radius: 8px;
-  background: var(--surface);
+  border: 1px solid rgba(47, 111, 159, 0.1);
+  background: rgba(255, 255, 255, 0.62);
 }
 
 .my-health-section-tabs button {
@@ -8441,10 +8446,11 @@ h3 {
 
 .my-health-section-tabs button:hover:not(:disabled),
 .my-health-section-tabs button.active {
-  border-color: #fff;
   background: #fff;
   color: var(--text);
-  box-shadow: var(--shadow-soft);
+  box-shadow:
+    0 0 0 1px rgba(47, 111, 159, 0.1),
+    0 8px 18px rgba(31, 42, 51, 0.055);
   transform: none;
 }
 
@@ -8570,6 +8576,11 @@ button.my-health-summary-item:hover:not(:disabled) {
   border: 0;
   border-radius: 8px;
   background: var(--surface);
+}
+
+.my-health-detail-section.my-health-record-log-actions-card {
+  padding: 0;
+  background: transparent;
 }
 
 .my-health-detail-section h3 {
@@ -11869,6 +11880,39 @@ output {
   .my-health-record-log-card,
   .my-health-record-log-summary article {
     padding: 14px;
+  }
+
+  .my-health-record-log-card,
+  .my-health-record-log-actions-card {
+    padding: 0;
+  }
+
+  .my-health-record-log {
+    gap: 14px;
+    padding-top: 16px;
+  }
+
+  .my-health-record-log-title h1 {
+    font-size: clamp(1.55rem, 7vw, 2rem);
+  }
+
+  .my-health-record-log-title p {
+    font-size: 0.96rem;
+    line-height: 1.42;
+  }
+
+  .my-health-recommendation-card {
+    min-height: 0;
+    gap: 7px;
+    padding: 14px;
+  }
+
+  .my-health-request-composer {
+    padding: 10px;
+  }
+
+  .my-health-request-composer textarea {
+    min-height: 48px;
   }
 
   .my-health-record-log-item {
